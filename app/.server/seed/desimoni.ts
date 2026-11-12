@@ -21,6 +21,7 @@ export async function seedDeSimoniDemo(db: DB) {
     claim: "Dal 1917",
     tagline: { de: "Italienische Weine & Spezialitäten seit 1917", it: "Vini e specialità italiane dal 1917" },
     logoUrl: `${D}/logo-scuro.png`,
+    faviconUrl: `${D}/favicon.png`,
     logoInverseUrl: `${D}/logo-bianco.png`,
     colors: {
       // Wine red from desimoni.ch (#a2193c), deeper wine for dark sections, logo pink as accent.

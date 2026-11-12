@@ -15,11 +15,12 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm test
-      - run: npm version --no-git-tag-version --allow-same-version "${GITHUB_REF_NAME#v}"
+      - run: npm run changelog:check   # tag must equal package.json version and have a CHANGELOG section
       - run: npm run release
+      - run: node scripts/release-notes.mjs "${GITHUB_REF_NAME}" > release-notes.md
       - name: Publish archive
         uses: softprops/action-gh-release@v2
-        with: { files: "release/shop-*.tar.gz", generate_release_notes: true }
+        with: { files: "release/shop-*.tar.gz", body_path: release-notes.md, name: "${{ github.ref_name }}" }
       - uses: docker/login-action@v3
         with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
       - uses: docker/build-push-action@v6

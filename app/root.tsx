@@ -138,7 +138,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <style dangerouslySetInnerHTML={{ __html: themeCss(root.brand) }} />
             {pref === "system" && <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />}
             <meta name="theme-color" content={root.brand.colors.background} />
-            {root.brand.faviconUrl && <link rel="icon" href={root.brand.faviconUrl} />}
+            <link rel="icon" href={root.brand.faviconUrl || "/favicon.png"} />
             {root.shop.locales.map((l) => <link key={l} rel="alternate" hrefLang={l} href={`?lang=${l}`} />)}
           </>
         )}

@@ -23,7 +23,9 @@
     "release": "node scripts/release.mjs",
     "up": "npm ci && npm run build && npm start",
     "backup": "tsx scripts/backup.ts",
-    "restore": "tsx scripts/restore.ts"
+    "restore": "tsx scripts/restore.ts",
+    "version:bump": "node scripts/version.mjs",
+    "changelog:check": "node scripts/check-changelog.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",
