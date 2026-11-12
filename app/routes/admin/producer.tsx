@@ -40,6 +40,8 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (form.get("intent") === "delete") {
     const used = await db.query.products.findFirst({ where: eq(schema.products.producerId, Number(params.id)) });
     if (used) return data({ error: "Es sind noch Produkte zugeordnet." }, { status: 400 });
+    const self = await db.query.producers.findFirst({ where: eq(schema.producers.id, Number(params.id)) });
+    if (self?.erpId) return data({ error: "Dieser Produzent kommt aus vinX und würde beim nächsten Abgleich neu angelegt." }, { status: 400 });
     await db.delete(schema.producers).where(eq(schema.producers.id, Number(params.id)));
     return redirect("/admin/producers");
   }
@@ -120,7 +122,7 @@ export default function AdminProducer({ loaderData }: Route.ComponentProps) {
               ) : (
                 <div className="flex items-center justify-between gap-4 text-sm text-muted-fg">
                   Keine Produkte zugeordnet.
-                  <Button type="submit" name="intent" value="delete" variant="ghost" size="sm" formNoValidate onClick={(e) => { if (!confirm("Produzent löschen?")) e.preventDefault(); }}><Trash2 size={14} /> Löschen</Button>
+                  {!p.erpId && <Button type="submit" name="intent" value="delete" variant="ghost" size="sm" formNoValidate onClick={(e) => { if (!confirm("Produzent löschen?")) e.preventDefault(); }}><Trash2 size={14} /> Löschen</Button>}
                 </div>
               )}
             </Panel>

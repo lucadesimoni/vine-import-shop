@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import { data, Form, Link, redirect, useActionData } from "react-router";
-import { ArrowLeft, ExternalLink, Lock } from "lucide-react";
+import { ArrowLeft, ExternalLink, Lock, Trash2 } from "lucide-react";
 import type { Route } from "./+types/product";
 import { getDb, schema } from "~/.server/db";
 import { getSettings } from "~/.server/settings";
@@ -25,12 +25,21 @@ export async function loader({ params }: Route.LoaderArgs) {
     getSettings("shop"),
     erpOwnedFields(),
   ]);
-  return { product, variants, categories, producers, locales: shop.locales, erpOwned };
+  // locks apply only to records that really come from the ERP (variants with an ERP article id)
+  const linked = variants.some((v) => v.erpId);
+  return { product, variants, categories, producers, locales: shop.locales, erpOwned: linked ? erpOwned : [], linked };
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
   const db = await getDb();
   const form = await request.formData();
+  const current = params.id === "new" ? [] : await db.select().from(schema.variants).where(eq(schema.variants.productId, Number(params.id)));
+  const linked = current.some((v) => v.erpId);
+  if (form.get("intent") === "delete") {
+    if (linked) return data({ error: "Mit vinX verknüpfte Produkte werden in vinX verwaltet — hier nur deaktivieren." }, { status: 400 });
+    await db.delete(schema.products).where(eq(schema.products.id, Number(params.id)));
+    return redirect("/admin/products?deleted=1");
+  }
   const o = formToObject(form) as Record<string, Record<string, string> & string>;
   const loc = (k: string) => Object.fromEntries(Object.entries((o[k] ?? {}) as Record<string, string>).filter(([, v]) => v.trim())) as Localized;
   const name = loc("name");
@@ -56,7 +65,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     tradeOnly: form.has("tradeOnly"), ageRestricted: form.has("ageRestricted"), image, updatedAt: new Date(),
   };
   // fields mastered by the ERP are never written from the admin (they would be overwritten by the next sync)
-  const owned = await erpOwnedFields();
+  const owned = linked ? await erpOwnedFields() : [];
   if (params.id !== "new") for (const f of ["active", "taxClass"] as const) if (owned.includes(f)) delete (values as Partial<typeof values>)[f];
   let id = Number(params.id);
   if (params.id === "new") {
@@ -69,18 +78,21 @@ export async function action({ request, params }: Route.ActionArgs) {
   await db.update(schema.products).set(values).where(eq(schema.products.id, id));
   // Variant fields (editable unless owned by ERP)
   for (const [key, v] of Object.entries((o.variant ?? {}) as unknown as Record<string, Record<string, string>>)) {
+    const row = current.find((x) => x.id === Number(key));
+    if (!row) continue;
+    const lock = (f: string) => !!row.erpId && owned.includes(f);
     const patch: Partial<typeof schema.variants.$inferInsert> = {};
-    if (v.vintage !== undefined) patch.vintage = v.vintage || null;
-    if (v.size !== undefined) patch.size = v.size || null;
-    if (v.price !== undefined) patch.priceCents = parseMoneyInput(v.price);
-    if (v.stock !== undefined) patch.stock = Number(v.stock) || 0;
+    if (v.vintage !== undefined && !lock("vintage")) patch.vintage = v.vintage || null;
+    if (v.size !== undefined && !lock("size")) patch.size = v.size || null;
+    if (v.price !== undefined && !lock("price")) patch.priceCents = parseMoneyInput(v.price);
+    if (v.stock !== undefined && !lock("stock")) patch.stock = Number(v.stock) || 0;
     if (Object.keys(patch).length) await db.update(schema.variants).set(patch).where(eq(schema.variants.id, Number(key)));
   }
   return { ok: true };
 }
 
 export default function AdminProduct({ loaderData }: Route.ComponentProps) {
-  const { product: p, variants, categories, producers, locales, erpOwned } = loaderData;
+  const { product: p, variants, categories, producers, locales, erpOwned, linked } = loaderData;
   const result = useActionData<typeof action>();
   const owned = (f: string) => erpOwned.includes(f);
   const Lk = () => <Lock size={11} className="inline text-muted-fg" aria-label="von vinX verwaltet" />;
@@ -114,10 +126,10 @@ export default function AdminProduct({ loaderData }: Route.ComponentProps) {
                 {variants.map((v) => (
                   <div key={v.id} className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr]">
                     <div className="flex h-9 items-center font-mono text-[13px]">{v.sku}{v.erpId && <Badge className="ml-2">vinX</Badge>}</div>
-                    <Input name={`variant.${v.id}.vintage`} defaultValue={v.vintage ?? ""} disabled={owned("vintage")} size="sm" aria-label="Jahrgang" />
-                    <Input name={`variant.${v.id}.size`} defaultValue={v.size ?? ""} disabled={owned("size")} size="sm" aria-label="Format" />
-                    <Input name={`variant.${v.id}.price`} defaultValue={(v.priceCents / 100).toFixed(2)} disabled={owned("price")} size="sm" className="tabular-nums" aria-label="Preis" />
-                    <Input name={`variant.${v.id}.stock`} defaultValue={v.stock} disabled={owned("stock")} type="number" size="sm" className="tabular-nums" aria-label="Lager" />
+                    <Input name={`variant.${v.id}.vintage`} defaultValue={v.vintage ?? ""} disabled={!!v.erpId && owned("vintage")} size="sm" aria-label="Jahrgang" />
+                    <Input name={`variant.${v.id}.size`} defaultValue={v.size ?? ""} disabled={!!v.erpId && owned("size")} size="sm" aria-label="Format" />
+                    <Input name={`variant.${v.id}.price`} defaultValue={(v.priceCents / 100).toFixed(2)} disabled={!!v.erpId && owned("price")} size="sm" className="tabular-nums" aria-label="Preis" />
+                    <Input name={`variant.${v.id}.stock`} defaultValue={v.stock} disabled={!!v.erpId && owned("stock")} type="number" size="sm" className="tabular-nums" aria-label="Lager" />
                   </div>
                 ))}
               </div>
@@ -164,6 +176,17 @@ export default function AdminProduct({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
       <SaveBar saved={!!result && "ok" in result} />
+      {p && (
+        <div className="mt-4 flex items-center gap-3 text-[12px] text-muted-fg">
+          {linked ? (
+            <span className="flex items-center gap-1.5"><Lock size={12} /> Mit vinX verknüpft — Löschen und Stammdaten in vinX; hier Texte, Bilder und Sichtbarkeit.</span>
+          ) : (
+            <button type="submit" name="intent" value="delete" formNoValidate onClick={(e) => { if (!confirm("Produkt endgültig löschen? Bestellungen behalten ihre Positionen.")) e.preventDefault(); }} className="flex items-center gap-1.5 hover:text-danger">
+              <Trash2 size={13} /> Produkt löschen
+            </button>
+          )}
+        </div>
+      )}
     </Form>
   );
 }

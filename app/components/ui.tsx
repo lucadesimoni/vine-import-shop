@@ -73,11 +73,12 @@ export function Card({ className, ...props }: ComponentProps<"div">) {
   return <div className={cn("rounded-surface border border-border bg-surface", className)} {...props} />;
 }
 
-export function Badge({ tone = "neutral", className, ...props }: ComponentProps<"span"> & { tone?: "neutral" | "primary" | "soft" | "success" | "warning" | "danger" | "inverse" }) {
+export function Badge({ tone = "neutral", className, ...props }: ComponentProps<"span"> & { tone?: "neutral" | "primary" | "soft" | "outline" | "success" | "warning" | "danger" | "inverse" }) {
   const tones = {
     neutral: "bg-muted text-muted-fg",
     primary: "bg-primary text-on-primary",
     soft: "bg-primary-soft text-primary",
+    outline: "border border-primary/35 bg-surface/95 text-primary backdrop-blur-sm",
     success: "bg-success-soft text-success",
     warning: "bg-warning-soft text-warning",
     danger: "bg-danger-soft text-danger",

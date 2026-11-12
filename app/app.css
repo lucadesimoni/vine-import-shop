@@ -72,12 +72,12 @@
   --t-media: #ffffff;
   --t-scrim: #000000;
   --t-shadow: #000000;
-  --t-success: #2f6b45;
-  --t-success-soft: #e6f0e9;
-  --t-warning: #8a5a12;
-  --t-warning-soft: #f7eedd;
-  --t-danger: #a12a2a;
-  --t-danger-soft: #f8e6e6;
+  --t-success: #556f4d;
+  --t-success-soft: #f0f2ec;
+  --t-warning: #8e6a2f;
+  --t-warning-soft: #f6f0e4;
+  --t-danger: #9c3e2d;
+  --t-danger-soft: #f7ebe7;
   --t-on-danger: #ffffff;
   --t-art-oil: #7d7a2e;
   --t-art-glass: #c9c48f;
@@ -151,10 +151,12 @@
   line-height: 1.2;
 }
 @utility text-eyebrow {
+  font-family: var(--font-sans); /* also when used on headings */
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
+  @media (width < 40rem) { letter-spacing: calc(var(--tracking-eyebrow) * 0.75); }
 }
 @utility text-lead {
   font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
@@ -166,6 +168,8 @@
   text-transform: var(--t-btn-case);
   letter-spacing: var(--t-btn-tracking);
   font-weight: 500;
+  /* phones: wide uppercase tracking makes labels long — tighten it */
+  @media (width < 40rem) { letter-spacing: calc(var(--t-btn-tracking) * 0.6); }
 }
 @utility btn-text-sm { font-size: calc(13px * var(--t-btn-scale)); }
 @utility btn-text-md { font-size: calc(14px * var(--t-btn-scale)); }

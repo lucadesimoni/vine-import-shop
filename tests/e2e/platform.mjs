@@ -175,7 +175,7 @@ ok(taurasi2.price === 33.5, "synced vinX special price 10658 = CHF 33.50", taura
 const res = (p, init) => fetch(B + p, init);
 ok((await res("/api/health")).ok, "GET /api/health");
 const prod = await (await res("/api/v1/products?per_page=5")).json();
-ok(prod.data.length === 5 && prod.meta.total === 56 && prod.data[0].variants[0].price, "GET /api/v1/products (consumer prices only)");
+ok(prod.data.length === 5 && prod.meta.total === 58 && prod.data[0].variants[0].price, "GET /api/v1/products (consumer prices only)");
 ok((await res("/api/cron", { method: "POST" })).status === 401, "cron rejects missing secret");
 const cron = await res("/api/cron?jobs=outbox,stock", { method: "POST", headers: { Authorization: `Bearer ${CRON}` } });
 ok(cron.ok, "cron runs with secret", cron.status);
@@ -252,7 +252,9 @@ const ginRows = await admin.locator("tbody tr").count();
 await admin.locator("thead input[type=checkbox]").check();
 await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button[form=bulk]:has-text('Empfehlen')")]);
 ok(await admin.getByText(`${ginRows} Produkt`).first().isVisible(), `admin products: bulk action on ${ginRows} rows`);
-ok((await admin.locator("button[form=bulk]:has-text('Deaktivieren')").count()) === 0, "admin products: ERP-owned 'active' not offered as bulk action");
+await admin.locator("tbody input[name=ids]").first().check();
+await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button[form=bulk]:has-text('Deaktivieren')")]);
+ok(await admin.getByText(/mit vinX verknüpft übersprungen/).waitFor({ timeout: 5000 }).then(() => true, () => false), "admin products: ERP-owned 'active' stays with vinX for linked products");
 // admin orders: sort + CSV export
 await admin.goto(B + "/admin/orders?sort=total&dir=desc");
 ok((await admin.locator("tbody tr").count()) >= 2, "admin orders: sortable list");

@@ -1,0 +1,283 @@
+{
+  "_note": "Demo texts written for the blueprint (DE/IT): short line, description, pairing. Keyed by first SKU. Neutral, category-based — no claims about individual producers.",
+  "10679": {
+    "short": { "de": "Nebbiolo-Riserva von den Steilterrassen der Sassella", "it": "Riserva di Nebbiolo dai terrazzamenti della Sassella" },
+    "description": { "de": "Chiavennasca, wie der Nebbiolo in der Valtellina heisst, wächst hier auf Trockenmauer-Terrassen über der Adda. Die Riserva reift lange und zeigt Kirsche, Rose, Teer und eine kühle, mineralische Spannung — ein Wein mit grossem Lagerpotenzial.", "it": "La Chiavennasca, come si chiama il Nebbiolo in Valtellina, cresce su terrazzamenti a secco sopra l'Adda. La Riserva matura a lungo e mostra ciliegia, rosa, catrame e una fresca tensione minerale — un vino di grande longevità." },
+    "pairing": { "de": "Pizzoccheri, Brasato, gereifter Bitto", "it": "Pizzoccheri, brasato, Bitto stagionato" }
+  },
+  "10681": {
+    "short": { "de": "Grumello Riserva — warm, würzig, elegant", "it": "Grumello Riserva — caldo, speziato, elegante" },
+    "description": { "de": "Der Grumello liegt zwischen Sassella und Inferno und gibt dem Nebbiolo eine weiche, warme Frucht. Die Riserva verbindet getrocknete Kirsche und Gewürz mit feinem Tannin und langem Nachhall.", "it": "Il Grumello, tra Sassella e Inferno, dona al Nebbiolo un frutto morbido e caldo. La Riserva unisce ciliegia essiccata e spezie a un tannino fine e una lunga persistenza." },
+    "pairing": { "de": "Wild, Pilzrisotto, Bergkäse", "it": "Selvaggina, risotto ai funghi, formaggi di montagna" }
+  },
+  "10680": {
+    "short": { "de": "Sassella mit Frische und Finesse", "it": "Sassella fresco e fine" },
+    "description": { "de": "Ein Valtellina Superiore aus der Sassella, der früher zugänglich ist als die Riserva: rote Beeren, Veilchen, Kräuter und eine lebendige Säure. Klassischer Bergnebbiolo.", "it": "Un Valtellina Superiore della Sassella, più pronto della Riserva: frutti rossi, viola, erbe e un'acidità vivace. Nebbiolo di montagna classico." },
+    "pairing": { "de": "Bresaola, Kalbsbraten, Polenta", "it": "Bresaola, arrosto di vitello, polenta" }
+  },
+  "10682": {
+    "short": { "de": "Saftiger Nebbiolo für jeden Tag", "it": "Nebbiolo succoso per ogni giorno" },
+    "description": { "de": "Ein Valtellina Superiore mit offener, saftiger Frucht und sanftem Tannin. Zeigt den Charakter des Bergnebbiolo, ohne lange Lagerung zu verlangen.", "it": "Un Valtellina Superiore dal frutto aperto e succoso e dal tannino morbido. Mostra il carattere del Nebbiolo di montagna senza richiedere lunghi affinamenti." },
+    "pairing": { "de": "Salumi, Pasta mit Ragù, Grilladen", "it": "Salumi, pasta al ragù, grigliate" }
+  },
+  "10683": {
+    "short": { "de": "Der leichte Einstieg in die Valtellina", "it": "L'ingresso leggero in Valtellina" },
+    "description": { "de": "Rosso di Valtellina: frisch, fruchtbetont, mit typischer Nebbiolo-Würze. Leicht gekühlt ein vielseitiger Begleiter am Tisch.", "it": "Rosso di Valtellina: fresco, fruttato, con la tipica speziatura del Nebbiolo. Leggermente fresco, un compagno versatile a tavola." },
+    "pairing": { "de": "Antipasti, Pizza, helles Fleisch", "it": "Antipasti, pizza, carni bianche" }
+  },
+  "10658": {
+    "short": { "de": "Taurasi Riserva — das Barolo des Südens", "it": "Taurasi Riserva — il Barolo del Sud" },
+    "description": { "de": "Aglianico aus dem Irpinia-Hügelland, auf vulkanischen Böden gewachsen. Die Riserva ist dicht und kraftvoll: schwarze Kirsche, Pflaume, Tabak und Leder, getragen von festem Tannin und guter Säure.", "it": "Aglianico dalle colline dell'Irpinia, su suoli vulcanici. La Riserva è densa e potente: amarena, prugna, tabacco e cuoio, sostenuti da un tannino deciso e una bella acidità." },
+    "pairing": { "de": "Lamm, Schmorbraten, gereifter Pecorino", "it": "Agnello, stracotti, pecorino stagionato" }
+  },
+  "10656": {
+    "short": { "de": "Aglianico aus Kampanien, rund und würzig", "it": "Aglianico campano, rotondo e speziato" },
+    "description": { "de": "Ein zugänglicher Aglianico mit dunkler Frucht, Kräutern und einem Hauch Rauch. Kräftig genug für die Küche des Südens, weich genug für jeden Tag.", "it": "Un Aglianico accessibile con frutto scuro, erbe e un tocco affumicato. Abbastanza deciso per la cucina del Sud, abbastanza morbido per ogni giorno." },
+    "pairing": { "de": "Pasta al forno, Salsiccia, Pizza", "it": "Pasta al forno, salsiccia, pizza" }
+  },
+  "10295": {
+    "short": { "de": "Cagnulari — eine seltene Rebsorte Sardiniens", "it": "Cagnulari — un vitigno raro della Sardegna" },
+    "description": { "de": "Cagnulari wird fast nur im Nordwesten Sardiniens angebaut. Der Wein ist saftig und mediterran: Brombeere, Myrte, Macchia und eine feine Würze.", "it": "Il Cagnulari si coltiva quasi solo nel nord-ovest della Sardegna. Il vino è succoso e mediterraneo: mora, mirto, macchia e una fine speziatura." },
+    "pairing": { "de": "Porceddu, Lamm, Pecorino sardo", "it": "Porceddu, agnello, pecorino sardo" }
+  },
+  "7739": {
+    "short": { "de": "Spaghetti aus Senatore-Cappelli-Hartweizen", "it": "Spaghetti di grano duro Senatore Cappelli" },
+    "description": { "de": "Senatore Cappelli ist eine alte Hartweizensorte mit kräftigem Geschmack. Bronzegezogen und langsam getrocknet, nimmt die raue Oberfläche Saucen besonders gut auf.", "it": "Il Senatore Cappelli è un'antica varietà di grano duro dal gusto deciso. Trafilata al bronzo ed essiccata lentamente, la superficie ruvida trattiene bene i sughi." },
+    "pairing": { "de": "Pomodoro e basilico, Vongole, Cacio e pepe", "it": "Pomodoro e basilico, vongole, cacio e pepe" }
+  },
+  "7896": {
+    "short": { "de": "Dicke Spaghettoni mit Biss", "it": "Spaghettoni corposi e al dente" },
+    "description": { "de": "Etwas kräftiger als klassische Spaghetti — ideal für Saucen mit Körper. Aus biologischem Cappelli-Hartweizen, bronzegezogen.", "it": "Più corposi degli spaghetti classici — ideali per sughi strutturati. Da grano duro Cappelli biologico, trafilati al bronzo." },
+    "pairing": { "de": "Carbonara, Amatriciana, Sugo di mare", "it": "Carbonara, amatriciana, sugo di mare" }
+  },
+  "9797": {
+    "short": { "de": "Grosse, geriefte Paccheri aus Cappelli-Weizen", "it": "Paccheri rigati di grano Cappelli" },
+    "description": { "de": "Die grossen Röhren stammen aus der neapolitanischen Tradition. Die Rillen und der Bronzezug halten Ragù und Fischsaucen — ein Klassiker für die Gastronomie.", "it": "I grandi tubi vengono dalla tradizione napoletana. Le righe e la trafilatura al bronzo trattengono ragù e sughi di pesce — un classico per la ristorazione." },
+    "pairing": { "de": "Ragù napoletano, Pilzsauce, Fisch", "it": "Ragù napoletano, funghi, pesce" }
+  },
+  "10074": {
+    "short": { "de": "Gemischte Pasta für Suppen und Eintöpfe", "it": "Pasta mista per minestre e zuppe" },
+    "description": { "de": "Die traditionelle «pasta mista» vereint verschiedene Formate — perfekt für Pasta e fagioli, Minestrone oder Pasta e patate.", "it": "La tradizionale pasta mista unisce vari formati — perfetta per pasta e fagioli, minestrone o pasta e patate." },
+    "pairing": { "de": "Pasta e fagioli, Minestrone", "it": "Pasta e fagioli, minestrone" }
+  },
+  "7737": {
+    "short": { "de": "Spaghetti aus Dinkel (Farro), nussig", "it": "Spaghetti di farro, dal gusto di nocciola" },
+    "description": { "de": "Farro gibt der Pasta eine nussige Note und eine warme Farbe. Bio, bronzegezogen — schön zu Gemüse und leichten Saucen.", "it": "Il farro dona alla pasta una nota di nocciola e un colore caldo. Bio, trafilata al bronzo — ottima con verdure e sughi leggeri." },
+    "pairing": { "de": "Zucchini, Pesto, Kirschtomaten", "it": "Zucchine, pesto, pomodorini" }
+  },
+  "10075": {
+    "short": { "de": "Kleine Rigatoni aus Farro", "it": "Rigatini di farro" },
+    "description": { "de": "Kurze, geriefte Röhrennudeln aus biologischem Farro. Halten stückige Saucen und eignen sich auch für Pastasalate.", "it": "Pasta corta rigata di farro biologico. Trattiene i sughi a pezzi ed è adatta anche alle insalate di pasta." },
+    "pairing": { "de": "Gemüseragù, Salsiccia, Pastasalat", "it": "Ragù di verdure, salsiccia, insalata di pasta" }
+  },
+  "7738": {
+    "short": { "de": "Penne rigate aus Farro", "it": "Penne rigate di farro" },
+    "description": { "de": "Der Klassiker in der Farro-Version: aromatisch, bissfest und aus kontrolliert biologischem Anbau.", "it": "Il classico nella versione al farro: aromatico, al dente e da agricoltura biologica." },
+    "pairing": { "de": "Arrabbiata, Tomate-Ricotta", "it": "Arrabbiata, pomodoro e ricotta" }
+  },
+  "8044": {
+    "short": { "de": "Ditalini aus Farro für Suppen", "it": "Ditalini di farro per minestre" },
+    "description": { "de": "Kleine Röhrchen, die in Brühe und Suppen ihren Biss behalten. Bio-Farro, bronzegezogen.", "it": "Piccoli tubetti che restano al dente in brodi e minestre. Farro bio, trafilati al bronzo." },
+    "pairing": { "de": "Pasta e ceci, Gemüsesuppe", "it": "Pasta e ceci, minestra di verdure" }
+  },
+  "10960": {
+    "short": { "de": "Olivenöl mit Peperoncino", "it": "Olio EVO al peperoncino" },
+    "description": { "de": "Natives Olivenöl extra mit scharfem Peperoncino aromatisiert — ein paar Tropfen genügen für Pizza, Pasta und Grilladen.", "it": "Olio extravergine aromatizzato al peperoncino piccante — bastano poche gocce su pizza, pasta e grigliate." },
+    "pairing": { "de": "Pizza, Aglio e olio, Grillgemüse", "it": "Pizza, aglio e olio, verdure grigliate" }
+  },
+  "8426": {
+    "short": { "de": "Apulisches Olivenöl mit geschützter Herkunft", "it": "Olio pugliese a denominazione protetta" },
+    "description": { "de": "Ein DOP-Öl aus Apulien, der grössten Olivenregion Italiens. Grüne Frucht, frische Kräuter und eine angenehme Schärfe im Abgang.", "it": "Un olio DOP dalla Puglia, la più grande regione olivicola d'Italia. Fruttato verde, erbe fresche e una piacevole nota piccante nel finale." },
+    "pairing": { "de": "Bruschetta, Burrata, Fisch", "it": "Bruschetta, burrata, pesce" }
+  },
+  "10476": {
+    "short": { "de": "Bio-DOP-Öl aus Apulien", "it": "Olio DOP biologico pugliese" },
+    "description": { "de": "Aus biologisch bewirtschafteten Hainen: harmonisch, mit Noten von Artischocke, Mandel und frischem Gras.", "it": "Da oliveti biologici: armonico, con note di carciofo, mandorla ed erba fresca." },
+    "pairing": { "de": "Salate, Hülsenfrüchte, Carpaccio", "it": "Insalate, legumi, carpaccio" }
+  },
+  "10474": {
+    "short": { "de": "Bio-Olivenöl für die tägliche Küche", "it": "Olio biologico per la cucina di ogni giorno" },
+    "description": { "de": "Ein ausgewogenes Bio-Olivenöl extra vergine — mild-fruchtig und vielseitig, roh wie zum Kochen.", "it": "Un extravergine biologico equilibrato — fruttato delicato e versatile, a crudo come in cottura." },
+    "pairing": { "de": "Gemüse, Pasta, Fisch", "it": "Verdure, pasta, pesce" }
+  },
+  "8466": {
+    "short": { "de": "Display mit 18 aromatisierten Ölen", "it": "Espositore con 18 condimenti" },
+    "description": { "de": "Verkaufsfertiges Display mit aromatisierten Olivenöl-Würzen in 10-cl-Flaschen — ideal für Feinkosttheke und Kasse.", "it": "Espositore pronto con condimenti a base di olio EVO in bottiglie da 10 cl — ideale per banco gastronomia e cassa." },
+    "pairing": { "de": "Für den Verkauf im Laden", "it": "Per la vendita in negozio" }
+  },
+  "9930": {
+    "short": { "de": "Sizilianisches Olivenöl im Kanister", "it": "Olio siciliano in latta" },
+    "description": { "de": "Natives Olivenöl extra aus Sizilien in der praktischen Dose — für Küchen mit grösserem Bedarf. Fruchtig, mit Noten von Tomate und Kräutern.", "it": "Olio extravergine siciliano in pratica latta — per cucine con fabbisogno maggiore. Fruttato, con note di pomodoro ed erbe." },
+    "pairing": { "de": "Küche, Grilladen, Salate", "it": "Cucina, grigliate, insalate" }
+  },
+  "11064": {
+    "short": { "de": "Natives Olivenöl extra aus Sizilien", "it": "Olio extravergine siciliano" },
+    "description": { "de": "Ein ausdrucksstarkes Öl aus dem Westen Siziliens: grüne Tomate, Artischocke und ein frischer, leicht bitterer Abgang.", "it": "Un olio espressivo della Sicilia occidentale: pomodoro verde, carciofo e un finale fresco e leggermente amaro." },
+    "pairing": { "de": "Caponata, Fisch, Bruschetta", "it": "Caponata, pesce, bruschetta" }
+  },
+  "10494": {
+    "short": { "de": "Drei kalabrische Öle zum Vergleichen", "it": "Tre oli calabresi da confrontare" },
+    "description": { "de": "Eine Auswahl von drei Olivenölen aus Kalabrien — schön als Geschenk oder für eine Degustation am Tisch.", "it": "Una selezione di tre oli calabresi — bella come regalo o per una degustazione a tavola." },
+    "pairing": { "de": "Brot, Gemüse, Geschenk", "it": "Pane, verdure, regalo" }
+  },
+  "9350": {
+    "short": { "de": "Ganze Coppa, langsam gereift", "it": "Coppa intera, stagionata lentamente" },
+    "description": { "de": "Coppa wird aus dem Schweinenacken gewonnen, gewürzt und über Monate gereift. Marmoriert, zart und aromatisch — für den Aufschnitt an der Theke.", "it": "La coppa si ricava dal collo del maiale, viene speziata e stagionata per mesi. Marezzata, tenera e aromatica — da affettare al banco." },
+    "pairing": { "de": "Tagliere, Focaccia, Lambrusco", "it": "Tagliere, focaccia, Lambrusco" }
+  },
+  "9351": {
+    "short": { "de": "Halbe Coppa, vakuumiert", "it": "Mezza coppa sottovuoto" },
+    "description": { "de": "Die halbe Coppa im Vakuum — praktisch für kleinere Betriebe und lange haltbar.", "it": "La mezza coppa sottovuoto — pratica per locali più piccoli e a lunga conservazione." },
+    "pairing": { "de": "Antipasti, Panini", "it": "Antipasti, panini" }
+  },
+  "10275": {
+    "short": { "de": "Gewürzter, gereifter Speck (Lardo)", "it": "Lardo stagionato alle erbe" },
+    "description": { "de": "Lardo wird mit Salz, Kräutern und Gewürzen gereift. Hauchdünn auf warmem Brot schmilzt er und entfaltet sein Aroma.", "it": "Il lardo matura con sale, erbe e spezie. Tagliato sottilissimo su pane caldo si scioglie e sprigiona il suo aroma." },
+    "pairing": { "de": "Warme Crostini, Kastanien, Honig", "it": "Crostini caldi, castagne, miele" }
+  },
+  "9659": {
+    "short": { "de": "Salami mit Wildschwein", "it": "Salame al cinghiale" },
+    "description": { "de": "Eine kleine Salami mit Wildschweinfleisch — würzig, leicht wild im Geschmack und ideal für den Aperitivo.", "it": "Un piccolo salame con carne di cinghiale — saporito, dal gusto leggermente selvatico, ideale per l'aperitivo." },
+    "pairing": { "de": "Rotwein, Pecorino, Oliven", "it": "Vino rosso, pecorino, olive" }
+  },
+  "8905": {
+    "short": { "de": "Luftgetrocknete Wurstschnecke mit Peperoncino", "it": "Salsiccia arrotolata piccante" },
+    "description": { "de": "Die gerollte Salsiccia wird luftgetrocknet und mit Peperoncino gewürzt — pikant und aromatisch.", "it": "La salsiccia arrotolata viene stagionata all'aria e insaporita con peperoncino — piccante e aromatica." },
+    "pairing": { "de": "Aperitivo, Brot, kräftiger Rotwein", "it": "Aperitivo, pane, vino rosso deciso" }
+  },
+  "8906": {
+    "short": { "de": "Luftgetrocknete Wurstschnecke mit Fenchel", "it": "Salsiccia arrotolata al finocchio" },
+    "description": { "de": "Wilder Fenchel gibt der gerollten Salsiccia ihr typisch toskanisch-umbrisches Aroma.", "it": "Il finocchietto selvatico dona alla salsiccia arrotolata il suo tipico aroma tosco-umbro." },
+    "pairing": { "de": "Tagliere, Focaccia", "it": "Tagliere, focaccia" }
+  },
+  "8907": {
+    "short": { "de": "Kleine Hartwurst mit Peperoncino", "it": "Salsicciotto piccante" },
+    "description": { "de": "Kompakte, gereifte Wurst mit Peperoncino — in Scheiben zum Aperitivo oder in Würfeln für Pasta.", "it": "Salsiccia stagionata compatta con peperoncino — a fette per l'aperitivo o a dadini nella pasta." },
+    "pairing": { "de": "Aperitivo, Pasta, Pizza", "it": "Aperitivo, pasta, pizza" }
+  },
+  "8908": {
+    "short": { "de": "Kleine Hartwurst mit Fenchel", "it": "Salsicciotto al finocchio" },
+    "description": { "de": "Gereifte Wurst mit Fenchelsamen — mild, aromatisch und vielseitig.", "it": "Salsiccia stagionata con semi di finocchio — delicata, aromatica e versatile." },
+    "pairing": { "de": "Antipasti, Panini", "it": "Antipasti, panini" }
+  },
+  "10263": {
+    "short": { "de": "Büffelmozzarella in kleinen Kugeln", "it": "Bocconcini di mozzarella di bufala" },
+    "description": { "de": "Aus Büffelmilch aus Kampanien: zart, milchig und mit dem typisch leicht säuerlichen Geschmack. Kühl lagern, vor dem Servieren temperieren.", "it": "Da latte di bufala campana: tenera, lattica e con la tipica nota leggermente acidula. Conservare al fresco, servire a temperatura ambiente." },
+    "pairing": { "de": "Tomaten, Basilikum, Olivenöl", "it": "Pomodoro, basilico, olio EVO" }
+  },
+  "10264": {
+    "short": { "de": "Büffelmozzarella 125 g", "it": "Mozzarella di bufala 125 g" },
+    "description": { "de": "Die klassische Büffelmozzarella in der Portionsgrösse — für Caprese, Pizza oder einfach mit gutem Olivenöl.", "it": "La classica mozzarella di bufala in porzione singola — per caprese, pizza o semplicemente con un buon olio." },
+    "pairing": { "de": "Caprese, Pizza, Prosciutto", "it": "Caprese, pizza, prosciutto" }
+  },
+  "10265": {
+    "short": { "de": "Büffelmozzarella 250 g", "it": "Mozzarella di bufala 250 g" },
+    "description": { "de": "Die grosse Kugel zum Teilen — in der Mitte cremig, aussen elastisch.", "it": "La grande treccia da condividere — cremosa al centro, elastica fuori." },
+    "pairing": { "de": "Antipasti-Platte, Tomaten", "it": "Tagliere di antipasti, pomodori" }
+  },
+  "10266": {
+    "short": { "de": "Gezupfte Büffelmozzarella in Rahm", "it": "Stracciata di bufala" },
+    "description": { "de": "Feine Mozzarella-Fäden in Rahm — besonders cremig. Auf Pizza nach dem Backen, zu Tomaten oder Crudo.", "it": "Sfilacci di mozzarella in panna — particolarmente cremosi. Sulla pizza dopo la cottura, con pomodori o crudo." },
+    "pairing": { "de": "Pizza, Rohschinken, Grillgemüse", "it": "Pizza, crudo, verdure grigliate" }
+  },
+  "10273": {
+    "short": { "de": "Kirschgrosse Büffelmozzarella", "it": "Ciliegine di bufala" },
+    "description": { "de": "Kleine Kugeln à 20 g — praktisch für Salate, Spiesse und Fingerfood.", "it": "Piccole sfere da 20 g — pratiche per insalate, spiedini e finger food." },
+    "pairing": { "de": "Salate, Spiesse, Aperitivo", "it": "Insalate, spiedini, aperitivo" }
+  },
+  "10274": {
+    "short": { "de": "Geflochtene Büffelmozzarella", "it": "Treccia di mozzarella di bufala" },
+    "description": { "de": "Von Hand geflochten — ein schöner Mittelpunkt für die Antipasti-Platte.", "it": "Intrecciata a mano — un bel centro per il tagliere di antipasti." },
+    "pairing": { "de": "Antipasti, Tomaten, Basilikum", "it": "Antipasti, pomodori, basilico" }
+  },
+  "10281": {
+    "short": { "de": "Joghurt aus Büffelmilch", "it": "Yogurt di latte di bufala" },
+    "description": { "de": "Cremig und mild, mit dem vollen Geschmack der Büffelmilch. Pur, mit Honig oder in Desserts.", "it": "Cremoso e delicato, con il gusto pieno del latte di bufala. Al naturale, con miele o nei dessert." },
+    "pairing": { "de": "Honig, Früchte, Granola", "it": "Miele, frutta, granola" }
+  },
+  "10282": {
+    "short": { "de": "Ricotta aus Büffelmilch", "it": "Ricotta di bufala" },
+    "description": { "de": "Feine, leicht süssliche Ricotta — für Füllungen, Pasta oder Desserts wie Cannoli und Pastiera.", "it": "Ricotta fine e leggermente dolce — per ripieni, pasta o dolci come cannoli e pastiera." },
+    "pairing": { "de": "Ravioli, Cannoli, Honig", "it": "Ravioli, cannoli, miele" }
+  },
+  "10789": {
+    "short": { "de": "Marinierte Sardellenfilets", "it": "Filetti di alici marinate" },
+    "description": { "de": "Sardellen in Essig und Öl mariniert — frisch, zart und leicht säuerlich. Ein Klassiker der sizilianischen Antipasti.", "it": "Alici marinate in aceto e olio — fresche, tenere e leggermente acidule. Un classico degli antipasti siciliani." },
+    "pairing": { "de": "Crostini, Weisswein, Zitronen", "it": "Crostini, vino bianco, limone" }
+  },
+  "11116": {
+    "short": { "de": "Im Ofen getrocknete schwarze Oliven", "it": "Olive nere secche al forno" },
+    "description": { "de": "Die Oliven werden im Ofen getrocknet und werden dadurch runzlig, konzentriert und leicht bitter-würzig.", "it": "Le olive vengono essiccate al forno: diventano rugose, concentrate e leggermente amarognole." },
+    "pairing": { "de": "Aperitivo, Brot, Pasta", "it": "Aperitivo, pane, pasta" }
+  },
+  "10241": {
+    "short": { "de": "Speck-Röllchen mit Käsefüllung", "it": "Involtini di speck al formaggio" },
+    "description": { "de": "Speck umhüllt eine cremige Käsefüllung — ein schnelles Antipasto für Theke und Buffet.", "it": "Lo speck avvolge un ripieno cremoso al formaggio — un antipasto veloce per banco e buffet." },
+    "pairing": { "de": "Aperitivo, Buffet", "it": "Aperitivo, buffet" }
+  },
+  "10246": {
+    "short": { "de": "Gefüllte Peperoni mit Käse", "it": "Peperoni ripieni al formaggio" },
+    "description": { "de": "Süss-scharfe Peperoni mit einer milden Käsefüllung, eingelegt in Öl.", "it": "Peperoni dolci-piccanti con un ripieno delicato al formaggio, sott'olio." },
+    "pairing": { "de": "Antipasti, Aperitivo", "it": "Antipasti, aperitivo" }
+  },
+  "10247": {
+    "short": { "de": "Auberginen-Röllchen", "it": "Involtini di melanzane" },
+    "description": { "de": "Gegrillte Auberginen, gerollt und gefüllt — typisch sizilianisch und sofort servierbereit.", "it": "Melanzane grigliate, arrotolate e ripiene — tipicamente siciliane e pronte da servire." },
+    "pairing": { "de": "Antipasti, Weisswein", "it": "Antipasti, vino bianco" }
+  },
+  "10367": {
+    "short": { "de": "Peperoni-Röllchen", "it": "Involtini di peperoni" },
+    "description": { "de": "Gegrillte Peperonistreifen, gerollt und gefüllt — farbig auf jeder Antipasti-Platte.", "it": "Falde di peperone grigliate, arrotolate e ripiene — colorate su ogni piatto di antipasti." },
+    "pairing": { "de": "Antipasti, Buffet", "it": "Antipasti, buffet" }
+  },
+  "10368": {
+    "short": { "de": "Grosse Peperoni mit Thunfischfüllung", "it": "Peperoni ripieni al tonno" },
+    "description": { "de": "Runde Peperoni, gefüllt mit Thunfisch und Kapern — ein Klassiker aus dem Süden.", "it": "Peperoni tondi ripieni di tonno e capperi — un classico del Sud." },
+    "pairing": { "de": "Antipasti, Rosé", "it": "Antipasti, rosato" }
+  },
+  "10745": {
+    "short": { "de": "Gegrillte Borettane-Zwiebeln", "it": "Cipolle borettane grigliate" },
+    "description": { "de": "Die flachen, süsslichen Borettane-Zwiebeln werden gegrillt und in Öl eingelegt.", "it": "Le cipolle borettane, piatte e dolci, vengono grigliate e conservate sott'olio." },
+    "pairing": { "de": "Bollito, Grilladen, Antipasti", "it": "Bollito, grigliate, antipasti" }
+  },
+  "8450": {
+    "short": { "de": "Gin mit Zitrusnoten", "it": "Gin agrumato" },
+    "description": { "de": "Ein Gin, bei dem Zitrusfrüchte im Vordergrund stehen — frisch und hell, ideal für Gin Tonic mit Zitronenzeste.", "it": "Un gin in cui dominano gli agrumi — fresco e luminoso, ideale per il gin tonic con scorza di limone." },
+    "pairing": { "de": "Gin Tonic, Zitrone", "it": "Gin tonic, limone" }
+  },
+  "8451": {
+    "short": { "de": "Gin mit floralen Noten", "it": "Gin floreale" },
+    "description": { "de": "Blüten bestimmen das Profil dieses Gins — weich und duftig, schön mit Tonic und einer Gurkenscheibe.", "it": "I fiori definiscono il profilo di questo gin — morbido e profumato, ottimo con tonica e una fetta di cetriolo." },
+    "pairing": { "de": "Gin Tonic, Gurke", "it": "Gin tonic, cetriolo" }
+  },
+  "8452": {
+    "short": { "de": "Gin mit würzigen Noten", "it": "Gin speziato" },
+    "description": { "de": "Gewürze geben diesem Gin Wärme und Tiefe — auch pur oder im Negroni.", "it": "Le spezie danno calore e profondità a questo gin — anche liscio o nel Negroni." },
+    "pairing": { "de": "Negroni, Martini", "it": "Negroni, Martini" }
+  },
+  "11112": {
+    "short": { "de": "London Dry Gin aus Kalabrien", "it": "Dry gin calabrese" },
+    "description": { "de": "Ein trockener Gin aus Kalabrien mit mediterranen Botanicals — klar und vielseitig für die Bar.", "it": "Un gin secco calabrese con botaniche mediterranee — limpido e versatile per il bar." },
+    "pairing": { "de": "Gin Tonic, Martini", "it": "Gin tonic, Martini" }
+  },
+  "9833": {
+    "short": { "de": "Italienischer Gin mit kräftigem Profil", "it": "Gin italiano dal profilo deciso" },
+    "description": { "de": "Ein Gin mit markantem Wacholder und Tiefe — eigenständig im Glas und auffällig in der Flasche.", "it": "Un gin con ginepro marcato e profondità — personale nel bicchiere e d'impatto in bottiglia." },
+    "pairing": { "de": "Gin Tonic, Negroni", "it": "Gin tonic, Negroni" }
+  },
+  "9439": {
+    "short": { "de": "Kräuterlikör von der Insel Capri", "it": "Amaro dell'isola di Capri" },
+    "description": { "de": "Ein Amaro mit Kräutern und Zitrus — bittersüss, als Digestif nach dem Essen oder auf Eis.", "it": "Un amaro con erbe e agrumi — dolceamaro, come digestivo dopo il pasto o con ghiaccio." },
+    "pairing": { "de": "Digestif, auf Eis", "it": "Digestivo, con ghiaccio" }
+  },
+  "10571": {
+    "short": { "de": "Gin aus dem Piemont", "it": "Gin piemontese" },
+    "description": { "de": "Ein Gin aus dem Piemont mit weicher Struktur — ausgewogen zwischen Wacholder, Zitrus und Kräutern.", "it": "Un gin piemontese dalla struttura morbida — equilibrato tra ginepro, agrumi ed erbe." },
+    "pairing": { "de": "Gin Tonic, Gin Fizz", "it": "Gin tonic, gin fizz" }
+  },
+  "8540": {
+    "short": { "de": "Italienischer Wodka", "it": "Vodka italiana" },
+    "description": { "de": "Ein klarer, weicher Wodka aus Italien — pur gekühlt oder als Basis für Cocktails.", "it": "Una vodka limpida e morbida italiana — liscia ghiacciata o come base per cocktail." },
+    "pairing": { "de": "Cocktails, pur gekühlt", "it": "Cocktail, liscia ghiacciata" }
+  }
+}

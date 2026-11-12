@@ -74,6 +74,22 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 - Custom extensions that import `defineExtension` crashed the server at start (circular import).
 
 ### Changed
+- **ERP locks per record.**
+  - Only products, producers and customers that really come from vinX are locked: products with an ERP article id, producers with an ERP key, customers with an address number. Only the vinX-owned fields are locked.
+  - Shop-only records are fully editable and can be deleted. Products: single and bulk delete; order lines keep their copy of name and article number. Producers: when unused. Customers: without orders.
+  - Bulk actions skip linked products for vinX-owned fields and say so.
+- **Calmer, more coherent design.**
+  - Status colours are earthy, contrast-checked tones derived from the brand (sage, ochre, rust) instead of a strong green.
+  - Stock indicators are neutral; colour only for "few" and "sold out". "Added" uses the text colour instead of green.
+  - Promotion tags are outlined instead of solid.
+  - The order-list count sits as a small badge on the icon.
+  - Uppercase labels are tightened on phones. Eyebrows always use the sans font.
+- **Demo content rewritten.**
+  - Own wording instead of the reference site.
+  - Descriptions, short texts and pairings for all 56 products in German and Italian.
+  - Home, trade and story texts without unverifiable figures.
+  - Two shop-only articles show the difference to vinX-synced ones.
+- Product page: the short text is shown under the name.
 - **ERP field ownership is enforced.** Fields mastered by vinX are locked in the product form and are not offered as bulk actions.
 - The vinX article sync matches producers by their ERP key. Renaming a producer in the admin no longer creates a duplicate.
 - Demo content is fully translated into Italian. The German home page now has a German headline, so switching the language is visible at once.

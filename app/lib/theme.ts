@@ -39,15 +39,25 @@ export type Palette = {
 };
 const ART = { artOil: "#7d7a2e", artGlass: "#c9c48f", artSpirit: "#b8c0c2", artDairy: "#f1ede6" };
 
-/** Light palette = the brand colours from the admin + fixed, accessible status colours. */
+/**
+ * Status colours are quiet, earthy tones (sage, ochre, rust) pulled slightly towards the brand's text colour,
+ * so they sit with any palette instead of shouting — and are contrast-checked (≥ 4.5 : 1 on cards).
+ */
+const STATUS = { success: "#5b7652", warning: "#9b7434", danger: "#a3412f" };
+const statusLight = (fg: string, card: string) => {
+  const t = (hex: string) => ensure(mix(hex, fg, 0.12), card, 4.5);
+  const success = t(STATUS.success), warning = t(STATUS.warning), danger = t(STATUS.danger);
+  return { success, successSoft: mix(card, success, 0.075), warning, warningSoft: mix(card, warning, 0.09), danger, dangerSoft: mix(card, danger, 0.07) };
+};
+
+/** Light palette = the brand colours from the admin + harmonised, accessible status colours. */
 export function lightPalette(brand: Brand): Palette {
   const c = brand.colors;
   return {
     bg: c.background, fg: c.foreground, card: c.card, primary: c.primary, onPrimary: c.primaryForeground, muted: c.muted, mutedFg: c.mutedForeground,
     accent: c.accent, border: c.border, inverse: c.inverse, onInverse: c.inverseForeground,
     media: c.card, scrim: "#000000", shadow: "#000000",
-    success: "#2f6b45", successSoft: mix(c.card, "#2f6b45", 0.1), warning: "#8a5a12", warningSoft: mix(c.card, "#b9822b", 0.13),
-    danger: "#a12a2a", dangerSoft: mix(c.card, "#a12a2a", 0.09), onDanger: "#ffffff",
+    ...statusLight(c.foreground, c.card), onDanger: "#ffffff",
     ...ART,
   };
 }
@@ -72,8 +82,8 @@ export function darkPalette(brand: Brand): Palette {
     inverse, onInverse: o.inverseForeground ?? readableOn(inverse, c.inverseForeground),
     media: c.card, // packshots keep their light stage so white-background photos blend seamlessly
     scrim: "#000000", shadow: "#000000",
-    success: "#7cc196", successSoft: mix(card, "#7cc196", 0.14), warning: "#e0b25c", warningSoft: mix(card, "#e0b25c", 0.14),
-    danger: "#f08a8a", dangerSoft: mix(card, "#f08a8a", 0.13), onDanger: "#1a0d0d",
+    success: ensure("#a3b896", card, 4.5), successSoft: mix(card, "#a3b896", 0.12), warning: ensure("#d6b16e", card, 4.5), warningSoft: mix(card, "#d6b16e", 0.12),
+    danger: ensure("#e09a88", card, 4.5), dangerSoft: mix(card, "#e09a88", 0.12), onDanger: "#1a0d0d",
     ...ART, // packshots sit on the light media stage in both modes
   };
 }

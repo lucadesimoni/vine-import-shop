@@ -59,8 +59,8 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
           {L(b.data.text) && <p className="text-lead animate-fade-up max-w-xl text-on-inverse/85 [animation-delay:160ms]">{L(b.data.text)}</p>}
           {(L(b.data.primaryLabel) || L(b.data.secondaryLabel)) && (
             <div className="animate-fade-up flex flex-wrap gap-3 [animation-delay:240ms]">
-              {L(b.data.primaryLabel) && d<string>(b, "primaryHref") && <ButtonLink to={d<string>(b, "primaryHref")} variant="inverse" size="lg">{L(b.data.primaryLabel)} <ArrowRight size={16} /></ButtonLink>}
-              {L(b.data.secondaryLabel) && d<string>(b, "secondaryHref") && <ButtonLink to={d<string>(b, "secondaryHref")} variant="outlineInverse" size="lg">{L(b.data.secondaryLabel)}</ButtonLink>}
+              {L(b.data.primaryLabel) && d<string>(b, "primaryHref") && <ButtonLink to={d<string>(b, "primaryHref")} variant="inverse" size="lg" className="max-sm:h-11 max-sm:px-5">{L(b.data.primaryLabel)} <ArrowRight size={16} /></ButtonLink>}
+              {L(b.data.secondaryLabel) && d<string>(b, "secondaryHref") && <ButtonLink to={d<string>(b, "secondaryHref")} variant="outlineInverse" size="lg" className="max-sm:h-11 max-sm:px-5">{L(b.data.secondaryLabel)}</ButtonLink>}
             </div>
           )}
           {stats.length > 0 && (

@@ -129,12 +129,14 @@ export function Header() {
           <Link to={user ? (user.role === "customer" ? "/account" : "/admin") : "/login"} className={buttonClass({ variant: "ghost", size: "icon" })} aria-label={user ? t("nav.account") : t("nav.login")}>
             <User size={19} strokeWidth={1.5} />
           </Link>
-          <Link to="/order-list" className={buttonClass({ variant: "ghost", size: "sm" }, "relative gap-2 pr-2.5")} aria-label={t("nav.orderList")}>
-            <ShoppingBag size={19} strokeWidth={1.5} />
-            <span className="hidden md:inline">{t("nav.orderList")}</span>
-            {cartCount > 0 && (
-              <span key={cartCount} className="animate-fade-up grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[10px] font-semibold tabular-nums text-on-primary">{cartCount}</span>
-            )}
+          <Link to="/order-list" className={buttonClass({ variant: "ghost", size: "icon" }, "xl:w-auto xl:gap-4 xl:px-3")} aria-label={cartCount ? `${t("nav.orderList")} (${cartCount})` : t("nav.orderList")}>
+            <span className="relative">
+              <ShoppingBag size={19} strokeWidth={1.5} />
+              {cartCount > 0 && (
+                <span key={cartCount} className="absolute -right-2 -top-1.5 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none tracking-normal tabular-nums text-on-primary ring-2 ring-bg">{cartCount > 99 ? "99+" : cartCount}</span>
+              )}
+            </span>
+            <span className="hidden xl:inline">{t("nav.orderList")}</span>
           </Link>
         </div>
       </div>
@@ -311,8 +313,8 @@ export function PriceTag({ price, size = "md", className }: { price: PriceInfo |
 }
 
 const STOCK_STYLE: Record<StockLevel, { dots: number; tone: string; key: MessageKey }> = {
-  plenty: { dots: 3, tone: "bg-success", key: "stock.plenty" },
-  available: { dots: 2, tone: "bg-success", key: "stock.available" },
+  plenty: { dots: 3, tone: "bg-fg/55", key: "stock.plenty" },
+  available: { dots: 2, tone: "bg-fg/55", key: "stock.available" },
   few: { dots: 1, tone: "bg-warning", key: "stock.few" },
   out: { dots: 0, tone: "bg-danger", key: "stock.out" },
 };
@@ -323,7 +325,7 @@ export function StockLabel({ level, qty }: { level: StockLevel; qty?: number | n
   return (
     <span className="inline-flex items-center gap-2 whitespace-nowrap text-[12px] text-muted-fg">
       <span className="flex gap-0.5" aria-hidden>
-        {[0, 1, 2].map((i) => <span key={i} className={cn("h-1.5 w-3 rounded-full", i < s.dots ? s.tone : "bg-border")} />)}
+        {[0, 1, 2].map((i) => <span key={i} className={cn("h-1 w-2.5 rounded-full", i < s.dots ? s.tone : "bg-border")} />)}
       </span>
       {qty != null && level !== "out" ? t("stock.exact", { n: qty }) : t(s.key)}
     </span>
@@ -342,7 +344,7 @@ export function ProductCard({ product, priority = false }: { product: Card; prio
           <ProductImage product={product} className={priority ? "" : undefined} />
         </div>
         <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
-          {product.promo && <Badge tone="primary">{t("shop.promo")}</Badge>}
+          {product.promo && <Badge tone="outline">{t("shop.promo")}</Badge>}
           {product.isNew && <Badge tone="inverse">{t("shop.new")}</Badge>}
           {product.organic && <Badge tone="success"><Leaf size={10} /> {t("shop.organic")}</Badge>}
         </div>
@@ -399,11 +401,11 @@ export function AddToList({ variantId, packSize = 1, compact = false, iconOnly =
       <input type="hidden" name="variantId" value={variantId} />
       <Stepper name="qty" defaultValue={packSize > 1 && !compact ? packSize : 1} step={1} size={compact ? "sm" : "md"} label={t("product.qty")} />
       {iconOnly ? (
-        <Button type="submit" size="iconSm" disabled={busy || disabled} aria-label={t("product.add")} title={t("product.add")} className={cn(done && "bg-success!")}>
+        <Button type="submit" size="iconSm" disabled={busy || disabled} aria-label={t("product.add")} title={t("product.add")} className={cn(done && "bg-fg! text-bg!")}>
           {done ? <Check size={16} /> : <ShoppingBag size={16} strokeWidth={1.6} />}
         </Button>
       ) : (
-      <Button type="submit" size={compact ? "sm" : "md"} disabled={busy || disabled} className={cn(compact ? "min-w-0 flex-1 sm:flex-none" : "min-w-[13rem]", done && "bg-success!")}>
+      <Button type="submit" size={compact ? "sm" : "md"} disabled={busy || disabled} className={cn(compact ? "min-w-0 flex-1 sm:flex-none" : "min-w-[13rem]", done && "bg-fg! text-bg!")}>
         {done ? <><Check size={16} /> {t("product.added")}</> : <>{!compact && <ShoppingBag size={16} strokeWidth={1.6} />} {t("product.add")}</>}
       </Button>
       )}

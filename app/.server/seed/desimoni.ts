@@ -1,11 +1,16 @@
 import { eq } from "drizzle-orm";
 import { slugify } from "~/lib/slug";
+import type { Localized } from "~/lib/localized";
 import { parseSettings } from "~/lib/settings";
 import { homeBlocks } from "../blocks";
 import { hashPassword } from "../auth";
 import type { DB } from "../db";
 import { schema } from "../db";
 import products from "./desimoni-products.json";
+import texts from "./desimoni-texts.json";
+
+/** Demo product texts (short / description / pairing, DE + IT), keyed by the first SKU. */
+const TEXTS = texts as unknown as Record<string, { short: Localized; description: Localized; pairing: Localized }>;
 
 /**
  * DEMO PROFILE — De Simoni AG, Kriens (Importatore dal 1917).
@@ -75,25 +80,26 @@ export async function seedDeSimoniDemo(db: DB) {
   const home = parseSettings("home", {
     hero: {
       eyebrow: { de: "Importeur · Seit 1917", it: "Importatore · Dal 1917" },
-      title: { de: "Der Geschmack Italiens,\nin der Schweiz.", it: "Il gusto italiano,\nin Svizzera." },
+      title: { de: "Italien, direkt\nvom Erzeuger.", it: "L'Italia, direttamente\ndal produttore." },
       text: {
-        de: "Seit über einem Jahrhundert wählen wir italienische Spezialitäten aus und liefern sie an alle, die Qualität, Authentizität und Leidenschaft suchen.",
-        it: "Da oltre un secolo selezioniamo specialità italiane e le consegniamo a chi cerca qualità, autenticità e passione.",
+        de: "Weine, Öl, Pasta, Käse und Salumi von Familienbetrieben aus ganz Italien — für Restaurants, Hotels und alle, die zu Hause gut essen wollen. Aus Kriens, seit 1917.",
+        it: "Vini, olio, pasta, formaggi e salumi da aziende di famiglia di tutta Italia — per ristoranti, hotel e per chi a casa vuole mangiare bene. Da Kriens, dal 1917.",
       },
       imageUrl: `${D}/home-nuova.jpg`,
-      primary: { label: { de: "B2B-Konto eröffnen", it: "Aprire un conto B2B" }, href: "/trade#apply" },
-      secondary: { label: { de: "Für Gastronomen", it: "Per la ristorazione" }, href: "/trade" },
+      primary: { label: { de: "Sortiment entdecken", it: "Scoprire l'assortimento" }, href: "/shop" },
+      secondary: { label: { de: "Für die Gastronomie", it: "Per la ristorazione" }, href: "/trade" },
     },
     stats: [
-      { value: String(new Date().getFullYear() - 1917), label: { de: "Jahre Leidenschaft", it: "Anni di passione" } },
-      { value: "200+", label: { de: "Ausgewählte Etiketten", it: "Etichette selezionate" } },
+      { value: String(new Date().getFullYear() - 1917), label: { de: "Jahre in Kriens", it: "Anni a Kriens" } },
+      { value: "18", label: { de: "Produzenten", it: "Produttori" } },
+      { value: "9", label: { de: "Regionen Italiens", it: "Regioni d'Italia" } },
     ],
-    categories: { title: { de: "Entdecken Sie unser Sortiment", it: "Scoprite il nostro assortimento" }, show: true },
-    promo: { show: true, eyebrow: { de: "Exklusiv für die Gastronomie", it: "Esclusivo per la ristorazione" }, title: { de: "Aktionen im Monat", it: "Promozioni del mese" }, text: { de: "Exklusive Angebote warten auf Sie!", it: "Offerte esclusive vi aspettano!" } },
+    categories: { title: { de: "Was auf den Tisch kommt", it: "Cosa arriva in tavola" }, show: true },
+    promo: { show: true, eyebrow: { de: "Diesen Monat", it: "Questo mese" }, title: { de: "Aktionen", it: "Promozioni" }, text: { de: "Ausgewählte Weine und Spezialitäten zu besonderen Preisen — solange Vorrat.", it: "Vini e specialità selezionati a prezzi speciali — fino a esaurimento scorte." } },
     spotlight: {
       show: true,
       productSlug: "", // filled below
-      eyebrow: { de: "Neu bei De Simoni", it: "Novità da De Simoni" },
+      eyebrow: { de: "Neu im Sortiment", it: "Novità in assortimento" },
       bullets: [
         { de: "Nur Hartweizengriess und Wasser", it: "Solo semola di grano duro e acqua" },
         { de: "Bronzegezogen: raue Oberfläche, die die Sauce hält", it: "Trafilata al bronzo: superficie ruvida che trattiene il sugo" },
@@ -104,22 +110,22 @@ export async function seedDeSimoniDemo(db: DB) {
     story: {
       show: true,
       eyebrow: { de: "— Seit 1917", it: "— Dal 1917" },
-      title: { de: "Vier Generationen.\nEine Mission.", it: "Quattro generazioni.\nUna missione." },
+      title: { de: "Eine Familie,\nein Handwerk.", it: "Una famiglia,\nun mestiere." },
       text: {
-        de: "1917 in Kriens gegründet, importiert De Simoni heute in vierter Generation italienische Köstlichkeiten in die Schweiz. Was als kleines Familiengeschäft begann, ist heute eine der ältesten Adressen für italienische Weine und Spezialitäten en gros.",
-        it: "Fondata a Kriens nel 1917, De Simoni importa oggi, alla quarta generazione, prelibatezze italiane in Svizzera. Quella che era una piccola bottega di famiglia è oggi uno degli indirizzi più antichi per vini e specialità italiane all'ingrosso.",
+        de: "Seit 1917 holen wir aus Kriens das Beste aus Italien in die Schweiz. Wir kennen die Betriebe, mit denen wir arbeiten, probieren jeden Jahrgang selbst und liefern mit eigenen Fahrzeugen — damit in der Küche ankommt, was beim Erzeuger begann.",
+        it: "Dal 1917 portiamo da Kriens il meglio dell'Italia in Svizzera. Conosciamo le aziende con cui lavoriamo, assaggiamo ogni annata e consegniamo con i nostri mezzi — perché in cucina arrivi ciò che è iniziato dal produttore.",
       },
       imageUrl: `${D}/macchine.png`,
       link: { label: { de: "Unsere Geschichte", it: "La nostra storia" }, href: "/story" },
     },
-    brands: { show: true, title: { de: "Einige unserer besten Marken", it: "Alcuni dei nostri migliori marchi" } },
+    brands: { show: true, title: { de: "Mit diesen Betrieben arbeiten wir", it: "Le aziende con cui lavoriamo" } },
     values: {
-      title: { de: "Woran wir glauben", it: "In cosa crediamo" },
+      title: { de: "Worauf Sie sich verlassen können", it: "Su cosa potete contare" },
       items: [
-        { icon: "sprout", title: { de: "Tradition", it: "Tradizione" }, text: { de: "Ausgewählte italienische Produzenten und ihre echten Geschichten.", it: "Produttori italiani selezionati e le loro storie vere." } },
-        { icon: "award", title: { de: "Qualität", it: "Qualità" }, text: { de: "Mit Sorgfalt ausgewählte Produkte — vom Produzenten auf den Tisch.", it: "Prodotti scelti con cura — dal produttore alla tavola." } },
-        { icon: "heart", title: { de: "Leidenschaft", it: "Passione" }, text: { de: "Ein Wissen über die Welt der Lebensmittel, das jeden Tag wächst.", it: "Una conoscenza del mondo alimentare che cresce ogni giorno." } },
-        { icon: "truck", title: { de: "Verlässlichkeit", it: "Affidabilità" }, text: { de: "Lieferung und Service, gemacht für Profis der Gastronomie.", it: "Consegna e servizio pensati per i professionisti." } },
+        { icon: "grape", title: { de: "Direkt vom Erzeuger", it: "Direttamente dal produttore" }, text: { de: "Wir kaufen bei Familienbetrieben, die wir persönlich kennen — ohne Zwischenhandel.", it: "Acquistiamo da aziende di famiglia che conosciamo di persona — senza intermediari." } },
+        { icon: "award", title: { de: "Selbst probiert", it: "Assaggiato da noi" }, text: { de: "Jeder Wein und jedes Produkt wird von uns verkostet, bevor es ins Sortiment kommt.", it: "Ogni vino e ogni prodotto viene degustato da noi prima di entrare in assortimento." } },
+        { icon: "truck", title: { de: "Eigene Lieferung", it: "Consegna propria" }, text: { de: "Gastronomie-Kunden beliefern wir wöchentlich mit eigenen Fahrzeugen, gekühlt.", it: "Ai clienti della ristorazione consegniamo ogni settimana con mezzi propri, refrigerati." } },
+        { icon: "users", title: { de: "Persönliche Beratung", it: "Consulenza personale" }, text: { de: "Ein fester Ansprechpartner kennt Ihre Karte und Ihre Gäste.", it: "Un referente fisso conosce il vostro menu e i vostri ospiti." } },
       ],
     },
   });
@@ -129,16 +135,16 @@ export async function seedDeSimoniDemo(db: DB) {
     eyebrow: { de: "— Für die Gastronomie", it: "— Per la ristorazione" },
     title: { de: "Ihr Partner\nhinter der Karte.", it: "Il vostro partner\ndietro il menu." },
     text: {
-      de: "Über 800 Restaurants, Hotels und Trattorien in der Deutschschweiz arbeiten mit uns. Vom Quartier-Bistro bis zum Fine-Dining-Haus — wir liefern, beraten und teilen unsere Leidenschaft für die italienische Küche.",
-      it: "Oltre 800 ristoranti, hotel e trattorie nella Svizzera tedesca lavorano con noi. Dal bistrò di quartiere al fine dining — consegniamo, consigliamo e condividiamo la nostra passione per la cucina italiana.",
+      de: "Vom Quartier-Bistro bis zum Hotelrestaurant: Wir liefern italienische Weine und Spezialitäten zu Ihren Konditionen, beraten bei der Karte und sind erreichbar, wenn es schnell gehen muss. Bestellt wird im B2B-Portal, per Excel-Liste oder telefonisch.",
+      it: "Dal bistrò di quartiere al ristorante d'hotel: consegniamo vini e specialità italiane alle vostre condizioni, vi consigliamo sulla carta e ci siamo quando serve in fretta. Si ordina nel portale B2B, con una lista Excel o per telefono.",
     },
     servicesTitle: { de: "Was wir für Sie tun.", it: "Cosa facciamo per voi." },
     services: [
       { title: { de: "Persönliche Beratung", it: "Consulenza personale" }, text: { de: "Unser Aussendienst besucht Sie vor Ort, lernt Ihre Karte kennen und schlägt passende Weine und Spezialitäten vor.", it: "Il nostro servizio esterno vi visita sul posto, conosce il vostro menu e propone vini e specialità adatti." } },
       { title: { de: "Direktimport", it: "Importazione diretta" }, text: { de: "Wir importieren ohne Zwischenhändler — direkt aus den Familienbetrieben Italiens. Bessere Preise, klarer Ursprung.", it: "Importiamo senza intermediari — direttamente dalle aziende di famiglia italiane. Prezzi migliori, origine chiara." } },
-      { title: { de: "Wöchentliche Lieferung", it: "Consegna settimanale" }, text: { de: "Frische Wurstwaren, Käse und Bestände — pünktlich in der ganzen Deutschschweiz.", it: "Salumi freschi, formaggi e scorte — puntuali in tutta la Svizzera tedesca." } },
-      { title: { de: "Sommelier-Service", it: "Servizio sommelier" }, text: { de: "Wein-Pairings, Karten-Erstellung und Schulungen für Ihr Service-Team.", it: "Abbinamenti, carte dei vini e formazione per il vostro team di sala." } },
-      { title: { de: "Exklusive Etiketten", it: "Etichette esclusive" }, text: { de: "Über 40 Weine, die Sie nur über uns beziehen können.", it: "Oltre 40 vini disponibili solo da noi." } },
+      { title: { de: "Wöchentliche Lieferung", it: "Consegna settimanale" }, text: { de: "Mit eigener Tour und gekühlt — Frischprodukte, Wein und Trockenware in einer Lieferung.", it: "Con giro proprio e refrigerato — freschi, vino e secco in un'unica consegna." } },
+      { title: { de: "Weinkarte & Schulung", it: "Carta dei vini & formazione" }, text: { de: "Wir stellen mit Ihnen eine Karte zusammen, die zu Küche und Budget passt, und schulen Ihr Service-Team.", it: "Componiamo con voi una carta adatta a cucina e budget e formiamo il vostro team di sala." } },
+      { title: { de: "B2B-Portal", it: "Portale B2B" }, text: { de: "Ihre Preise und Rabatte, Schnellbestellung per Artikelnummer oder Excel, Bestellhistorie und Preisliste als CSV.", it: "I vostri prezzi e sconti, ordine rapido per numero d'articolo o Excel, storico ordini e listino in CSV." } },
       { title: { de: "Lager & Logistik", it: "Magazzino e logistica" }, text: { de: "Klimatisiertes Weinlager und sauber organisierte Logistik aus Kriens.", it: "Cantina climatizzata e logistica ben organizzata da Kriens." } },
     ],
     stepsTitle: { de: "So funktioniert's.", it: "Come funziona." },
@@ -158,12 +164,10 @@ export async function seedDeSimoniDemo(db: DB) {
     intro: { de: "Was 1917 mit einem kleinen Geschäft in Kriens begann, ist heute eine der ältesten Adressen für italienische Weine und Spezialitäten in der Schweiz — geführt von der vierten Generation der Familie De Simoni.", it: "Quella che nel 1917 era una piccola bottega a Kriens è oggi uno degli indirizzi più antichi per vini e specialità italiane in Svizzera — guidata dalla quarta generazione della famiglia De Simoni." },
     imageUrl: `${D}/macchine.png`,
     timeline: [
-      { year: "1917", title: { de: "Die Gründung", it: "La fondazione" }, text: { de: "Giuseppe De Simoni eröffnet in Kriens das erste Geschäft für italienische Spezialitäten — wenige Jahre nach seiner Auswanderung aus dem Tessin.", it: "Giuseppe De Simoni apre a Kriens il primo negozio di specialità italiane — pochi anni dopo essere emigrato dal Ticino." } },
-      { year: "1948", title: { de: "Nachkriegszeit", it: "Il dopoguerra" }, text: { de: "Die zweite Generation übernimmt und beginnt mit dem systematischen Import italienischer Weine in die Zentralschweiz.", it: "La seconda generazione subentra e avvia l'importazione sistematica di vini italiani nella Svizzera centrale." } },
-      { year: "1976", title: { de: "Eigenes Lager", it: "Il magazzino" }, text: { de: "Bezug der Schweighofstrasse 16 — bis heute unser Hauptsitz mit klimatisiertem Weinlager.", it: "Trasferimento alla Schweighofstrasse 16 — ancora oggi la nostra sede con cantina climatizzata." } },
-      { year: "1995", title: { de: "Direktimporte", it: "Importazione diretta" }, text: { de: "Ausbau der direkten Beziehungen zu kleinen Familien-Winzern in Piemont, Toskana und Sizilien.", it: "Rapporti diretti con piccoli vignaioli di famiglia in Piemonte, Toscana e Sicilia." } },
-      { year: "2010", title: { de: "Vierte Generation", it: "Quarta generazione" }, text: { de: "Die Familie führt das Unternehmen in vierter Generation weiter — mit dem gleichen Anspruch wie 1917.", it: "La famiglia guida l'azienda alla quarta generazione — con la stessa ambizione del 1917." } },
-      { year: "Heute", title: { de: "Italianità", it: "Italianità" }, text: { de: "Über 800 Gastronomie-Kunden, mehr als 200 Etiketten, ein einziger Standard: das Beste, was Italien zu bieten hat.", it: "Oltre 800 clienti della ristorazione, più di 200 etichette, un solo standard: il meglio che l'Italia ha da offrire." } },
+      { year: "1917", title: { de: "Die Gründung", it: "La fondazione" }, text: { de: "In Kriens beginnt der Handel mit italienischen Spezialitäten — damals für die italienische Gemeinschaft in der Zentralschweiz.", it: "A Kriens inizia il commercio di specialità italiane — allora per la comunità italiana della Svizzera centrale." } },
+      { year: "II", title: { de: "Wein wird zum Schwerpunkt", it: "Il vino diventa centrale" }, text: { de: "Die nächste Generation baut den Import von Weinen aus und knüpft direkte Beziehungen zu Kellereien in ganz Italien.", it: "La generazione successiva amplia l'importazione di vini e allaccia rapporti diretti con cantine di tutta Italia." } },
+      { year: "III", title: { de: "Gastronomie", it: "Ristorazione" }, text: { de: "Restaurants und Hotels werden die wichtigsten Kunden — mit eigener Lieferung, Beratung und Weinkarten-Service.", it: "Ristoranti e hotel diventano i clienti principali — con consegna propria, consulenza e servizio carta dei vini." } },
+      { year: "Heute", title: { de: "Italianità, digital", it: "Italianità, digitale" }, text: { de: "Ein Sortiment von Familienbetrieben aus ganz Italien — im Laden, im Onlineshop und im B2B-Portal mit Ihren Konditionen.", it: "Un assortimento di aziende di famiglia di tutta Italia — in negozio, nello shop online e nel portale B2B con le vostre condizioni." } },
     ],
     quote: { de: "Die besten Weine erzählen Geschichten — unsere geht inzwischen über vier Generationen.", it: "I vini migliori raccontano storie — la nostra attraversa ormai quattro generazioni." },
   });
@@ -206,7 +210,7 @@ export async function seedDeSimoniDemo(db: DB) {
   for (const p of products as DemoProduct[]) {
     let producerId = producerIds.get(p.producer);
     if (!producerId) {
-      const [row] = await db.insert(schema.producers).values({ slug: slugify(p.producer), name: p.producer, country: "Italia", region: p.region ?? null, featured: producerIds.size < 12 }).onConflictDoNothing().returning();
+      const [row] = await db.insert(schema.producers).values({ slug: slugify(p.producer), name: p.producer, erpId: p.producer, country: "Italia", region: p.region ?? null, featured: producerIds.size < 12 }).onConflictDoNothing().returning();
       producerId = row?.id ?? (await db.query.producers.findFirst({ where: eq(schema.producers.slug, slugify(p.producer)) }))!.id;
       producerIds.set(p.producer, producerId);
     }
@@ -218,7 +222,6 @@ export async function seedDeSimoniDemo(db: DB) {
         slug,
         kind: p.kind,
         name: { de: p.name, it: p.name },
-        short: null,
         categoryId: catIds.get(p.category),
         producerId,
         color: p.color,
@@ -232,6 +235,7 @@ export async function seedDeSimoniDemo(db: DB) {
         featured: isPromo,
         isNew: /di farro/.test(p.name),
         image: p.image,
+        ...(TEXTS[p.variants[0].sku] ?? {}),
       })
       .onConflictDoNothing()
       .returning();
@@ -261,6 +265,16 @@ export async function seedDeSimoniDemo(db: DB) {
     }
   }
   home.spotlight.productSlug = spotlightSlug;
+
+  // Shop-only articles (not in vinX): fully editable and deletable in the admin, unlike the synced range
+  const antipasti = catIds.get("antipasti");
+  for (const [slug, name, short, sku, price] of [
+    ["geschenkkarton-duo", { de: "Geschenkkarton für zwei Flaschen", it: "Confezione regalo per due bottiglie" }, { de: "Stabiler Karton mit Seidenpapier — wird mit Ihren Weinen verpackt.", it: "Scatola robusta con carta velina — confezionata con i vostri vini." }, "GK-02", 9.5],
+    ["degustation-gutschein", { de: "Gutschein Degustation in Kriens", it: "Buono degustazione a Kriens" }, { de: "Geführte Degustation mit sechs Weinen und Antipasti für zwei Personen.", it: "Degustazione guidata di sei vini con antipasti per due persone." }, "GS-DEG", 89],
+  ] as const) {
+    const [prod] = await db.insert(schema.products).values({ slug, kind: "food", name, short, categoryId: antipasti, ageRestricted: false, taxClass: "standard", active: true }).onConflictDoNothing().returning();
+    if (prod) await db.insert(schema.variants).values({ productId: prod.id, sku, priceCents: Math.round(price * 100), stock: 50, discountGroup: "FOOD" });
+  }
   // Page builder: the classic sections as blocks + origin map and a B2B call-to-action
   const base = homeBlocks(home);
   const at = base.findIndex((b) => b.id === "brands");

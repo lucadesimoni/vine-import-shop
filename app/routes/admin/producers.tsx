@@ -70,9 +70,10 @@ export async function action({ request }: Route.ActionArgs) {
     }
     if (action === "delete") {
       const used = await db.select({ id: schema.products.producerId }).from(schema.products).where(inArray(schema.products.producerId, ids));
-      const free = ids.filter((id) => !used.some((u) => u.id === id));
+      const erp = await db.select({ id: pr.id }).from(pr).where(and(inArray(pr.id, ids), isNotNull(pr.erpId)));
+      const free = ids.filter((id) => !used.some((u) => u.id === id) && !erp.some((e) => e.id === id));
       if (free.length) await db.delete(pr).where(inArray(pr.id, free));
-      return { ok: `${free.length} gelöscht${free.length < ids.length ? ` · ${ids.length - free.length} mit Produkten übersprungen` : ""}.` };
+      return { ok: `${free.length} gelöscht${free.length < ids.length ? ` · ${ids.length - free.length} übersprungen (mit Produkten oder aus vinX)` : ""}.` };
     }
   }
   return { ok: "" };

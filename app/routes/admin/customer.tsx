@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
-import { data, Form, Link, useActionData } from "react-router";
-import { ArrowLeft, ArrowUpRight, RefreshCw } from "lucide-react";
+import { data, Form, Link, redirect, useActionData } from "react-router";
+import { ArrowLeft, ArrowUpRight, RefreshCw, Trash2 } from "lucide-react";
 import type { Route } from "./+types/customer";
 import { getDb, schema } from "~/.server/db";
 import { emit } from "~/.server/events";
@@ -36,6 +36,14 @@ export async function action({ request, params }: Route.ActionArgs) {
   const id = Number(params.id);
   const form = await request.formData();
   const db = await getDb();
+  if (form.get("intent") === "delete") {
+    const c = await db.query.users.findFirst({ where: eq(u.id, id) });
+    const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(schema.orders).where(eq(schema.orders.userId, id));
+    if (c?.erpId) return data({ error: "Mit vinX verknüpfte Kunden werden in vinX verwaltet." }, { status: 400 });
+    if (n > 0) return data({ error: "Kunden mit Bestellungen können nicht gelöscht werden (Aufbewahrungspflicht) — B2B-Status auf „Abgelehnt“ setzen." }, { status: 400 });
+    await db.delete(u).where(eq(u.id, id));
+    return redirect("/admin/customers");
+  }
   if (form.get("intent") === "push") {
     await emit("customer.updated", { userId: id });
     return { ok: "An vinX übergeben — Status siehe „Abgleich“." };
@@ -128,6 +136,12 @@ export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
               )}
               <Form method="post" className="mt-4"><Button type="submit" name="intent" value="push" variant="secondary" size="sm"><RefreshCw size={13} /> Jetzt senden</Button></Form>
             </Panel>
+          )}
+          {!c.erpId && stats.n === 0 && (
+            <Form method="post" onSubmit={(e) => !confirm("Kunde endgültig löschen?") && e.preventDefault()}>
+              <input type="hidden" name="intent" value="delete" />
+              <button className="flex items-center gap-1.5 px-1 text-[12px] text-muted-fg hover:text-danger"><Trash2 size={13} /> Kunde löschen</button>
+            </Form>
           )}
         </div>
       </div>

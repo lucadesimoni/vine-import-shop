@@ -71,7 +71,7 @@ export default function Product({ loaderData }: Route.ComponentProps) {
             <div className="absolute inset-[8%]"><ProductImage product={c} /></div>
           </div>
           <div className="absolute left-4 top-4 flex flex-col gap-1.5">
-            {c.promo && <Badge tone="primary">{t("shop.promo")}</Badge>}
+            {c.promo && <Badge tone="outline">{t("shop.promo")}</Badge>}
             {c.organic && <Badge tone="success"><Leaf size={10} /> {t("shop.organic")}</Badge>}
           </div>
         </div>
@@ -86,6 +86,7 @@ export default function Product({ loaderData }: Route.ComponentProps) {
                 <span className="underline-offset-4 group-hover:underline">{p.producer.name}</span>
               </Link>
             )}
+            {p.short && p.short !== p.producer?.name && <p className="max-w-xl text-muted-fg">{p.short}</p>}
           </div>
 
           {first && (
@@ -139,10 +140,10 @@ export default function Product({ loaderData }: Route.ComponentProps) {
           )}
           {!showPrices && !user && <Notice>{t("auth.tradeText")} <Link to="/trade#apply" className="font-medium underline underline-offset-4">{t("trade.apply")}</Link></Notice>}
 
-          {(p.description || (p.short && p.short !== p.producer?.name)) && (
+          {p.description && (
             <div className="grid gap-3">
               <h2 className="text-eyebrow text-[11px] text-muted-fg">{t("product.details")}</h2>
-              <p className="text-lead whitespace-pre-line">{p.description || p.short}</p>
+              <p className="text-lead whitespace-pre-line">{p.description}</p>
             </div>
           )}
           {p.pairing && (

@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { Link, useActionData, useSearchParams } from "react-router";
 import { Lock, Plus } from "lucide-react";
 import type { Route } from "./+types/products";
@@ -75,12 +75,23 @@ export async function loader({ request }: Route.LoaderArgs) {
 export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
   const ids = bulkIds(form);
-  const op = BULK[String(form.get("action")) as keyof typeof BULK];
-  if (!ids.length || !op) return { message: "Nichts ausgewählt." };
-  if ((await erpOwnedFields()).includes(op.field)) return { error: `„${op.label}“ wird von vinX verwaltet und beim nächsten Sync überschrieben — bitte im ERP ändern.` };
+  const action = String(form.get("action"));
+  if (!ids.length) return { message: "Nichts ausgewählt." };
   const db = await getDb();
-  await db.update(p).set({ ...op.set, updatedAt: new Date() }).where(inArray(p.id, ids));
-  return { message: `${ids.length} Produkt${ids.length === 1 ? "" : "e"}: ${op.label}.` };
+  // ERP-linked = any variant carries an ERP article id; only those are locked
+  const linkedIds = new Set((await db.selectDistinct({ id: schema.variants.productId }).from(schema.variants).where(and(inArray(schema.variants.productId, ids), isNotNull(schema.variants.erpId)))).map((r) => r.id));
+  const free = ids.filter((id) => !linkedIds.has(id));
+  const skipped = ids.length - free.length;
+  const note = skipped ? ` · ${skipped} mit vinX verknüpft übersprungen (in vinX ändern)` : "";
+  if (action === "delete") {
+    if (free.length) await db.delete(p).where(inArray(p.id, free));
+    return { message: `${free.length} Produkt${free.length === 1 ? "" : "e"} gelöscht${note}.` };
+  }
+  const op = BULK[action as keyof typeof BULK];
+  if (!op) return { message: "Unbekannte Aktion." };
+  const target = (await erpOwnedFields()).includes(op.field) ? free : ids;
+  if (target.length) await db.update(p).set({ ...op.set, updatedAt: new Date() }).where(inArray(p.id, target));
+  return { message: `${target.length} Produkt${target.length === 1 ? "" : "e"}: ${op.label}${target.length < ids.length ? note : ""}.` };
 }
 
 export default function Products({ loaderData }: Route.ComponentProps) {
@@ -96,7 +107,7 @@ export default function Products({ loaderData }: Route.ComponentProps) {
         actions={<ButtonLink to="/admin/products/new" size="sm"><Plus size={15} /> Neues Produkt</ButtonLink>}
       />
       {result && "message" in result && <Notice tone="success" className="mb-5">{result.message}</Notice>}
-      {result && "error" in result && <Notice tone="danger" className="mb-5">{result.error}</Notice>}
+      {params.get("deleted") && !result && <Notice tone="success" className="mb-5">Produkt gelöscht.</Notice>}
       <ListToolbar placeholder="Name, Produzent, Art.-Nr. oder ERP-Nr." meta={list}>
         <Select name="category" defaultValue={params.get("category") ?? ""} size="sm" className="w-44" aria-label="Kategorie">
           <option value="">Alle Kategorien</option>
@@ -116,7 +127,7 @@ export default function Products({ loaderData }: Route.ComponentProps) {
       <DataTable
         meta={list}
         empty={!rows.length}
-        bulk={Object.entries(BULK).filter(([, b]) => !owned.includes(b.field)).map(([value, b]) => ({ value, label: b.label }))}
+        bulk={[...Object.entries(BULK).map(([value, b]) => ({ value, label: b.label })), { value: "delete", label: "Löschen", tone: "danger" as const }]}
         head={["", { label: "Produkt", sort: "name" }, { label: "Kategorie", sort: "category" }, "Art.-Nr.", { label: "Preis", sort: "price" }, { label: "Lager", sort: "stock" }, "Status"]}
       >
         {rows.map((x) => {
