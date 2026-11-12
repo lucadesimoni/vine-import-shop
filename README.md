@@ -16,6 +16,23 @@ npm run dev            # http://localhost:5173 — creates an embedded DB + demo
 | Gastro customer (B2B, approved) | `gastro@demo.ch` / `gastro-demo-1234` |
 | Private customer | `kunde@demo.ch` / `kunde-demo-1234` |
 
+## Run it (app + database, one command)
+
+```bash
+docker compose up -d          # → http://localhost:3000
+```
+
+or, without Docker (Node ≥ 20.19):
+
+```bash
+npm run up                    # install, build, start → http://localhost:3000
+```
+
+- **The database is built in** (embedded PostgreSQL). Secrets are created on first start.
+- **No configuration needed.** Everything lives in **one folder or volume** (`data/`). Backing it up backs up the whole shop.
+- Admin at `/admin`: `admin@example.com` / `admin-demo-1234` (change it after the first login).
+- To grow later: use an external PostgreSQL via `DATABASE_URL` (`docker compose -f docker-compose.postgres.yml up -d`), mail and payments via `.env` (see `.env.example`).
+
 ## One-click deploy
 
 [![Deploy on Elestio](https://img.shields.io/badge/Deploy%20on-Elestio-1f6feb?style=for-the-badge)](https://dash.elest.io/deploy?source=cicd&social=Github&url=https://github.com/lucadesimoni/vine-import-shop)
@@ -41,7 +58,7 @@ curl -L https://github.com/<org>/<repo>/releases/latest/download/shop-<version>.
 # 3 · point your domain at it (Hostpoint: Control Panel › "Nginx Custom Mode", port 8080)
 ```
 
-**Docker:** `npm run setup && docker compose up -d`.
+**Docker:** `docker compose up -d`.
 **PaaS:** connect the repo (`Procfile`).
 **Kubernetes:** `deploy/k8s/shop.yaml`.
 

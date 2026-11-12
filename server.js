@@ -1,11 +1,27 @@
 // Production server — runs on any Node host: Hostpoint Managed Flex (CSC), cPanel/Plesk (Passenger),
 // VPS (systemd), Docker/Kubernetes, PaaS (Infomaniak, Exoscale, Deploio, Heroku-style buildpacks …).
 //   npm run setup   → .env with secrets      npm run build && npm start
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 
 // 1) Config from .env (no extra tooling needed; real env vars always win)
 if (existsSync(".env")) process.loadEnvFile(".env");
+
+// 2) Zero-config secrets: generated once and kept in ./data/secrets.json next to the embedded database,
+//    so `node server.js` / `docker run` needs no configuration and one folder (data/) is the whole shop.
+{
+  const file = "data/secrets.json";
+  const keys = ["SESSION_SECRET", "CRON_SECRET", "VINX_WEBHOOK_SECRET"];
+  if (keys.some((k) => !process.env[k])) {
+    mkdirSync("data", { recursive: true });
+    const stored = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
+    let changed = false;
+    for (const k of keys) if (!stored[k]) { stored[k] = randomBytes(32).toString("base64url"); changed = true; }
+    if (changed) writeFileSync(file, JSON.stringify(stored, null, 2), { mode: 0o600 });
+    for (const k of keys) process.env[k] ||= stored[k];
+  }
+}
+process.env.NODE_ENV ||= "production";
 
 const { default: express } = await import("express");
 const { default: compression } = await import("compression");
@@ -13,8 +29,6 @@ const { createRequestHandler } = await import("@react-router/express");
 
 const port = Number(process.env.PORT ?? 3000);
 const host = process.env.HOST ?? "0.0.0.0"; // Hostpoint/nginx proxy: HOST=127.0.0.1
-// Built-in scheduler secret (used only in-process when no CRON_SECRET is configured)
-process.env.CRON_SECRET ||= randomBytes(24).toString("hex");
 
 const build = await import("./build/server/index.js");
 const app = express();
@@ -35,7 +49,7 @@ app.use(createRequestHandler({ build }));
 // Passenger (cPanel/Plesk) hooks the first listen() call and ignores port/host.
 const server = app.listen(port, host, () => console.log(`Shop listening on http://${host === "0.0.0.0" ? "localhost" : host}:${port}`));
 
-// 2) Built-in scheduler: ERP sync + outbox without any external cron.
+// 3) Built-in scheduler: ERP sync + outbox without any external cron.
 //    JOBS_INTERVAL_MINUTES=0 disables it (e.g. when a platform cron calls POST /api/cron, or with several instances).
 const every = Number(process.env.JOBS_INTERVAL_MINUTES ?? 10);
 let timer;
@@ -50,7 +64,7 @@ if (every > 0) {
   timer = setInterval(run, every * 60_000);
 }
 
-// 3) Graceful shutdown (supervisord, systemd, Docker, Kubernetes)
+// 4) Graceful shutdown (supervisord, systemd, Docker, Kubernetes)
 for (const sig of ["SIGTERM", "SIGINT"]) {
   process.on(sig, () => {
     clearInterval(timer);

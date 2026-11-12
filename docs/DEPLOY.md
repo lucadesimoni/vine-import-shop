@@ -1,5 +1,9 @@
 # Deployment
 
+**Simplest:** `docker compose up -d`, or `npm run up` without Docker.
+- One process, with the database built in and secrets generated into `data/`. No configuration is needed.
+- Back up the `data/` folder (or the `shop-data` volume), and you have backed up everything.
+
 **One app, any host.** You only need Node.js ≥ 20.19 (22 LTS recommended).
 - **Database:** the embedded database (PGlite, a single server, no DB server needed) or any PostgreSQL ≥ 14 (`DATABASE_URL`).
 - **Automatic on start:** migrations, the first-run seed and the scheduler.
@@ -58,7 +62,7 @@ Point them at the repository. They build the `Dockerfile` (`railway.json` sets t
 | Setup | Command / files | Notes |
 |---|---|---|
 | **Single server** (Hostpoint, VPS, Jelastic node) | `npm start` behind nginx or the panel proxy | Embedded DB in `./data` (back it up) or `DATABASE_URL`. Built-in scheduler |
-| **Docker / Compose** | `docker compose up -d` (app + Postgres) | Image with healthcheck (`/api/health`), graceful shutdown |
+| **Docker / Compose** | `docker compose up -d` (single container, built-in DB) · `docker compose -f docker-compose.postgres.yml up -d` (app + Postgres) | Image with healthcheck (`/api/health`), graceful shutdown |
 | **Buildpack PaaS** | `Procfile`; set env vars in the dashboard | Add managed Postgres. Use `STORAGE_DRIVER=s3` if the disk is ephemeral |
 | **Kubernetes** | `deploy/k8s/shop.yaml` (Deployment ×2, Service, Ingress, CronJob) | `JOBS_INTERVAL_MINUTES=0` in pods; the CronJob calls `/api/cron` once for the cluster |
 | **Serverless** (Vercel, Netlify, Cloudflare) | React Router adapters | Possible with managed Postgres and S3, but the outbox and scheduler need an external cron. A long-running Node is recommended |
@@ -68,7 +72,7 @@ Point them at the repository. They build the `Dockerfile` (`railway.json` sets t
 | Variable | Default | Purpose |
 |---|---|---|
 | `PORT` / `HOST` | `3000` / `0.0.0.0` | `HOST=127.0.0.1` behind a local proxy (Hostpoint, nginx) |
-| `SESSION_SECRET` | — | **required in production** (`npm run setup` generates it) |
+| `SESSION_SECRET`, `CRON_SECRET` | generated into `data/secrets.json` | set explicitly when running several instances or serverless |
 | `DATABASE_URL` | embedded DB in `./data` | PostgreSQL connection string |
 | `DEMO_DATA`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | demo on | First start on an empty DB |
 | `JOBS_INTERVAL_MINUTES` | `10` | Built-in scheduler. Use `0` with several instances, and use the platform cron → `POST /api/cron` (`Authorization: Bearer $CRON_SECRET`) |

@@ -1,22 +1,13 @@
-# Production-like stack: app + Postgres.   npm run setup && docker compose up -d  → http://localhost:3000
-# The app's built-in scheduler runs ERP sync + outbox (JOBS_INTERVAL_MINUTES, default 10).
+# The simplest way to run the shop: one container, database built in, everything in one volume.
+#   docker compose up -d    → http://localhost:3000   (admin: /admin · admin@example.com / admin-demo-1234)
+# Secrets are generated on first start and stored in the volume — no configuration needed.
 services:
-  app:
+  shop:
     build: .
     ports: ["3000:3000"]
-    env_file: .env
-    environment:
-      DATABASE_URL: postgres://shop:shop@db:5432/shop
-    volumes: [uploads:/app/data]
-    depends_on:
-      db: { condition: service_healthy }
+    volumes: [shop-data:/app/data]
     restart: unless-stopped
-  db:
-    image: postgres:17-alpine
-    environment: { POSTGRES_USER: shop, POSTGRES_PASSWORD: shop, POSTGRES_DB: shop }
-    volumes: [pg:/var/lib/postgresql/data]
-    healthcheck: { test: ["CMD-SHELL", "pg_isready -U shop"], interval: 5s, retries: 10 }
-    restart: unless-stopped
+    # Optional settings (mail, payments, vinX …): create a .env file (see .env.example) and uncomment:
+    # env_file: .env
 volumes:
-  pg:
-  uploads:
+  shop-data:

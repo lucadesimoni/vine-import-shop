@@ -20,7 +20,8 @@
     "vinx:spec": "node scripts/vinx-spec.mjs",
     "e2e:platform": "node tests/e2e/platform.mjs",
     "setup": "node scripts/setup.mjs",
-    "release": "node scripts/release.mjs"
+    "release": "node scripts/release.mjs",
+    "up": "npm ci && npm run build && npm start"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",
