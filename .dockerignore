@@ -1,5 +1,7 @@
-.git
-storage/*.sqlite*
-storage/sessions
-storage/logs/*
+node_modules
+build
+data
 .env
+.git
+.react-router
+test-results

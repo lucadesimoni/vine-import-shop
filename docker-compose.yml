@@ -1,34 +1,25 @@
-# Local or single-server setup: docker compose up -d → http://localhost:8080
+# Production-like stack: app + Postgres + scheduler.  docker compose up -d → http://localhost:3000
 services:
-  shop:
+  app:
     build: .
-    ports: ["8080:80"]
+    ports: ["3000:3000"]
     env_file: .env
     environment:
-      DB_DRIVER: mysql
-      DB_HOST: db
-      DB_NAME: shop
-      DB_USER: shop
-      DB_PASS: shop
-    volumes:
-      - storage:/var/www/html/storage
-    depends_on: [db]
+      DATABASE_URL: postgres://shop:shop@db:5432/shop
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
   db:
-    image: mariadb:11
-    environment:
-      MARIADB_DATABASE: shop
-      MARIADB_USER: shop
-      MARIADB_PASSWORD: shop
-      MARIADB_RANDOM_ROOT_PASSWORD: "1"
-    volumes:
-      - db:/var/lib/mysql
+    image: postgres:17-alpine
+    environment: { POSTGRES_USER: shop, POSTGRES_PASSWORD: shop, POSTGRES_DB: shop }
+    volumes: [pg:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U shop"], interval: 5s, retries: 10 }
+    restart: unless-stopped
   cron:
-    build: .
-    command: sh -c 'while true; do php bin/console vinx:sync; sleep 600; done'
+    image: curlimages/curl:8.11.1
     env_file: .env
-    environment: { DB_DRIVER: mysql, DB_HOST: db, DB_NAME: shop, DB_USER: shop, DB_PASS: shop }
-    volumes: [storage:/var/www/html/storage]
-    depends_on: [db]
+    entrypoint: ["/bin/sh", "-c", "while true; do sleep 600; curl -fsS -X POST -H \"Authorization: Bearer $$CRON_SECRET\" http://app:3000/api/cron || true; done"]
+    depends_on: [app]
+    restart: unless-stopped
 volumes:
-  storage:
-  db:
+  pg:

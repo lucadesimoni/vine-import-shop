@@ -1,74 +1,45 @@
-# vinX ERP integration
+# vinX integration
 
-vinX (wine-trade ERP, Switzerland) is the **master** for articles, stock, prices and customer numbers. The shop is the master for rich content: texts in four languages, tasting notes, images and SEO. Orders and new customers flow from the shop to vinX.
+Implemented against the **official, public vinX API documentation by I-AG**:
+<https://i-ag.atlassian.net/wiki> → *Technische Dokumentation* → **Spezifikation VinX-Api (REST3)** (Shop V 1.0 / **V 2.0**).
 
-```
-          ┌──────────── pull (cron / web-cron / webhook) ────────────┐
- vinX ───►│ articles (delta|full) · stock · price lists               │──► shop DB
-          └──────────────────────────────────────────────────────────┘
- vinX ◄── outbox (orders, customers) ◄── events: order.placed, customer.registered, b2b.approved
-          retries with exponential backoff, status per order (pending → transferred | failed)
-```
+## How the shop uses vinX (as the I-AG docs recommend for B2B shops)
 
-## 1. Choose a driver (`VINX_DRIVER`)
-
-| Driver | When | Setup |
+| Process | vinX REST3 endpoint | Shop implementation |
 |---|---|---|
-| `rest` | vinX web interface / API is licensed and reachable over HTTPS | `VINX_BASE_URL`, `VINX_AUTH` (`bearer`, `basic`, `header:X-Api-Key`), `VINX_TOKEN` or `VINX_USER`/`VINX_PASS`, optional `VINX_MANDANT` |
-| `file` | Classic import/export: vinX writes CSV, reads XML/CSV (via SFTP, a shared folder or a sync tool) | `vinx.file.inbox` / `outbox` paths, delimiter, encoding (Windows-1252 is typical) |
-| `mock` | Demo, development, testing before the real interface exists | nothing |
-| *custom class* | Any other ERP (Abacus, bexio, SAP B1 …) | implement `App\Modules\Vinx\ErpClient` and set `vinx.driver` to the class name |
+| Authentication | `POST /api/Identity/Realm/RequestToken` `{client_id:"Integrated", scope:"VinX.Shop", username, password}` → Bearer token | Token cached until expiry (JWT `exp`), automatic refresh on 401 |
+| Article master (cached in shop) | `GET /api/v2.0/Core/VinX/Shop/BaseData/Article` with OData `$top/$skip`, delta via `$filter=modifiedDate gt <ISO>` | `syncArticles()`: delta by default, full on demand. vinX owns commercial fields; the shop owns texts, images and flags |
+| Stock | `GET …/Calculated/StockInfo` | `syncStock()`, matched on the vinX `articleId` |
+| Price lists | `POST …/Calculated/ProductInfo {priceGroupId}` | `syncPrices()`: net prices per mapped price group become customer-group tiers |
+| Live customer prices | `POST …/Calculated/ProductInfo {customerId, articleParameters}` | `productInfo()` (incl. `pricePromotion`, `promotionType` in V2) |
+| **Basket calculation** | `POST …/Online/Basket {action:"calculate"}` | Approved B2B customers with a vinX address: vinX calculates conditions, promotions, deposits (Gebinde), LSVA and freight (V2). Falls back to local calculation on error |
+| Order | `POST …/Online/Basket {action:"order"}` | Every order goes through a persistent **outbox** with exponential-backoff retries |
+| Quote request | `POST …/Online/Basket {action:"quote"}` (V2) | Used when prices are hidden ("price on request") |
+| New customer / address change | `POST …/Online/OnlineAddress {changeType:"new"\|"change"}` | On registration and trade approval; vinX staff map it to the address master |
+| Vouchers | Promo article with negative price, `priceCalculationRule:"fromShop"` | Exactly as described in the Basket spec |
+| Pick-up vs delivery | `shippingCodeId` (`BaseData/ShippingCode`; 0 = delivery) | Mapping in Admin → vinX |
+| Errors | RFC 7807 `application/problem+json` | `errorCode · title · detail` shown in the log and outbox |
 
-> **Before go-live, check with your vinX partner:** the exact endpoint paths, auth scheme, pagination and field names depend on your vinX version and licensed modules. Everything you need to change is **configuration** in `config['vinx']['rest']` and `config['vinx']['mapping']`; the code stays as it is.
+The vinX REST adapter is **passive** and server-to-server. The shop pulls on a schedule (`POST /api/cron` with `Authorization: Bearer $CRON_SECRET`, or `npm run jobs`). The optional `POST /api/vinx/webhook` (HMAC-signed) lets a relay push stock or order-status changes.
 
-## 2. Field mapping
+## Going live
 
-`config['vinx']['mapping']['article']` maps vinX field names to shop fields. Dot notation works for nested JSON (`"Preise.Verkauf"`). The values parse Swiss number formats (`1'234.50`, `1234,50`). Volume in cl is converted to ml. Colour and VAT codes are translated through `color_map` and `tax_map`.
+1. **Licence:** vinX REST API option (I-AG). The B2B basket calculation is a separate licence option.
+2. **Access:** request a shop user from I-AG. Demo server: `https://vinxapi.i-ag.ch` (access via support@i-ag.ch; reset nightly).
+3. **Admin → vinX:** driver **REST3**, base URL, API version V2.0, user. Set the password as the environment variable `VINX_PASSWORD`.
+4. **Mapping:** open `<base URL>/swagger` and confirm the article field names; installations can have custom extensions. Adjust the JSON mapping in admin; no code changes are needed.
+5. Set `groupMap` (vinX price group ID → shop customer group), `promoArticleId` and `shippingCodeMap`.
+6. Run **Test connection**, then a **full article sync**, then stock and prices. After that, set up the cron.
+7. Link B2B customers to their vinX address number (Admin → Customers) to enable live basket calculation.
 
-`owned_fields` lists the fields that vinX overwrites. Everything else (descriptions, images, featured flag) is never touched by the sync.
+### Still to confirm with the real system
 
-Price lists: each row is (SKU, price list code, minimum quantity, net price). `group_map` connects vinX price-list codes to shop customer groups (`PRIV → retail`, `HAND → b2b`, `GASTRO → gastro`). Each sync replaces all tiers for a product and group pair.
+- Exact `BaseData/Article` field names (the public docs show only diagrams; Swagger has the definitions).
+- The response field holding the online order ID.
+- Any customer-specific extensions in your installation.
 
-## 3. Scheduling
+## Alternatives
 
-```bash
-# every 10 minutes: push queued orders, then stock, prices, article delta
-*/10 * * * * php /path/to/shop/bin/console vinx:sync
-# nightly full article import
-15 3 * * *   php /path/to/shop/bin/console vinx:sync articles:full
-```
-
-If your host has no CLI cron, set `CRON_KEY` and call `https://shop.ch/cron.php?key=…` from the host's control panel or from cron-job.org.
-
-Orders are also pushed **right after checkout**, once the response has been sent (`fastcgi_finish_request`), so the customer never waits on the ERP.
-
-## 4. Webhook (optional, real-time)
-
-`POST /api/vinx/webhook`, header `X-Vinx-Signature: hex(hmac_sha256(body, VINX_WEBHOOK_SECRET))`
-
-```json
-{ "event": "stock.updated", "items": [{ "sku": "W-1001", "stock": 42 }] }
-{ "event": "article.updated" }
-{ "event": "order.status", "number": "WS-2026-000123", "status": "shipped", "paid": true }
-```
-
-If vinX cannot sign requests, put a small relay (for example a Cloudflare Worker) in front of it, or rely on the cron sync.
-
-## 5. Order payload (shop → vinX)
-
-```json
-{
-  "order":   { "number": "WS-2026-000123", "created_at": "…", "customer_erp_id": "K-10023", "price_list": "GASTRO",
-               "payment_method": "invoice", "shipping_method": "delivery", "po_number": "PO-4711", "delivery_date": "2026-11-20",
-               "subtotal_net": 134796, "total_gross": 145730, "tax_total": 10934, "is_b2b": 1, "locale": "de" },
-  "billing":  { "company": "…", "name": "…", "street": "…", "zip": "8001", "city": "Zürich", "country": "CH" },
-  "shipping": { … },
-  "items":    [{ "sku": "W-1001", "name": "Chianti Classico Riserva DOCG 2020", "qty": 36, "unit_net": 2361, "unit_gross": 2552, "tax_rate": 8.1 }]
-}
-```
-
-Amounts are in Rappen (integers). The `file` driver writes the same data as `order-<number>.xml` (or `.csv` / `.json`).
-
-## 6. Monitoring
-
-Admin → **vinX ERP** shows the last successful run per job, the outbox (pending / failed with the error text and a retry button) and a job log. The dashboard flags failed transfers.
+- **CSV exchange:** upload vinX exports in admin, or `POST /api/vinx/import` (multipart: `articles`, `stock`, `prices`; UTF-8 or Windows-1252).
+- **Mock:** a demo driver that runs the complete pipeline without an ERP.
+- **Other ERPs:** implement `ErpClient` (`app/.server/vinx/client.ts`).

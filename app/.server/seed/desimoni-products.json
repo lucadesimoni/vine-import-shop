@@ -1,0 +1,1038 @@
+[
+ {
+  "name": "Riserva Sassella Rocce Rosse DOCG ARPEPE",
+  "category": "rotwein",
+  "kind": "wine",
+  "producer": "ARPEPE S.r.l Societa' Agricola",
+  "color": "red",
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10679",
+    "vintage": "2016",
+    "size": "75 cl",
+    "price": 41.6,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/10679.jpg"
+ },
+ {
+  "name": "Riserva Grumello Buon Consiglio DOCG ARPEPE",
+  "category": "rotwein",
+  "kind": "wine",
+  "producer": "ARPEPE S.r.l Societa' Agricola",
+  "color": "red",
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10681",
+    "vintage": "2016",
+    "size": "75 cl",
+    "price": 52.5,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10681.jpg"
+ },
+ {
+  "name": "Sassella Stella Retica DOCG ARPEPE",
+  "category": "rotwein",
+  "kind": "wine",
+  "producer": "ARPEPE S.r.l Societa' Agricola",
+  "color": "red",
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10680",
+    "vintage": "2022",
+    "size": "75 cl",
+    "price": 37.65,
+    "stock": 6
+   }
+  ],
+  "image": "/demo/desimoni/products/10680.jpg"
+ },
+ {
+  "name": "Il Pettirosso Nebbiolo DOCG ARPEPE",
+  "category": "rotwein",
+  "kind": "wine",
+  "producer": "ARPEPE S.r.l Societa' Agricola",
+  "color": "red",
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10682",
+    "vintage": "2022",
+    "size": "75 cl",
+    "price": 34.65,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10682.png"
+ },
+ {
+  "name": "Rosso di Valtellina Nebbiolo DOC ARPEPE",
+  "category": "rotwein",
+  "kind": "wine",
+  "producer": "ARPEPE S.r.l Societa' Agricola",
+  "color": "red",
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10683",
+    "vintage": "2022",
+    "size": "75 cl",
+    "price": 46.3,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/10683.jpg"
+ },
+ {
+  "name": "Taurasi DOCG Riserva Vigna Olmo Di Meo",
+  "category": "rotwein",
+  "kind": "wine",
+  "producer": "Azienda Agricola di Meo S.a.S.",
+  "color": "red",
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10658",
+    "vintage": "2015",
+    "size": "150 cl",
+    "price": 41.6,
+    "stock": 140
+   },
+   {
+    "sku": "10657",
+    "vintage": "2015",
+    "size": "75 cl",
+    "price": 19.35,
+    "stock": 46
+   }
+  ],
+  "image": "/demo/desimoni/products/10657.jpg"
+ },
+ {
+  "name": "Campania Aglianico IGT Di Meo",
+  "category": "rotwein",
+  "kind": "wine",
+  "producer": "Azienda Agricola di Meo S.a.S.",
+  "color": "red",
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10656",
+    "vintage": "2019",
+    "size": "150 cl",
+    "price": 60.95,
+    "stock": 40
+   },
+   {
+    "sku": "10655",
+    "vintage": "2019",
+    "size": "75 cl",
+    "price": 28.35,
+    "stock": 13
+   }
+  ],
+  "image": "/demo/desimoni/products/10655.jpg"
+ },
+ {
+  "name": "PINTA Isola dei Nuraghi Cagnulari rosso IGT Cagnulari Binza ‘e su Re",
+  "category": "rotwein",
+  "kind": "wine",
+  "producer": "Binza ‘e su Re",
+  "color": "red",
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10295",
+    "vintage": "2022",
+    "size": "75 cl",
+    "price": 35.1,
+    "stock": 40
+   },
+   {
+    "sku": "9328",
+    "vintage": "2020",
+    "size": "75 cl",
+    "price": 35.1,
+    "stock": 13
+   }
+  ],
+  "image": "/demo/desimoni/products/9328.png"
+ },
+ {
+  "name": "Spaghetti Bio organic il Valentino CAPPELLI Monograno Felicetti Astuccio nr.9108",
+  "category": "pasta-mehl",
+  "kind": "food",
+  "producer": "Felicetti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "7739",
+    "vintage": null,
+    "size": "500 g",
+    "price": 4.05,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/7739.jpg"
+ },
+ {
+  "name": "Spaghettoni Bio-organic n.107 CAPPELLI Monograno Felicetti Astuccio",
+  "category": "pasta-mehl",
+  "kind": "food",
+  "producer": "Felicetti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "7896",
+    "vintage": null,
+    "size": "500 g",
+    "price": 5.7,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/7896.jpg"
+ },
+ {
+  "name": "Paccheri Rigati Bio-organic n. 137 CAPPELLI Monograno Felicetti Astuccio",
+  "category": "pasta-mehl",
+  "kind": "food",
+  "producer": "Felicetti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "9797",
+    "vintage": null,
+    "size": "500 g",
+    "price": 5.7,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/9797.jpg"
+ },
+ {
+  "name": "Pasta Mista Bio-organic n. 139 MATT Monograno Catering Monograno Felicetti",
+  "category": "pasta-mehl",
+  "kind": "food",
+  "producer": "Felicetti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10074",
+    "vintage": null,
+    "size": "500 g",
+    "price": 4.25,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10074.jpg"
+ },
+ {
+  "name": "Spaghetti di FARRO Bio-organic n.105 Monograno Felicetti Astuccio",
+  "category": "pasta-mehl",
+  "kind": "food",
+  "producer": "Felicetti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "7737",
+    "vintage": null,
+    "size": "500 g",
+    "price": 6.8,
+    "stock": 6
+   }
+  ],
+  "image": "/demo/desimoni/products/7737.jpg"
+ },
+ {
+  "name": "Rigatini di FARRO Bio-organic n.169 Monograno Felicetti Astuccio",
+  "category": "pasta-mehl",
+  "kind": "food",
+  "producer": "Felicetti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10075",
+    "vintage": null,
+    "size": "500 g",
+    "price": 6.25,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10075.jpg"
+ },
+ {
+  "name": "Penne rigate di FARRO Bio-organic n.169 Monograno Felicetti Astuccio",
+  "category": "pasta-mehl",
+  "kind": "food",
+  "producer": "Felicetti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "7738",
+    "vintage": null,
+    "size": "500 g",
+    "price": 4.85,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/7738.jpg"
+ },
+ {
+  "name": "Ditalini di FARRO Bio-organic n.23 Monograno Felicetti Astuccio",
+  "category": "pasta-mehl",
+  "kind": "food",
+  "producer": "Felicetti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "8044",
+    "vintage": null,
+    "size": "500 g",
+    "price": 4.85,
+    "stock": 6
+   }
+  ],
+  "image": "/demo/desimoni/products/8044.jpg"
+ },
+ {
+  "name": "Condimento al peperoncino a base di olio extra vergine di oliva italiano BACHMANN",
+  "category": "olivenoel",
+  "kind": "food",
+  "producer": "Cazzola e Fiorini",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10960",
+    "vintage": null,
+    "size": "50 cl",
+    "price": 32.4,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10960.jpg"
+ },
+ {
+  "name": "Olio Tenuta Torre di Mossa DOP 50 cl",
+  "category": "olivenoel",
+  "kind": "food",
+  "producer": "De Carlo",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "8426",
+    "vintage": null,
+    "size": "50 cl",
+    "price": 29.25,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/8426.jpg"
+ },
+ {
+  "name": "Olio Extra Vergine di Oliva BIO Tenuta Arcamone DOP",
+  "category": "olivenoel",
+  "kind": "food",
+  "producer": "De Carlo",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10476",
+    "vintage": null,
+    "size": "50 cl",
+    "price": 33.65,
+    "stock": 6
+   }
+  ],
+  "image": "/demo/desimoni/products/10476.jpg"
+ },
+ {
+  "name": "Olio Extra Vergine di Oliva il Biologico 50cl",
+  "category": "olivenoel",
+  "kind": "food",
+  "producer": "De Carlo",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10474",
+    "vintage": null,
+    "size": "50 cl",
+    "price": 17.35,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/10474.jpg"
+ },
+ {
+  "name": "Condimento 18 Fl. EVO Espositore 3x limone, 3x mandarino, 3x aglio, 3x tartufo, 3x basilico, 3x peperoncino a 10cl DE CARLO",
+  "category": "olivenoel",
+  "kind": "food",
+  "producer": "De Carlo",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "8466",
+    "vintage": null,
+    "size": "10 cl",
+    "price": 33.65,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/8466.jpg"
+ },
+ {
+  "name": "Olio Extra Vergine di Oliva Latta Feudo Disisa",
+  "category": "olivenoel",
+  "kind": "food",
+  "producer": "Feudo Disisa",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "9930",
+    "vintage": null,
+    "size": "5 l",
+    "price": 15.45,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/9930.jpg"
+ },
+ {
+  "name": "Olio extra vergine di oliva Feudo Disisa",
+  "category": "olivenoel",
+  "kind": "food",
+  "producer": "Feudo Disisa",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "11064",
+    "vintage": null,
+    "size": "50 cl",
+    "price": 18.2,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/11064.jpg"
+ },
+ {
+  "name": "Conf. selezione di oro verde di Calabria 3 bottiglie",
+  "category": "olivenoel",
+  "kind": "food",
+  "producer": "Madeo",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10494",
+    "vintage": null,
+    "size": "25 cl",
+    "price": 21.55,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/10494.jpg"
+ },
+ {
+  "name": "Coppa ca.1.8-2kg Salumificio Bazza",
+  "category": "wurstwaren",
+  "kind": "food",
+  "producer": "SALUMIFICIO BAZZA",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "9350",
+    "vintage": null,
+    "size": "ca. 1,8-2 kg",
+    "price": 18.1,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/9350.jpg"
+ },
+ {
+  "name": "Coppa 1/2 SV Salumificio Bazza",
+  "category": "wurstwaren",
+  "kind": "food",
+  "producer": "SALUMIFICIO BAZZA",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "9351",
+    "vintage": null,
+    "size": "nach Gewicht",
+    "price": 41.85,
+    "stock": 6
+   }
+  ],
+  "image": "/demo/desimoni/products/9351.jpg"
+ },
+ {
+  "name": "Lardo del Poggio ca. 2 kg Cascina Stella",
+  "category": "wurstwaren",
+  "kind": "food",
+  "producer": "Cascina Stella",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10275",
+    "vintage": null,
+    "size": "ca. 2 kg",
+    "price": 31.9,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/10275.webp"
+ },
+ {
+  "name": "Salame Turista al Cinghiale ca.350g Cascina Stella",
+  "category": "wurstwaren",
+  "kind": "food",
+  "producer": "Cascina Stella",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "9659",
+    "vintage": null,
+    "size": "ca. 350 g",
+    "price": 41.85,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/9659.jpg"
+ },
+ {
+  "name": "Salsiccia arrotolata al peperoncino ca. 350g Cascina Stella vakuumiert",
+  "category": "wurstwaren",
+  "kind": "food",
+  "producer": "Cascina Stella",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "8905",
+    "vintage": null,
+    "size": "ca. 350 g",
+    "price": 27.9,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/8905.jpg"
+ },
+ {
+  "name": "Salsiccia arrotolata al finocchio ca. 350g Cascina Stella vakuumiert",
+  "category": "wurstwaren",
+  "kind": "food",
+  "producer": "Cascina Stella",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "8906",
+    "vintage": null,
+    "size": "ca. 350 g",
+    "price": 43.9,
+    "stock": 6
+   }
+  ],
+  "image": "/demo/desimoni/products/8906.jpg"
+ },
+ {
+  "name": "Salsicciotto al peperoncino 2xca. 80g Cascina Stella vakuumiert",
+  "category": "wurstwaren",
+  "kind": "food",
+  "producer": "Cascina Stella",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "8907",
+    "vintage": null,
+    "size": "2 × ca. 80 g",
+    "price": 52.6,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/8907.png"
+ },
+ {
+  "name": "Salsicciotto al finocchio 2xca. 80g Cascina Stella vakuumiert",
+  "category": "wurstwaren",
+  "kind": "food",
+  "producer": "Cascina Stella",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "8908",
+    "vintage": null,
+    "size": "2 × ca. 80 g",
+    "price": 45.55,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/8908.png"
+ },
+ {
+  "name": "Bocconcino Mozzarella con latte di bufala 5x50g= 250g in Beutel Barlotti MDP0050BA0250BR",
+  "category": "kaese",
+  "kind": "food",
+  "producer": "Barlotti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10263",
+    "vintage": null,
+    "size": "3 kg",
+    "price": 27.0,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10263.jpg"
+ },
+ {
+  "name": "Mozzarella con latte di bufala 125g in Beutel Barlotti MDP00125BA0250BR",
+  "category": "kaese",
+  "kind": "food",
+  "producer": "Barlotti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10264",
+    "vintage": null,
+    "size": "3 kg",
+    "price": 30.4,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/10264.jpg"
+ },
+ {
+  "name": "Mozzarella con latte di bufala 250 g in Beutel Barlotti MDP0250BA0250BR",
+  "category": "kaese",
+  "kind": "food",
+  "producer": "Barlotti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10265",
+    "vintage": null,
+    "size": "3 kg",
+    "price": 33.5,
+    "stock": 6
+   }
+  ],
+  "image": "/demo/desimoni/products/10265.jpg"
+ },
+ {
+  "name": "Stracciata con latte di bufala 200 g in bicchiere Barlotti STRACCIABUF200G",
+  "category": "kaese",
+  "kind": "food",
+  "producer": "Barlotti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10266",
+    "vintage": null,
+    "size": "200 g",
+    "price": 12.8,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10266.jpg"
+ },
+ {
+  "name": "Ciliegine di Mozzarella con latte di bufala 20g in Beutel Cardinali MDP0020BA0250BR Barlotti",
+  "category": "kaese",
+  "kind": "food",
+  "producer": "Barlotti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10273",
+    "vintage": null,
+    "size": "3 kg",
+    "price": 11.55,
+    "stock": 6
+   }
+  ],
+  "image": "/demo/desimoni/products/10273.jpg"
+ },
+ {
+  "name": "Treccina con latte di bufala 250g Barlotti MDT0250BA0500BR",
+  "category": "kaese",
+  "kind": "food",
+  "producer": "Barlotti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10274",
+    "vintage": null,
+    "size": "3 kg",
+    "price": 27.15,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/10274.png"
+ },
+ {
+  "name": "Yogurt con latte di bufala 125g in vasetto Barlotti YOGURTBUFVAS125*8",
+  "category": "kaese",
+  "kind": "food",
+  "producer": "Barlotti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10281",
+    "vintage": null,
+    "size": "125 g",
+    "price": 39.0,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/10281.jpg"
+ },
+ {
+  "name": "Ricotta con latte di bufala 250g in vasetto Barlotti RIC250VASETTOTERMO",
+  "category": "kaese",
+  "kind": "food",
+  "producer": "Barlotti",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10282",
+    "vintage": null,
+    "size": "250 g",
+    "price": 19.9,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10282.jpg"
+ },
+ {
+  "name": "Filetti di alici marinate cod. 113001200 Buscema",
+  "category": "antipasti",
+  "kind": "food",
+  "producer": "Buscema Gastronomia",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10789",
+    "vintage": null,
+    "size": "200 g",
+    "price": 14.5,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/10789.jpg"
+ },
+ {
+  "name": "Olive Nere secche (al forno) Buscema",
+  "category": "antipasti",
+  "kind": "food",
+  "producer": "Buscema Gastronomia",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "11116",
+    "vintage": null,
+    "size": "nach Gewicht",
+    "price": 23.5,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/11116.jpg"
+ },
+ {
+  "name": "Involtini Speck al Formaggio 1Kg Buscema",
+  "category": "antipasti",
+  "kind": "food",
+  "producer": "Buscema Gastronomia",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10241",
+    "vintage": null,
+    "size": "1 kg",
+    "price": 23.15,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10241.jpg"
+ },
+ {
+  "name": "Peperoni Ripieni al Formaggio 1Kg Buscema",
+  "category": "antipasti",
+  "kind": "food",
+  "producer": "Buscema Gastronomia",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10246",
+    "vintage": null,
+    "size": "1 kg",
+    "price": 20.0,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10246.jpg"
+ },
+ {
+  "name": "Involtini di Melanzane 1Kg Buscema",
+  "category": "antipasti",
+  "kind": "food",
+  "producer": "Buscema Gastronomia",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10247",
+    "vintage": null,
+    "size": "1 kg",
+    "price": 21.6,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/10247.png"
+ },
+ {
+  "name": "Involtini di Peperoni 1Kg Buscema",
+  "category": "antipasti",
+  "kind": "food",
+  "producer": "Buscema Gastronomia",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10367",
+    "vintage": null,
+    "size": "1 kg",
+    "price": 26.7,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/10367.jpg"
+ },
+ {
+  "name": "Peperoni Gran Ripieno al Tonno 1Kg Buscema",
+  "category": "antipasti",
+  "kind": "food",
+  "producer": "Buscema Gastronomia",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10368",
+    "vintage": null,
+    "size": "1 kg",
+    "price": 17.05,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10368.jpg"
+ },
+ {
+  "name": "Cipolle borettane Grigliate Buscema",
+  "category": "antipasti",
+  "kind": "food",
+  "producer": "Buscema Gastronomia",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "10745",
+    "vintage": null,
+    "size": "1 kg",
+    "price": 28.85,
+    "stock": 140
+   },
+   {
+    "sku": "10236",
+    "vintage": null,
+    "size": "2 kg",
+    "price": 28.85,
+    "stock": 46
+   }
+  ],
+  "image": "/demo/desimoni/products/10236.jpg"
+ },
+ {
+  "name": "Acquavita di Gin Agrumata Bespoke",
+  "category": "spirituosen",
+  "kind": "spirit",
+  "producer": "Bespoke Distillery srl",
+  "color": null,
+  "alcohol": 40.0,
+  "variants": [
+   {
+    "sku": "8450",
+    "vintage": null,
+    "size": "70 cl",
+    "price": 55.9,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/8450.png"
+ },
+ {
+  "name": "Acquavita di Gin Floreale Bespoke",
+  "category": "spirituosen",
+  "kind": "spirit",
+  "producer": "Bespoke Distillery srl",
+  "color": null,
+  "alcohol": 40.0,
+  "variants": [
+   {
+    "sku": "8451",
+    "vintage": null,
+    "size": "70 cl",
+    "price": 39.95,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/8451.png"
+ },
+ {
+  "name": "Acquavita di Gin Speziata Bespoke",
+  "category": "spirituosen",
+  "kind": "spirit",
+  "producer": "Bespoke Distillery srl",
+  "color": null,
+  "alcohol": 40.0,
+  "variants": [
+   {
+    "sku": "8452",
+    "vintage": null,
+    "size": "70 cl",
+    "price": 46.1,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/8452.png"
+ },
+ {
+  "name": "Emporia Dry Gin Caffo",
+  "category": "spirituosen",
+  "kind": "spirit",
+  "producer": "Caffo Deutschland GmbH",
+  "color": null,
+  "alcohol": 45.0,
+  "variants": [
+   {
+    "sku": "11112",
+    "vintage": null,
+    "size": "70 cl",
+    "price": 49.95,
+    "stock": 6
+   }
+  ],
+  "image": "/demo/desimoni/products/11112.png"
+ },
+ {
+  "name": "Black Gin 42% Taurus",
+  "category": "spirituosen",
+  "kind": "spirit",
+  "producer": "GINEVRA srl",
+  "color": null,
+  "alcohol": 42.0,
+  "variants": [
+   {
+    "sku": "9833",
+    "vintage": null,
+    "size": "70 cl",
+    "price": 49.75,
+    "stock": 140
+   }
+  ],
+  "image": "/demo/desimoni/products/9833.jpg"
+ },
+ {
+  "name": "Amaro di Capri Caprisius 47",
+  "category": "spirituosen",
+  "kind": "spirit",
+  "producer": "Limited Capri",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "9439",
+    "vintage": null,
+    "size": "70 cl",
+    "price": 34.3,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/9439.png"
+ },
+ {
+  "name": "Gin Bathtub Montanaro",
+  "category": "spirituosen",
+  "kind": "spirit",
+  "producer": "Montanaro",
+  "color": null,
+  "alcohol": 42.0,
+  "variants": [
+   {
+    "sku": "10571",
+    "vintage": null,
+    "size": "70 cl",
+    "price": 43.0,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/10571.jpg"
+ },
+ {
+  "name": "Blu lie - Vodka Italiana 23",
+  "category": "spirituosen",
+  "kind": "spirit",
+  "producer": "TPLF s.r.l.",
+  "color": null,
+  "alcohol": null,
+  "variants": [
+   {
+    "sku": "8540",
+    "vintage": null,
+    "size": "70 cl",
+    "price": 41.9,
+    "stock": 40
+   }
+  ],
+  "image": "/demo/desimoni/products/8540.jpg"
+ }
+]

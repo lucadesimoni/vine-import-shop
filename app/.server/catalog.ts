@@ -1,0 +1,252 @@
+import { and, asc, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
+import { priceFor, stockLevel, type PriceInfo, type StockLevel, type Tier } from "~/lib/pricing";
+import { tl } from "~/lib/localized";
+import type { ShopContext } from "./context";
+import { getDb, schema } from "./db";
+
+const { products: p, variants: v, producers: pr, categories: c, prices } = schema;
+
+export type CardVariant = {
+  id: number;
+  sku: string;
+  vintage: string | null;
+  size: string | null;
+  packSize: number;
+  stock: StockLevel;
+  stockQty: number | null;
+  price: PriceInfo | null;
+};
+export type ProductCard = {
+  id: number;
+  slug: string;
+  name: string;
+  kind: string;
+  color: string | null;
+  image: string | null;
+  organic: boolean;
+  promo: boolean;
+  isNew: boolean;
+  tradeOnly: boolean;
+  producer: { name: string; slug: string } | null;
+  category: { name: string; slug: string } | null;
+  country: string | null;
+  region: string | null;
+  variants: CardVariant[];
+};
+
+export function taxRate(ctx: ShopContext, taxClass: "standard" | "reduced") {
+  return taxClass === "reduced" ? ctx.shop.tax.reduced : ctx.shop.tax.standard;
+}
+
+async function tiersFor(variantIds: number[], groupId: number | undefined) {
+  const map = new Map<number, Tier[]>();
+  if (!groupId || !variantIds.length) return map;
+  const db = await getDb();
+  const rows = await db
+    .select({ variantId: prices.variantId, minQty: prices.minQty, netCents: prices.netCents })
+    .from(prices)
+    .where(and(eq(prices.groupId, groupId), inArray(prices.variantId, variantIds)));
+  for (const r of rows) map.set(r.variantId, [...(map.get(r.variantId) ?? []), { minQty: r.minQty, netCents: r.netCents }]);
+  return map;
+}
+
+/** Turn DB rows into localized cards with group pricing + stock levels. */
+export async function toCards(ctx: ShopContext, ids: number[]): Promise<ProductCard[]> {
+  if (!ids.length) return [];
+  const db = await getDb();
+  const rows = await db.query.products.findMany({
+    where: inArray(p.id, ids),
+    with: undefined,
+  });
+  const vrows = await db.select().from(v).where(and(inArray(v.productId, ids), eq(v.active, true))).orderBy(asc(v.sort), desc(v.vintage));
+  const prodIds = [...new Set(rows.map((r) => r.producerId).filter((x): x is number => !!x))];
+  const catIds = [...new Set(rows.map((r) => r.categoryId).filter((x): x is number => !!x))];
+  const [prods, cats, tiers] = await Promise.all([
+    prodIds.length ? db.select().from(pr).where(inArray(pr.id, prodIds)) : [],
+    catIds.length ? db.select().from(c).where(inArray(c.id, catIds)) : [],
+    tiersFor(vrows.map((x) => x.id), ctx.group?.id),
+  ]);
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const { stockDisplay, stockLow, stockHigh } = ctx.shop;
+
+  return ids
+    .map((id) => byId.get(id))
+    .filter((r): r is NonNullable<typeof r> => !!r)
+    .map((r) => {
+      const producer = prods.find((x) => x.id === r.producerId);
+      const cat = cats.find((x) => x.id === r.categoryId);
+      return {
+        id: r.id,
+        slug: r.slug,
+        name: tl(r.name, ctx.locale),
+        kind: r.kind,
+        color: r.color,
+        image: r.image,
+        organic: r.organic,
+        promo: r.promo,
+        isNew: r.isNew,
+        tradeOnly: r.tradeOnly,
+        producer: producer ? { name: producer.name, slug: producer.slug } : null,
+        category: cat ? { name: tl(cat.name, ctx.locale), slug: cat.slug } : null,
+        country: r.country,
+        region: r.region,
+        variants: vrows
+          .filter((x) => x.productId === r.id)
+          .map((x) => ({
+            id: x.id,
+            sku: x.sku,
+            vintage: x.vintage,
+            size: x.size,
+            packSize: x.packSize,
+            stock: stockLevel(x.stock, stockLow, stockHigh),
+            stockQty: stockDisplay === "exact" ? x.stock : null,
+            price: ctx.showPrices
+              ? priceFor({ listGross: x.priceCents, taxRate: taxRate(ctx, r.taxClass), group: ctx.group, tiers: tiers.get(x.id) ?? [] })
+              : null,
+          })),
+      };
+    });
+}
+
+export type SearchParams = {
+  q?: string;
+  category?: string;
+  producer?: string;
+  kind?: string;
+  sort?: string;
+  page?: number;
+  perPage?: number;
+  promo?: boolean;
+};
+
+export async function categoryAndDescendants(slug: string): Promise<number[]> {
+  const db = await getDb();
+  const all = await db.select({ id: c.id, parentId: c.parentId, slug: c.slug }).from(c);
+  const root = all.find((x) => x.slug === slug);
+  if (!root) return [];
+  const out = [root.id];
+  for (let i = 0; i < out.length; i++) for (const x of all) if (x.parentId === out[i]) out.push(x.id);
+  return out;
+}
+
+export async function searchProducts(ctx: ShopContext, params: SearchParams) {
+  const db = await getDb();
+  const where: SQL[] = [eq(p.active, true)];
+  if (!ctx.isTrade) where.push(eq(p.tradeOnly, false));
+  if (params.kind) where.push(eq(p.kind, params.kind as "wine"));
+  if (params.promo) where.push(eq(p.promo, true));
+  if (params.category) {
+    const ids = await categoryAndDescendants(params.category);
+    where.push(ids.length ? inArray(p.categoryId, ids) : sql`false`);
+  }
+  if (params.producer) {
+    const prod = await db.query.producers.findFirst({ where: eq(pr.slug, params.producer) });
+    where.push(prod ? eq(p.producerId, prod.id) : sql`false`);
+  }
+  if (params.q?.trim()) {
+    const q = `%${params.q.trim().toLowerCase()}%`;
+    where.push(
+      or(
+        sql`lower(${p.name}::text) like ${q}`,
+        sql`lower(coalesce(products.grapes, '') || ' ' || coalesce(products.region, '') || ' ' || coalesce(products.appellation, '')) like ${q}`,
+        sql`exists (select 1 from producers pq where pq.id = products.producer_id and lower(pq.name) like ${q})`,
+        sql`exists (select 1 from variants vq where vq.product_id = products.id and lower(vq.sku) like ${q})`,
+      )!,
+    );
+  }
+  const nameExpr = sql`coalesce(${p.name}->>${ctx.locale}, ${p.name}->>'de')`;
+  // Correlated subqueries use explicit aliases (drizzle renders bare column names inside sql``).
+  const minPrice = sql.raw(`(select min(vm.price_cents) from variants vm where vm.product_id = products.id)`);
+  const order =
+    params.sort === "name" ? [asc(nameExpr)]
+    : params.sort === "producer" ? [asc(sql.raw(`(select ps.name from producers ps where ps.id = products.producer_id)`)), asc(nameExpr)]
+    : params.sort === "price_asc" ? [asc(minPrice)]
+    : params.sort === "price_desc" ? [desc(minPrice)]
+    : params.sort === "new" ? [desc(p.createdAt)]
+    : [desc(p.featured), desc(p.promo), asc(p.categoryId), asc(nameExpr)];
+
+  const perPage = params.perPage ?? 24;
+  const page = Math.max(1, params.page ?? 1);
+  const cond = and(...where);
+  const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(p).where(cond);
+  const ids = await db.select({ id: p.id }).from(p).where(cond).orderBy(...order).limit(perPage).offset((page - 1) * perPage);
+  return { items: await toCards(ctx, ids.map((x) => x.id)), total: count, page, pages: Math.max(1, Math.ceil(count / perPage)) };
+}
+
+export async function categoryTree(ctx: ShopContext) {
+  const db = await getDb();
+  const rows = await db
+    .select({
+      id: c.id, slug: c.slug, parentId: c.parentId, name: c.name, image: c.image, sort: c.sort, showOnHome: c.showOnHome,
+      count: sql<number>`${sql.raw("(select count(*)::int from products pc where pc.category_id = categories.id and pc.active)")}`,
+    })
+    .from(c)
+    .orderBy(asc(c.sort));
+  const nodes = rows.map((r) => ({ ...r, name: tl(r.name, ctx.locale), total: r.count }));
+  // roll counts up to parents
+  for (const n of [...nodes].reverse()) if (n.parentId) {
+    const parent = nodes.find((x) => x.id === n.parentId);
+    if (parent) parent.total += n.total;
+  }
+  return nodes;
+}
+
+export async function producerFacets(ctx: ShopContext, limit = 8) {
+  const db = await getDb();
+  return db
+    .select({ slug: pr.slug, name: pr.name, count: sql<number>`count(${p.id})::int` })
+    .from(pr)
+    .innerJoin(p, and(eq(p.producerId, pr.id), eq(p.active, true), ctx.isTrade ? undefined : eq(p.tradeOnly, false)))
+    .groupBy(pr.id)
+    .orderBy(desc(sql`count(${p.id})`), asc(pr.name))
+    .limit(limit);
+}
+
+export async function productDetail(ctx: ShopContext, slug: string) {
+  const db = await getDb();
+  const row = await db.query.products.findFirst({ where: and(eq(p.slug, slug), eq(p.active, true)) });
+  if (!row || (row.tradeOnly && !ctx.isTrade)) return null;
+  const [card] = await toCards(ctx, [row.id]);
+  const producer = row.producerId ? await db.query.producers.findFirst({ where: eq(pr.id, row.producerId) }) : null;
+  const sameProducer = producer
+    ? await db.select({ id: p.id }).from(p).where(and(eq(p.producerId, producer.id), eq(p.active, true), sql`${p.id} <> ${row.id}`)).limit(4)
+    : [];
+  const sameCategory = row.categoryId
+    ? await db.select({ id: p.id }).from(p).where(and(eq(p.categoryId, row.categoryId), eq(p.active, true), sql`${p.id} <> ${row.id}`)).orderBy(desc(p.featured)).limit(4)
+    : [];
+  return {
+    card,
+    description: tl(row.description, ctx.locale),
+    short: tl(row.short, ctx.locale),
+    pairing: tl(row.pairing, ctx.locale),
+    appellation: row.appellation,
+    grapes: row.grapes,
+    alcohol: row.alcohol,
+    taxClass: row.taxClass,
+    producer: producer ? { name: producer.name, slug: producer.slug, region: producer.region, country: producer.country, description: tl(producer.description, ctx.locale) } : null,
+    moreFromProducer: await toCards(ctx, sameProducer.map((x) => x.id)),
+    related: await toCards(ctx, sameCategory.map((x) => x.id)),
+  };
+}
+
+export async function producersList() {
+  const db = await getDb();
+  return db
+    .select({
+      id: pr.id, slug: pr.slug, name: pr.name, region: pr.region, country: pr.country, logo: pr.logo, featured: pr.featured, description: pr.description,
+      count: sql<number>`${sql.raw("(select count(*)::int from products pp where pp.producer_id = producers.id and pp.active)")}`,
+    })
+    .from(pr)
+    .orderBy(desc(pr.featured), asc(pr.name));
+}
+
+export async function homeCollections(ctx: ShopContext) {
+  const db = await getDb();
+  const base = and(eq(p.active, true), ctx.isTrade ? undefined : eq(p.tradeOnly, false));
+  const promo = await db.select({ id: p.id }).from(p).where(and(base, eq(p.promo, true))).orderBy(desc(p.updatedAt)).limit(12);
+  const featured = await db.select({ id: p.id }).from(p).where(and(base, eq(p.featured, true))).orderBy(desc(p.updatedAt)).limit(8);
+  return {
+    promo: await toCards(ctx, promo.map((x) => x.id)),
+    featured: await toCards(ctx, featured.map((x) => x.id)),
+  };
+}

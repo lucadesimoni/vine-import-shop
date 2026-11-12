@@ -1,14 +1,19 @@
 name: CI
 on: [push, pull_request]
 jobs:
-  test:
+  check:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php: ['8.1', '8.2', '8.3']
     steps:
       - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
-        with: { php-version: '${{ matrix.php }}', extensions: pdo_sqlite, intl, mbstring, curl }
-      - run: find app config database public -name '*.php' -print0 | xargs -0 -n1 php -l
-      - run: php tests/run.php
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: E2E smoke (embedded PGlite + demo data)
+        run: |
+          npx playwright install --with-deps chromium
+          SESSION_SECRET=ci-secret-ci-secret-ci-secret-1234 npm start &
+          npx wait-on http://localhost:3000/api/health
+          npm run e2e

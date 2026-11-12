@@ -1,0 +1,171 @@
+import { data, Link } from "react-router";
+import { ChevronRight, Leaf } from "lucide-react";
+import type { Route } from "./+types/product";
+import { shopContext } from "~/.server/context";
+import { productDetail } from "~/.server/catalog";
+import { useI18n, type MessageKey } from "~/lib/i18n";
+import { formatMoney } from "~/lib/money";
+import { useRootData } from "~/lib/root-data";
+import { Badge, Eyebrow, Notice, SectionHeading } from "~/components/ui";
+import { AddToList, PriceTag, ProductGrid, ProductImage, StockLabel } from "~/components/shop";
+
+export async function loader({ params, context, request }: Route.LoaderArgs) {
+  const ctx = context.get(shopContext);
+  const product = await productDetail(ctx, params.slug);
+  if (!product) throw data("Not found", { status: 404 });
+  return { product, url: request.url };
+}
+
+export const meta: Route.MetaFunction = ({ loaderData, matches }) => {
+  if (!loaderData) return [];
+  const root = matches[0].loaderData as { brand: { name: string } } | undefined;
+  const p = loaderData.product;
+  const v = p.card.variants[0];
+  return [
+    { title: `${p.card.name} · ${root?.brand.name ?? ""}` },
+    { name: "description", content: p.short || p.description.slice(0, 160) },
+    { property: "og:title", content: p.card.name },
+    ...(p.card.image ? [{ property: "og:image", content: new URL(p.card.image, loaderData.url).href }] : []),
+    {
+      "script:ld+json": {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: p.card.name,
+        sku: v?.sku,
+        brand: p.producer ? { "@type": "Brand", name: p.producer.name } : undefined,
+        image: p.card.image ? new URL(p.card.image, loaderData.url).href : undefined,
+        offers: v ? { "@type": "Offer", availability: v.stock === "out" ? "https://schema.org/OutOfStock" : "https://schema.org/InStock", ...(v.price ? { price: (v.price.gross / 100).toFixed(2), priceCurrency: "CHF" } : {}) } : undefined,
+      },
+    },
+  ];
+};
+
+export default function Product({ loaderData }: Route.ComponentProps) {
+  const { product: p } = loaderData;
+  const { t, locale } = useI18n();
+  const { shop, showPrices, user } = useRootData();
+  const c = p.card;
+  const first = c.variants[0];
+  const facts = [
+    [t("product.producer"), p.producer?.name],
+    [t("product.origin"), [c.region, c.country].filter(Boolean).join(", ")],
+    [t("product.appellation"), p.appellation],
+    [t("product.grapes"), p.grapes],
+    [t("product.alcohol"), p.alcohol ? `${p.alcohol} % vol.` : null],
+  ].filter(([, v]) => v) as [string, string][];
+
+  return (
+    <div className="container-page pb-24 pt-8">
+      <nav aria-label="Breadcrumb" className="mb-8 flex flex-wrap items-center gap-1.5 text-[13px] text-muted-fg">
+        <Link to="/shop" className="hover:text-fg">{t("nav.shop")}</Link>
+        {c.category && <><ChevronRight size={13} /><Link to={`/shop?category=${c.category.slug}`} className="hover:text-fg">{c.category.name}</Link></>}
+        <ChevronRight size={13} /><span className="text-fg">{c.name}</span>
+      </nav>
+
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16">
+        <div className="relative lg:sticky lg:top-[calc(var(--header-h)+2rem)] lg:self-start">
+          <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-surface">
+            <div className="absolute inset-[8%]"><ProductImage product={c} /></div>
+          </div>
+          <div className="absolute left-4 top-4 flex flex-col gap-1.5">
+            {c.promo && <Badge tone="primary">{t("shop.promo")}</Badge>}
+            {c.organic && <Badge tone="success"><Leaf size={10} /> {t("shop.organic")}</Badge>}
+          </div>
+        </div>
+
+        <div className="grid content-start gap-8">
+          <div className="grid gap-4">
+            <Eyebrow>{[c.color ? t(`color.${c.color}` as MessageKey) : c.category?.name, c.country].filter(Boolean).join(" · ")}</Eyebrow>
+            <h1 className="text-h1">{c.name}</h1>
+            {p.producer && (
+              <Link to={`/shop?producer=${p.producer.slug}`} className="w-fit text-lg text-muted-fg underline-offset-4 hover:text-fg hover:underline">{p.producer.name}</Link>
+            )}
+          </div>
+
+          {first && (
+            <div className="grid gap-2">
+              <PriceTag price={first.price} size="lg" />
+              {!showPrices && (
+                <p className="text-sm text-muted-fg">
+                  {user ? t("cart.requestNote") : <>{t("price.loginForPrices")} · <Link to="/login" className="text-fg underline underline-offset-4">{t("nav.login")}</Link></>}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Variant table */}
+          <div className="overflow-hidden rounded-lg border border-border bg-surface">
+            <div className="hidden grid-cols-[1fr_0.8fr_1fr_auto] gap-4 border-b border-border px-5 py-3 sm:grid sm:grid-cols-[1.1fr_0.7fr_0.9fr_17.5rem]">
+              {[t("product.vintage"), t("product.format"), t("product.art"), ""].map((h, i) => <span key={i} className="text-eyebrow text-[10px] text-muted-fg">{h}</span>)}
+            </div>
+            {c.variants.map((v) => (
+              <div key={v.id} className="grid gap-4 border-b border-border px-5 py-5 last:border-0 sm:grid-cols-[1.1fr_0.7fr_0.9fr_17.5rem] sm:items-center">
+                <div className="grid gap-1">
+                  <span className="font-medium tabular-nums">{v.vintage ?? "—"}</span>
+                  <StockLabel level={v.stock} qty={v.stockQty} />
+                </div>
+                <span className="text-sm">{v.size ?? "—"}</span>
+                <div className="grid gap-0.5">
+                  <span className="text-sm tabular-nums">{v.sku}</span>
+                  {v.price && <span className="text-[13px] text-muted-fg tabular-nums">{formatMoney(v.price.display, shop.currency, locale)}</span>}
+                </div>
+                <AddToList variantId={v.id} packSize={v.packSize} compact disabled={v.stock === "out"} />
+              </div>
+            ))}
+          </div>
+
+          {first?.price && first.price.tiers.length > 1 && (
+            <div className="rounded-lg border border-border bg-surface p-5">
+              <p className="text-eyebrow mb-3 text-[10px] text-muted-fg">{t("price.tiers")} · {first.price.displayMode === "net" ? t("price.exclVat") : t("price.inclVat")}</p>
+              <dl className="grid grid-cols-3 gap-3">
+                {first.price.tiers.map((tier) => (
+                  <div key={tier.minQty} className="rounded-md bg-muted px-3 py-2.5">
+                    <dt className="text-[12px] text-muted-fg">{t("price.from", { qty: tier.minQty })}</dt>
+                    <dd className="font-semibold tabular-nums">{formatMoney(first.price!.displayMode === "net" ? tier.netCents : Math.round(tier.netCents * (1 + first.price!.taxRate / 100)), shop.currency, locale)}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
+          {!showPrices && !user && <Notice>{t("auth.tradeText")} <Link to="/trade#apply" className="font-medium underline underline-offset-4">{t("trade.apply")}</Link></Notice>}
+
+          {(p.description || p.short) && (
+            <div className="grid gap-3">
+              <h2 className="text-eyebrow text-[11px] text-muted-fg">{t("product.details")}</h2>
+              <p className="text-lead whitespace-pre-line">{p.description || p.short}</p>
+            </div>
+          )}
+          {p.pairing && (
+            <div className="grid gap-3">
+              <h2 className="text-eyebrow text-[11px] text-muted-fg">{t("product.pairing")}</h2>
+              <p>{p.pairing}</p>
+            </div>
+          )}
+          {facts.length > 0 && (
+            <dl className="grid grid-cols-2 border-t border-border">
+              {facts.map(([k, v]) => (
+                <div key={k} className="border-b border-border py-3.5 pr-4">
+                  <dt className="text-eyebrow text-[10px] text-muted-fg">{k}</dt>
+                  <dd className="mt-1 text-[14px]">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+      </div>
+
+      {p.moreFromProducer.length > 0 && p.producer && (
+        <section className="mt-24">
+          <SectionHeading title={t("product.more", { name: p.producer.name })} action={<Link to={`/shop?producer=${p.producer.slug}`} className="text-sm underline underline-offset-4">{t("common.showAll")}</Link>} />
+          <ProductGrid products={p.moreFromProducer} />
+        </section>
+      )}
+      {p.related.length > 0 && (
+        <section className="mt-24">
+          <SectionHeading title={t("product.related")} />
+          <ProductGrid products={p.related} />
+        </section>
+      )}
+    </div>
+  );
+}

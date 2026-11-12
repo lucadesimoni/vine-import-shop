@@ -1,0 +1,115 @@
+import { randomBytes, scrypt as _scrypt, timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
+import { createCookieSessionStorage, redirect } from "react-router";
+import { eq, sql } from "drizzle-orm";
+import { getDb, schema } from "./db";
+
+const scrypt = promisify(_scrypt) as (pw: string, salt: Buffer, len: number, opts: object) => Promise<Buffer>;
+const PARAMS = { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
+
+/** scrypt (memory-hard, built into Node — no native deps). Format: scrypt$N$salt$hash */
+export async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16);
+  const hash = await scrypt(password.normalize("NFKC"), salt, 32, PARAMS);
+  return `scrypt$${PARAMS.N}$${salt.toString("base64")}$${hash.toString("base64")}`;
+}
+
+export async function verifyPassword(password: string, stored: string): Promise<boolean> {
+  const [algo, n, saltB64, hashB64] = stored.split("$");
+  if (algo !== "scrypt" || !saltB64 || !hashB64) return false;
+  const expected = Buffer.from(hashB64, "base64");
+  const actual = await scrypt(password.normalize("NFKC"), Buffer.from(saltB64, "base64"), expected.length, { ...PARAMS, N: Number(n) });
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
+
+type SessionData = { userId: number; cartId: string; locale: string };
+type FlashData = { toast: { kind: "success" | "error"; text: string } };
+
+const secret = process.env.SESSION_SECRET;
+if (!secret && process.env.NODE_ENV === "production") throw new Error("SESSION_SECRET must be set in production");
+
+export const sessionStorage = createCookieSessionStorage<SessionData, FlashData>({
+  cookie: {
+    name: "__shop",
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    secure: process.env.NODE_ENV === "production",
+    secrets: [secret ?? "dev-insecure-secret"],
+    maxAge: 60 * 60 * 24 * 30,
+  },
+});
+
+export const getSession = (request: Request) => sessionStorage.getSession(request.headers.get("Cookie"));
+export const commit = sessionStorage.commitSession;
+
+export type SessionUser = Awaited<ReturnType<typeof loadUser>>;
+
+async function loadUser(id: number) {
+  const db = await getDb();
+  const user = await db.query.users.findFirst({ where: eq(schema.users.id, id) });
+  if (!user) return null;
+  const group = user.groupId ? await db.query.customerGroups.findFirst({ where: eq(schema.customerGroups.id, user.groupId) }) : null;
+  const { passwordHash: _p, resetToken: _r, ...safe } = user;
+  return { ...safe, group: group ?? null };
+}
+
+export async function getUser(request: Request) {
+  const session = await getSession(request);
+  const id = session.get("userId");
+  return id ? loadUser(id) : null;
+}
+
+export async function requireUser(request: Request) {
+  const user = await getUser(request);
+  if (!user) {
+    const url = new URL(request.url);
+    throw redirect(`/login?next=${encodeURIComponent(url.pathname + url.search)}`);
+  }
+  return user;
+}
+
+export async function requireStaff(request: Request) {
+  const user = await requireUser(request);
+  if (user.role !== "admin" && user.role !== "staff") throw new Response("Forbidden", { status: 403 });
+  return user;
+}
+
+export async function findUserByEmail(email: string) {
+  const db = await getDb();
+  return db.query.users.findFirst({ where: eq(sql`lower(${schema.users.email})`, email.trim().toLowerCase()) });
+}
+
+/** Very small in-memory login throttle (per instance). Use a shared store when scaling out. */
+const attempts = new Map<string, { n: number; until: number }>();
+export function throttle(key: string): boolean {
+  const now = Date.now();
+  const a = attempts.get(key);
+  if (a && a.until > now && a.n >= 8) return true;
+  return false;
+}
+export function registerFailure(key: string) {
+  const now = Date.now();
+  const a = attempts.get(key);
+  attempts.set(key, a && a.until > now ? { n: a.n + 1, until: a.until } : { n: 1, until: now + 10 * 60_000 });
+}
+export const clearFailures = (key: string) => attempts.delete(key);
+
+export async function login(request: Request, userId: number, redirectTo: string) {
+  const session = await getSession(request);
+  session.set("userId", userId);
+  // Keep the anonymous cart: it is merged in cart.ts on next access.
+  return redirect(redirectTo, { headers: { "Set-Cookie": await commit(session) } });
+}
+
+export async function logout(request: Request) {
+  const session = await getSession(request);
+  session.unset("userId");
+  session.unset("cartId");
+  return redirect("/", { headers: { "Set-Cookie": await commit(session) } });
+}
+
+export function safeRedirect(to: FormDataEntryValue | string | null | undefined, fallback = "/") {
+  if (typeof to !== "string" || !to.startsWith("/") || to.startsWith("//")) return fallback;
+  return to;
+}

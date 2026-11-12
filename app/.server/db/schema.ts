@@ -1,0 +1,300 @@
+import { sql } from "drizzle-orm";
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
+import type { Localized } from "~/lib/localized";
+
+/**
+ * Data model
+ *  - product = what the customer sees (name, story, producer, category)
+ *  - variant = what the ERP sells (SKU / article no., vintage, size, price, stock)
+ *  Money is integer cents. Translatable content is jsonb { de, it, fr, en }.
+ *  White-label configuration lives in `settings` (see app/lib/settings.ts).
+ */
+
+const timestamps = {
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+};
+
+export const settings = pgTable("settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const customerGroups = pgTable("customer_groups", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  name: text("name").notNull(),
+  isTrade: boolean("is_trade").notNull().default(false),
+  showNet: boolean("show_net").notNull().default(false),
+  discountPct: numeric("discount_pct", { precision: 5, scale: 2, mode: "number" }).notNull().default(0),
+  minOrderCents: integer("min_order_cents").notNull().default(0),
+  erpCode: text("erp_code"),
+});
+
+export const users = pgTable(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    email: text("email").notNull(),
+    passwordHash: text("password_hash").notNull(),
+    name: text("name").notNull().default(""),
+    company: text("company"),
+    uidNumber: text("uid_number"),
+    phone: text("phone"),
+    role: text("role", { enum: ["customer", "staff", "admin"] }).notNull().default("customer"),
+    groupId: integer("group_id").references(() => customerGroups.id),
+    tradeStatus: text("trade_status", { enum: ["pending", "approved", "rejected"] }),
+    locale: text("locale").notNull().default("de"),
+    billing: jsonb("billing").$type<Address>(),
+    erpId: text("erp_id"),
+    resetToken: text("reset_token"),
+    resetExpires: timestamp("reset_expires", { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("users_email_idx").on(sql`lower(${t.email})`)],
+);
+
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  parentId: integer("parent_id"),
+  name: jsonb("name").$type<Localized>().notNull(),
+  image: text("image"),
+  sort: integer("sort").notNull().default(0),
+  showOnHome: boolean("show_on_home").notNull().default(false),
+  erpCode: text("erp_code"),
+});
+
+export const producers = pgTable("producers", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  country: text("country"),
+  region: text("region"),
+  description: jsonb("description").$type<Localized>(),
+  logo: text("logo"),
+  website: text("website"),
+  featured: boolean("featured").notNull().default(false),
+  erpId: text("erp_id"),
+});
+
+export const products = pgTable(
+  "products",
+  {
+    id: serial("id").primaryKey(),
+    slug: text("slug").notNull().unique(),
+    kind: text("kind", { enum: ["wine", "food", "spirit", "beverage"] }).notNull().default("wine"),
+    name: jsonb("name").$type<Localized>().notNull(),
+    short: jsonb("short").$type<Localized>(),
+    description: jsonb("description").$type<Localized>(),
+    pairing: jsonb("pairing").$type<Localized>(),
+    categoryId: integer("category_id").references(() => categories.id),
+    producerId: integer("producer_id").references(() => producers.id),
+    color: text("color", { enum: ["red", "white", "rose", "sparkling", "sweet"] }),
+    country: text("country"),
+    region: text("region"),
+    appellation: text("appellation"),
+    grapes: text("grapes"),
+    alcohol: numeric("alcohol", { precision: 4, scale: 1, mode: "number" }),
+    organic: boolean("organic").notNull().default(false),
+    taxClass: text("tax_class", { enum: ["standard", "reduced"] }).notNull().default("standard"),
+    ageRestricted: boolean("age_restricted").notNull().default(true),
+    tradeOnly: boolean("trade_only").notNull().default(false),
+    active: boolean("active").notNull().default(true),
+    featured: boolean("featured").notNull().default(false),
+    promo: boolean("promo").notNull().default(false),
+    isNew: boolean("is_new").notNull().default(false),
+    image: text("image"),
+    ...timestamps,
+  },
+  (t) => [index("products_category_idx").on(t.categoryId), index("products_producer_idx").on(t.producerId)],
+);
+
+export const variants = pgTable(
+  "variants",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    sku: text("sku").notNull().unique(),
+    erpId: text("erp_id"),
+    vintage: text("vintage"),
+    size: text("size"), // display label, e.g. "75 cl", "2.5 kg"
+    volumeMl: integer("volume_ml"),
+    packSize: integer("pack_size").notNull().default(1), // units per case
+    priceCents: integer("price_cents").notNull().default(0), // list price incl. VAT
+    stock: integer("stock").notNull().default(0),
+    active: boolean("active").notNull().default(true),
+    sort: integer("sort").notNull().default(0),
+    syncedAt: timestamp("synced_at", { withTimezone: true }),
+  },
+  (t) => [index("variants_product_idx").on(t.productId)],
+);
+
+/** Group / tier prices (net, excl. VAT) — typically imported from ERP price lists. */
+export const prices = pgTable(
+  "prices",
+  {
+    id: serial("id").primaryKey(),
+    variantId: integer("variant_id")
+      .notNull()
+      .references(() => variants.id, { onDelete: "cascade" }),
+    groupId: integer("group_id")
+      .notNull()
+      .references(() => customerGroups.id, { onDelete: "cascade" }),
+    minQty: integer("min_qty").notNull().default(1),
+    netCents: integer("net_cents").notNull(),
+  },
+  (t) => [index("prices_lookup_idx").on(t.variantId, t.groupId)],
+);
+
+export type CartItem = { variantId: number; qty: number };
+
+export const carts = pgTable("carts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  items: jsonb("items").$type<CartItem[]>().notNull().default([]),
+  couponCode: text("coupon_code"),
+  ...timestamps,
+});
+
+export type Address = {
+  company?: string;
+  name: string;
+  street: string;
+  zip: string;
+  city: string;
+  country: string;
+  phone?: string;
+};
+
+export const orders = pgTable(
+  "orders",
+  {
+    id: serial("id").primaryKey(),
+    number: text("number").notNull().unique(),
+    token: text("token").notNull(),
+    kind: text("kind", { enum: ["order", "request"] }).notNull().default("order"),
+    userId: integer("user_id").references(() => users.id),
+    groupId: integer("group_id"),
+    isTrade: boolean("is_trade").notNull().default(false),
+    email: text("email").notNull(),
+    status: text("status", { enum: ["new", "confirmed", "processing", "shipped", "completed", "cancelled"] })
+      .notNull()
+      .default("new"),
+    paymentMethod: text("payment_method").notNull(),
+    paymentStatus: text("payment_status", { enum: ["pending", "paid", "failed"] }).notNull().default("pending"),
+    paymentRef: text("payment_ref"),
+    shippingMethod: text("shipping_method").notNull(),
+    currency: text("currency").notNull().default("CHF"),
+    subtotalNet: integer("subtotal_net").notNull().default(0),
+    subtotalGross: integer("subtotal_gross").notNull().default(0),
+    shippingGross: integer("shipping_gross").notNull().default(0),
+    discountGross: integer("discount_gross").notNull().default(0),
+    taxTotal: integer("tax_total").notNull().default(0),
+    totalGross: integer("total_gross").notNull().default(0),
+    couponCode: text("coupon_code"),
+    billing: jsonb("billing").$type<Address>().notNull(),
+    shipping: jsonb("shipping").$type<Address>(),
+    notes: text("notes"),
+    poNumber: text("po_number"),
+    deliveryDate: text("delivery_date"),
+    locale: text("locale").notNull().default("de"),
+    erpId: text("erp_id"),
+    erpStatus: text("erp_status", { enum: ["pending", "transferred", "failed"] }).notNull().default("pending"),
+    ...timestamps,
+  },
+  (t) => [index("orders_user_idx").on(t.userId), index("orders_created_idx").on(t.createdAt)],
+);
+
+export const orderItems = pgTable(
+  "order_items",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    variantId: integer("variant_id"),
+    sku: text("sku").notNull(),
+    name: text("name").notNull(),
+    qty: integer("qty").notNull(),
+    unitNet: integer("unit_net").notNull(),
+    unitGross: integer("unit_gross").notNull(),
+    taxRate: numeric("tax_rate", { precision: 5, scale: 2, mode: "number" }).notNull(),
+    lineGross: integer("line_gross").notNull(),
+  },
+  (t) => [index("order_items_order_idx").on(t.orderId)],
+);
+
+export const coupons = pgTable("coupons", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  type: text("type", { enum: ["percent", "fixed"] }).notNull().default("percent"),
+  value: integer("value").notNull(),
+  minTotalCents: integer("min_total_cents").notNull().default(0),
+  consumerOnly: boolean("consumer_only").notNull().default(true),
+  active: boolean("active").notNull().default(true),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+});
+
+/** Contact messages, trade applications from visitors, sample requests … */
+export const inquiries = pgTable("inquiries", {
+  id: serial("id").primaryKey(),
+  kind: text("kind", { enum: ["contact", "trade", "sample", "newsletter"] }).notNull(),
+  email: text("email").notNull(),
+  data: jsonb("data").$type<Record<string, string>>().notNull().default({}),
+  status: text("status", { enum: ["open", "done"] }).notNull().default("open"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Editable pages (legal, about …): markdown per locale. */
+export const pages = pgTable("pages", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  title: jsonb("title").$type<Localized>().notNull(),
+  body: jsonb("body").$type<Localized>().notNull(),
+  showInFooter: boolean("show_in_footer").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Reliable ERP hand-off: every outbound message is persisted and retried. */
+export const erpOutbox = pgTable(
+  "erp_outbox",
+  {
+    id: serial("id").primaryKey(),
+    type: text("type", { enum: ["order", "customer"] }).notNull(),
+    refId: integer("ref_id").notNull(),
+    payload: jsonb("payload").notNull(),
+    status: text("status", { enum: ["pending", "retry", "sent", "failed"] }).notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+  },
+  (t) => [index("outbox_status_idx").on(t.status, t.nextAttemptAt)],
+);
+
+export const syncLog = pgTable("sync_log", {
+  id: serial("id").primaryKey(),
+  job: text("job").notNull(),
+  status: text("status", { enum: ["running", "ok", "error"] }).notNull(),
+  items: integer("items").notNull().default(0),
+  message: text("message"),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+});

@@ -1,21 +1,25 @@
-# Production image: PHP 8.3 + Apache. Works on any container host
-# (Fly.io, Render, Railway, Infomaniak Jelastic, Azure, AWS, a VPS …).
-FROM php:8.3-apache
+# Multi-stage production image (Node 22 LTS). Runs anywhere containers run:
+# VPS (Docker/Podman), Fly.io, Railway, Render, Google Cloud Run, Azure, AWS, Infomaniak, Exoscale …
+FROM node:22-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
 
-RUN apt-get update && apt-get install -y --no-install-recommends libsqlite3-dev libicu-dev libzip-dev \
- && docker-php-ext-install pdo_mysql pdo_sqlite intl opcache \
- && a2enmod rewrite headers expires deflate \
- && rm -rf /var/lib/apt/lists/*
-
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
- && sed -ri -e 's!AllowOverride None!AllowOverride All!g' /etc/apache2/apache2.conf \
- && printf "opcache.enable=1\nopcache.validate_timestamps=0\nexpose_php=Off\n" > /usr/local/etc/php/conf.d/shop.ini
-
-WORKDIR /var/www/html
+FROM deps AS build
 COPY . .
-RUN mkdir -p storage/logs storage/sessions storage/cache storage/vinx/inbox storage/vinx/outbox \
- && chown -R www-data:www-data storage
+RUN npm run build && npm prune --omit=dev
 
-VOLUME ["/var/www/html/storage"]
-EXPOSE 80
+FROM node:22-alpine
+ENV NODE_ENV=production PORT=3000
+WORKDIR /app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/build ./build
+COPY --from=build /app/drizzle ./drizzle
+COPY --from=build /app/public ./public
+COPY package.json server.js ./
+RUN mkdir -p data && chown -R node:node data
+USER node
+VOLUME ["/app/data"]
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s CMD wget -qO- http://127.0.0.1:3000/api/health || exit 1
+CMD ["node", "server.js"]
