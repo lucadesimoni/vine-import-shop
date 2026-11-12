@@ -2,7 +2,7 @@ import { data, Form, Link, redirect, useNavigation, useSearchParams } from "reac
 import type { Route } from "./+types/login";
 import { shopContext } from "~/.server/context";
 import { clearFailures, findUserByEmail, login, registerFailure, safeRedirect, throttle, verifyPassword } from "~/.server/auth";
-import { useI18n } from "~/lib/i18n";
+import { useI18n, metaT } from "~/lib/i18n";
 import { channelPath, usePath } from "~/lib/channel";
 import { Logo } from "~/components/shop";
 import { Button, ButtonLink, Card, Eyebrow, Field, Input, Notice } from "~/components/ui";
@@ -30,7 +30,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   return login(request, user.id, safeRedirect(form.get("next"), home));
 }
 
-export const meta: Route.MetaFunction = () => [{ title: "Login" }, { name: "robots", content: "noindex" }];
+export const meta: Route.MetaFunction = ({ matches }) => [{ title: metaT(matches)("nav.login") }, { name: "robots", content: "noindex" }];
 
 export default function Login({ loaderData, actionData }: Route.ComponentProps) {
   const { t } = useI18n();

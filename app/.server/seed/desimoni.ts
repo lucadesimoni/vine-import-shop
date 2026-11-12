@@ -73,8 +73,8 @@ export async function seedDeSimoniDemo(db: DB) {
 
   const home = parseSettings("home", {
     hero: {
-      eyebrow: { de: "Importatore · Dal 1917", it: "Importatore · Dal 1917" },
-      title: { de: "Il gusto Italiano,\nin Svizzera.", it: "Il gusto Italiano,\nin Svizzera." },
+      eyebrow: { de: "Importeur · Seit 1917", it: "Importatore · Dal 1917" },
+      title: { de: "Der Geschmack Italiens,\nin der Schweiz.", it: "Il gusto italiano,\nin Svizzera." },
       text: {
         de: "Seit über einem Jahrhundert wählen wir italienische Spezialitäten aus und liefern sie an alle, die Qualität, Authentizität und Leidenschaft suchen.",
         it: "Da oltre un secolo selezioniamo specialità italiane e le consegniamo a chi cerca qualità, autenticità e passione.",
@@ -84,8 +84,8 @@ export async function seedDeSimoniDemo(db: DB) {
       secondary: { label: { de: "Für Gastronomen", it: "Per la ristorazione" }, href: "/trade" },
     },
     stats: [
-      { value: String(new Date().getFullYear() - 1917), label: { de: "Anni di passione", it: "Anni di passione" } },
-      { value: "200+", label: { de: "Etichette selezionate", it: "Etichette selezionate" } },
+      { value: String(new Date().getFullYear() - 1917), label: { de: "Jahre Leidenschaft", it: "Anni di passione" } },
+      { value: "200+", label: { de: "Ausgewählte Etiketten", it: "Etichette selezionate" } },
     ],
     categories: { title: { de: "Entdecken Sie unser Sortiment", it: "Scoprite il nostro assortimento" }, show: true },
     promo: { show: true, eyebrow: { de: "Exklusiv für die Gastronomie", it: "Esclusivo per la ristorazione" }, title: { de: "Aktionen im Monat", it: "Promozioni del mese" }, text: { de: "Exklusive Angebote warten auf Sie!", it: "Offerte esclusive vi aspettano!" } },
@@ -102,14 +102,14 @@ export async function seedDeSimoniDemo(db: DB) {
     },
     story: {
       show: true,
-      eyebrow: { de: "— Dal 1917", it: "— Dal 1917" },
+      eyebrow: { de: "— Seit 1917", it: "— Dal 1917" },
       title: { de: "Vier Generationen.\nEine Mission.", it: "Quattro generazioni.\nUna missione." },
       text: {
         de: "1917 in Kriens gegründet, importiert De Simoni heute in vierter Generation italienische Köstlichkeiten in die Schweiz. Was als kleines Familiengeschäft begann, ist heute eine der ältesten Adressen für italienische Weine und Spezialitäten en gros.",
-        it: "Fondata a Kriens nel 1917, De Simoni importa oggi alla quarta generazione prelibatezze italiane in Svizzera.",
+        it: "Fondata a Kriens nel 1917, De Simoni importa oggi, alla quarta generazione, prelibatezze italiane in Svizzera. Quella che era una piccola bottega di famiglia è oggi uno degli indirizzi più antichi per vini e specialità italiane all'ingrosso.",
       },
       imageUrl: `${D}/macchine.png`,
-      link: { label: { de: "La nostra storia", it: "La nostra storia" }, href: "/story" },
+      link: { label: { de: "Unsere Geschichte", it: "La nostra storia" }, href: "/story" },
     },
     brands: { show: true, title: { de: "Einige unserer besten Marken", it: "Alcuni dei nostri migliori marchi" } },
     values: {
@@ -125,26 +125,26 @@ export async function seedDeSimoniDemo(db: DB) {
 
   const trade = parseSettings("trade", {
     imageUrl: `${D}/macchine.png`,
-    eyebrow: { de: "— Per la ristorazione", it: "— Per la ristorazione" },
+    eyebrow: { de: "— Für die Gastronomie", it: "— Per la ristorazione" },
     title: { de: "Ihr Partner\nhinter der Karte.", it: "Il vostro partner\ndietro il menu." },
     text: {
       de: "Über 800 Restaurants, Hotels und Trattorien in der Deutschschweiz arbeiten mit uns. Vom Quartier-Bistro bis zum Fine-Dining-Haus — wir liefern, beraten und teilen unsere Leidenschaft für die italienische Küche.",
-      it: "Oltre 800 ristoranti, hotel e trattorie nella Svizzera tedesca lavorano con noi.",
+      it: "Oltre 800 ristoranti, hotel e trattorie nella Svizzera tedesca lavorano con noi. Dal bistrò di quartiere al fine dining — consegniamo, consigliamo e condividiamo la nostra passione per la cucina italiana.",
     },
     servicesTitle: { de: "Was wir für Sie tun.", it: "Cosa facciamo per voi." },
     services: [
-      { title: { de: "Persönliche Beratung", it: "Consulenza personale" }, text: { de: "Unser Aussendienst besucht Sie vor Ort, lernt Ihre Karte kennen und schlägt passende Weine und Spezialitäten vor." } },
-      { title: { de: "Direktimport", it: "Importazione diretta" }, text: { de: "Wir importieren ohne Zwischenhändler — direkt aus den Familienbetrieben Italiens. Bessere Preise, klarer Ursprung." } },
-      { title: { de: "Wöchentliche Lieferung", it: "Consegna settimanale" }, text: { de: "Frische Wurstwaren, Käse und Bestände — pünktlich in der ganzen Deutschschweiz." } },
-      { title: { de: "Sommelier-Service", it: "Servizio sommelier" }, text: { de: "Wein-Pairings, Karten-Erstellung und Schulungen für Ihr Service-Team." } },
-      { title: { de: "Exklusive Etiketten", it: "Etichette esclusive" }, text: { de: "Über 40 Weine, die Sie nur über uns beziehen können." } },
-      { title: { de: "Lager & Logistik", it: "Magazzino e logistica" }, text: { de: "Klimatisiertes Weinlager und sauber organisierte Logistik aus Kriens." } },
+      { title: { de: "Persönliche Beratung", it: "Consulenza personale" }, text: { de: "Unser Aussendienst besucht Sie vor Ort, lernt Ihre Karte kennen und schlägt passende Weine und Spezialitäten vor.", it: "Il nostro servizio esterno vi visita sul posto, conosce il vostro menu e propone vini e specialità adatti." } },
+      { title: { de: "Direktimport", it: "Importazione diretta" }, text: { de: "Wir importieren ohne Zwischenhändler — direkt aus den Familienbetrieben Italiens. Bessere Preise, klarer Ursprung.", it: "Importiamo senza intermediari — direttamente dalle aziende di famiglia italiane. Prezzi migliori, origine chiara." } },
+      { title: { de: "Wöchentliche Lieferung", it: "Consegna settimanale" }, text: { de: "Frische Wurstwaren, Käse und Bestände — pünktlich in der ganzen Deutschschweiz.", it: "Salumi freschi, formaggi e scorte — puntuali in tutta la Svizzera tedesca." } },
+      { title: { de: "Sommelier-Service", it: "Servizio sommelier" }, text: { de: "Wein-Pairings, Karten-Erstellung und Schulungen für Ihr Service-Team.", it: "Abbinamenti, carte dei vini e formazione per il vostro team di sala." } },
+      { title: { de: "Exklusive Etiketten", it: "Etichette esclusive" }, text: { de: "Über 40 Weine, die Sie nur über uns beziehen können.", it: "Oltre 40 vini disponibili solo da noi." } },
+      { title: { de: "Lager & Logistik", it: "Magazzino e logistica" }, text: { de: "Klimatisiertes Weinlager und sauber organisierte Logistik aus Kriens.", it: "Cantina climatizzata e logistica ben organizzata da Kriens." } },
     ],
     stepsTitle: { de: "So funktioniert's.", it: "Come funziona." },
     steps: [
-      { title: { de: "Anfrage stellen", it: "Inviare la richiesta" }, text: { de: "Sie senden uns eine kurze Anfrage mit Angaben zu Ihrem Betrieb. Wir melden uns innerhalb von 24 Stunden." } },
-      { title: { de: "Persönliches Gespräch", it: "Colloquio personale" }, text: { de: "Unser Aussendienst besucht Sie vor Ort, versteht Ihre Karte und Ihre Gäste." } },
-      { title: { de: "Wir liefern, Sie geniessen", it: "Noi consegniamo, voi gustate" }, text: { de: "Wöchentliche Lieferung, transparente Preise, persönlicher Ansprechpartner." } },
+      { title: { de: "Anfrage stellen", it: "Inviare la richiesta" }, text: { de: "Sie senden uns eine kurze Anfrage mit Angaben zu Ihrem Betrieb. Wir melden uns innerhalb von 24 Stunden.", it: "Inviateci una breve richiesta con i dati della vostra attività. Vi rispondiamo entro 24 ore." } },
+      { title: { de: "Persönliches Gespräch", it: "Colloquio personale" }, text: { de: "Unser Aussendienst besucht Sie vor Ort, versteht Ihre Karte und Ihre Gäste.", it: "Il nostro servizio esterno vi visita, conosce il vostro menu e i vostri ospiti." } },
+      { title: { de: "Wir liefern, Sie geniessen", it: "Noi consegniamo, voi gustate" }, text: { de: "Wöchentliche Lieferung, transparente Preise, persönlicher Ansprechpartner.", it: "Consegna settimanale, prezzi trasparenti, un referente personale." } },
     ],
     formTitle: { de: "Werden Sie Kunde.", it: "Diventate clienti." },
     formText: { de: "Füllen Sie das Formular aus — wir melden uns innerhalb von 24 Stunden persönlich bei Ihnen.", it: "Compilate il modulo — vi contatteremo personalmente entro 24 ore." },
@@ -152,19 +152,19 @@ export async function seedDeSimoniDemo(db: DB) {
   });
 
   const story = parseSettings("story", {
-    eyebrow: { de: "— La nostra storia", it: "— La nostra storia" },
+    eyebrow: { de: "— Unsere Geschichte", it: "— La nostra storia" },
     title: { de: "Seit 1917.", it: "Dal 1917." },
-    intro: { de: "Was 1917 mit einem kleinen Geschäft in Kriens begann, ist heute eine der ältesten Adressen für italienische Weine und Spezialitäten in der Schweiz — geführt von der vierten Generation der Familie De Simoni." },
+    intro: { de: "Was 1917 mit einem kleinen Geschäft in Kriens begann, ist heute eine der ältesten Adressen für italienische Weine und Spezialitäten in der Schweiz — geführt von der vierten Generation der Familie De Simoni.", it: "Quella che nel 1917 era una piccola bottega a Kriens è oggi uno degli indirizzi più antichi per vini e specialità italiane in Svizzera — guidata dalla quarta generazione della famiglia De Simoni." },
     imageUrl: `${D}/macchine.png`,
     timeline: [
-      { year: "1917", title: { de: "Die Gründung" }, text: { de: "Giuseppe De Simoni eröffnet in Kriens das erste Geschäft für italienische Spezialitäten — wenige Jahre nach seiner Auswanderung aus dem Tessin." } },
-      { year: "1948", title: { de: "Nachkriegszeit" }, text: { de: "Die zweite Generation übernimmt und beginnt mit dem systematischen Import italienischer Weine in die Zentralschweiz." } },
-      { year: "1976", title: { de: "Eigenes Lager" }, text: { de: "Bezug der Schweighofstrasse 16 — bis heute unser Hauptsitz mit klimatisiertem Weinlager." } },
-      { year: "1995", title: { de: "Direktimporte" }, text: { de: "Ausbau der direkten Beziehungen zu kleinen Familien-Winzern in Piemont, Toskana und Sizilien." } },
-      { year: "2010", title: { de: "Vierte Generation" }, text: { de: "Die Familie führt das Unternehmen in vierter Generation weiter — mit dem gleichen Anspruch wie 1917." } },
-      { year: "Heute", title: { de: "Italianità" }, text: { de: "Über 800 Gastronomie-Kunden, mehr als 200 Etiketten, ein einziger Standard: das Beste, was Italien zu bieten hat." } },
+      { year: "1917", title: { de: "Die Gründung", it: "La fondazione" }, text: { de: "Giuseppe De Simoni eröffnet in Kriens das erste Geschäft für italienische Spezialitäten — wenige Jahre nach seiner Auswanderung aus dem Tessin.", it: "Giuseppe De Simoni apre a Kriens il primo negozio di specialità italiane — pochi anni dopo essere emigrato dal Ticino." } },
+      { year: "1948", title: { de: "Nachkriegszeit", it: "Il dopoguerra" }, text: { de: "Die zweite Generation übernimmt und beginnt mit dem systematischen Import italienischer Weine in die Zentralschweiz.", it: "La seconda generazione subentra e avvia l'importazione sistematica di vini italiani nella Svizzera centrale." } },
+      { year: "1976", title: { de: "Eigenes Lager", it: "Il magazzino" }, text: { de: "Bezug der Schweighofstrasse 16 — bis heute unser Hauptsitz mit klimatisiertem Weinlager.", it: "Trasferimento alla Schweighofstrasse 16 — ancora oggi la nostra sede con cantina climatizzata." } },
+      { year: "1995", title: { de: "Direktimporte", it: "Importazione diretta" }, text: { de: "Ausbau der direkten Beziehungen zu kleinen Familien-Winzern in Piemont, Toskana und Sizilien.", it: "Rapporti diretti con piccoli vignaioli di famiglia in Piemonte, Toscana e Sicilia." } },
+      { year: "2010", title: { de: "Vierte Generation", it: "Quarta generazione" }, text: { de: "Die Familie führt das Unternehmen in vierter Generation weiter — mit dem gleichen Anspruch wie 1917.", it: "La famiglia guida l'azienda alla quarta generazione — con la stessa ambizione del 1917." } },
+      { year: "Heute", title: { de: "Italianità", it: "Italianità" }, text: { de: "Über 800 Gastronomie-Kunden, mehr als 200 Etiketten, ein einziger Standard: das Beste, was Italien zu bieten hat.", it: "Oltre 800 clienti della ristorazione, più di 200 etichette, un solo standard: il meglio che l'Italia ha da offrire." } },
     ],
-    quote: { de: "Die besten Weine erzählen Geschichten — unsere geht inzwischen über vier Generationen." },
+    quote: { de: "Die besten Weine erzählen Geschichten — unsere geht inzwischen über vier Generationen.", it: "I vini migliori raccontano storie — la nostra attraversa ormai quattro generazioni." },
   });
 
   // ── Catalog ────────────────────────────────────────────────────────────
@@ -305,9 +305,10 @@ type DemoProduct = {
 
 export async function seedLegalStubs(db: DB, company: string) {
   const note = "> Vorlage — bitte durch eigene, rechtlich geprüfte Texte ersetzen (Admin → Inhalte).\n\n";
+  const noteIt = "> Modello — sostituire con testi propri verificati legalmente (Admin → Contenuti).\n\n";
   await db.insert(schema.pages).values([
-    { slug: "impressum", title: { de: "Impressum", it: "Colophon", fr: "Mentions légales", en: "Imprint" }, body: { de: `${note}## ${company}\n\nAdresse, Handelsregister, UID und Vertretungsberechtigte.` } },
-    { slug: "agb", title: { de: "AGB", it: "CG", fr: "CG", en: "Terms" }, body: { de: `${note}## Geltungsbereich\n\nDiese AGB gelten für alle Bestellungen bei ${company}.\n\n## Preise\n\nAlle Preise in CHF. Geschäftskunden: exkl. MWST.\n\n## Alter\n\nAlkoholische Getränke werden nur an Personen ab 18 Jahren abgegeben.` } },
-    { slug: "datenschutz", title: { de: "Datenschutz", it: "Protezione dei dati", fr: "Protection des données", en: "Privacy" }, body: { de: `${note}Verantwortlich: ${company}.\n\nWir bearbeiten Personendaten nach dem Schweizer Datenschutzgesetz (DSG). Schriften werden über Bunny Fonts (EU) geladen, es werden keine Tracking-Dienste eingesetzt.` } },
+    { slug: "impressum", title: { de: "Impressum", it: "Colophon", fr: "Mentions légales", en: "Imprint" }, body: { de: `${note}## ${company}\n\nAdresse, Handelsregister, UID und Vertretungsberechtigte.`, it: `${noteIt}## ${company}\n\nIndirizzo, registro di commercio, IDI e persone autorizzate a rappresentare.` } },
+    { slug: "agb", title: { de: "AGB", it: "CG", fr: "CG", en: "Terms" }, body: { de: `${note}## Geltungsbereich\n\nDiese AGB gelten für alle Bestellungen bei ${company}.\n\n## Preise\n\nAlle Preise in CHF. Geschäftskunden: exkl. MWST.\n\n## Alter\n\nAlkoholische Getränke werden nur an Personen ab 18 Jahren abgegeben.`, it: `${noteIt}## Campo di applicazione\n\nLe presenti CG valgono per tutti gli ordini presso ${company}.\n\n## Prezzi\n\nTutti i prezzi in CHF. Clienti commerciali: IVA esclusa.\n\n## Età\n\nLe bevande alcoliche vengono consegnate solo a persone maggiorenni (18 anni).` } },
+    { slug: "datenschutz", title: { de: "Datenschutz", it: "Protezione dei dati", fr: "Protection des données", en: "Privacy" }, body: { de: `${note}Verantwortlich: ${company}.\n\nWir bearbeiten Personendaten nach dem Schweizer Datenschutzgesetz (DSG). Schriften werden über Bunny Fonts (EU) geladen, es werden keine Tracking-Dienste eingesetzt.`, it: `${noteIt}Responsabile: ${company}.\n\nTrattiamo i dati personali secondo la legge svizzera sulla protezione dei dati (LPD). I caratteri vengono caricati tramite Bunny Fonts (UE), non vengono utilizzati servizi di tracciamento.` } },
   ]).onConflictDoNothing();
 }

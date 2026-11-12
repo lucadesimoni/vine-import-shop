@@ -29,7 +29,7 @@ const en: Partial<Messages> = {
   "checkout.placeRequest": "Send request", "checkout.haveAccount": "Already a customer?", "checkout.loggedInAs": "Signed in as {email}", "checkout.createAccount": "Create an account",
   "checkout.summary": "Summary", "checkout.errors": "Please check the highlighted fields.", "checkout.noGuest": "Please sign in to order.",
   "payment.invoice": "Invoice", "payment.invoiceText": "Payable within {days} days", "payment.prepayment": "Bank transfer", "payment.prepaymentText": "Pay in advance, shipped on receipt",
-  "payment.stripe": "Card / TWINT", "payment.request": "Quote", "payment.pending": "Pending", "payment.paid": "Paid", "payment.failed": "Failed",
+  "footer.language": "Language", "nav.admin": "Admin", "payment.stripeText": "Visa, Mastercard, Apple Pay, Google Pay, TWINT", "payment.stripe": "Card / TWINT", "payment.request": "Quote", "payment.pending": "Pending", "payment.paid": "Paid", "payment.failed": "Failed",
   "done.title": "Thank you!", "done.orderText": "Your order {number} has been received. A confirmation was sent to {email}.", "done.requestText": "Your request {number} has been received. We'll get back to you with our offer.",
   "done.bank": "Payment details", "done.holder": "Account holder", "done.reference": "Reference",
   "status.new": "Received", "status.confirmed": "Confirmed", "status.processing": "Processing", "status.shipped": "Shipped", "status.completed": "Completed", "status.cancelled": "Cancelled",

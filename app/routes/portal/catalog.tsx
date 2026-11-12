@@ -3,7 +3,7 @@ import { ClipboardList, Search } from "lucide-react";
 import type { Route } from "./+types/catalog";
 import { shopContext } from "~/.server/context";
 import { categoryTree, searchProducts } from "~/.server/catalog";
-import { useI18n } from "~/lib/i18n";
+import { useI18n, metaT } from "~/lib/i18n";
 import { cn } from "~/lib/cn";
 import { formatMoney } from "~/lib/money";
 import { useRootData } from "~/lib/root-data";
@@ -18,7 +18,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   return { result, categories: categories.filter((c) => c.total > 0), params };
 }
 
-export const meta: Route.MetaFunction = () => [{ title: "Sortiment · B2B" }];
+export const meta: Route.MetaFunction = ({ matches }) => [{ title: `${metaT(matches)("portal.catalog")} · B2B` }];
 
 export default function PortalCatalog({ loaderData }: Route.ComponentProps) {
   const { result, categories, params } = loaderData;

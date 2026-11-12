@@ -23,7 +23,8 @@ All shop paths live under `/api/v2.0/Core/VinX/Shop/`. Collections support OData
 | Live customer price | `POST Calculated/ProductInfo` `{validDate, customerId \| priceGroupId, articleParameters:[{articleId, quantity}]}` → `price`, `pricePromotion`, `discounts[]` | Price source **vinX**: effective price = (promotion ?? price) − discounts. Covers the customer-discount matrix |
 | Basket calculation | `POST Online/Basket {action:"calculate"}` | B2B customers with a vinX address. vinX returns positions, charges (LSVA, deposits), packages, discounts, VAT totals and rounding |
 | Order | `POST Online/Basket {action:"order"}` → `Id` | Persistent outbox with retries. The shop order number is sent as `shopId` and `orderNumber`; PO and notes as `orderText` |
-| New customer / change | `POST Online/OnlineAddress {changeType:"new"\|"change", addressId}` | On registration and trade approval. The spec has no company field, so the company goes into `additionalAddressLine1` |
+| New customer / change | `POST Online/OnlineAddress {changeType:"new"\|"change", addressId}` | On registration, trade approval and every customer edit in the admin. The spec has no company field, so the company goes into `additionalAddressLine1` |
+| Customer changes from vinX | `GET BaseData/Address?$filter=changedOn gt …` | Job `customers`: updates linked shop customers (`users.erpId` = address id): name, company, phone, address, price group (via `groupMap`), language. A newer shop change wins; it is already queued for vinX |
 | Vouchers | Basket position with negative `unitPrice` and `priceCalculationRule:"fromShop"` | Uses the `promoArticleId` mapping |
 
 ### Confirmed by the spec (and differing from the earlier draft)
@@ -33,6 +34,18 @@ All shop paths live under `/api/v2.0/Core/VinX/Shop/`. Collections support OData
 - Stock comes from `Calculated/StockData`, not `StockInfo`. The delta field is `changedOn`. The article number is `articleNumber`, the web title `designationWeb`, and alcohol `volume`.
 - `BaseData/Condition` describes **bottle condition** (Rarities add-in: capsule, label, fill level). It is not a discount endpoint.
 - **Customer discounts (Kundenrabatt matrix)** are not exposed as rules. vinX applies them in `ProductInfo` and `Basket`. `BaseData/DiscountGroupArticleCustomer` lists only the group names.
+
+## Two-way sync: who owns which field
+
+| Data | Master | Direction |
+|---|---|---|
+| Article number, price, stock, vintage, size, active, VAT class, pack size (`vinx.ownedFields`) | vinX | vinX → shop on every sync. Locked in the admin, rejected by bulk actions |
+| Texts, images, categories, promo / featured / B2B-only flags | Shop | Shop only |
+| Producers | vinX creates them, the shop enriches them | Matched by ERP key (`producers.erpId`), so renaming in the admin is safe. Logo, portrait and website stay in the shop |
+| Customers | Both | Shop → vinX on every change (OnlineAddress), vinX → shop by the `customers` job (BaseData/Address) |
+| Orders | Shop | Shop → vinX (Online/Basket, outbox with retries) |
+
+The Shop API v2.0 accepts writes only for orders and addresses, so article master data is maintained in vinX by design.
 
 ## Pricing: who calculates what
 

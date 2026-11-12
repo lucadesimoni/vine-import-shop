@@ -31,7 +31,36 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 - **Automated dependency updates** (Renovate): grouped weekly PRs, majors need approval, security fixes immediately.
 - Vercel demo functions run in Frankfurt (fra1). Neutral default favicon; demo favicon.
 
+- **Producer pages** (`/producers/<name>`): logo, portrait, origin mini map and all products. Linked from the origin map, A–Z and every product page.
+- **Producer & brand admin** (Admin › Produzenten):
+  - logo upload (PNG, WebP or sanitised SVG served with a CSP sandbox);
+  - country and region suggestions, with a hint when a region is not found on the map;
+  - portrait per language, search, filters, sort and bulk actions;
+  - the origin-map settings sit on the same page.
+- **Origin maps for 17 countries.**
+  - Region maps for Italy, France, Spain, Portugal, Germany, Austria, Switzerland, Greece, Hungary, Slovenia, Croatia, USA, Argentina, Chile, South Africa, Australia and New Zealand.
+  - Wine regions are recognised (Bordeaux, Champagne, Rioja, Douro, Mosel, Wachau, Napa, Marlborough …).
+  - Visitors switch between regions, world and A–Z. The world map drills down into a country's regions.
+  - New countries: `scripts/maps/build-region-maps.py`.
+- **Admin lists** for products, orders, customers and producers:
+  - search, sortable columns, filters, paging and bulk actions;
+  - filters for products without image or description, open payments and failed ERP transfers;
+  - order CSV export (Excel-ready).
+- **Customer page** in the admin: contact, billing address, group, B2B status, vinX address number, revenue, last orders and ERP sync status with *send now*.
+- **Two-way customer sync with vinX.**
+  - Admin changes are pushed as OnlineAddress changes.
+  - The new job `customers` pulls address changes made in vinX (BaseData/Address).
+- Language switch in the footer, so it is also reachable on phones. `npm run i18n:check` in CI keeps DE / IT / FR / EN complete.
+
+### Fixed
+- On phones, header icons could be pushed off-screen: responsive `hidden` on buttons was overridden by the button's own display class.
+- Custom extensions that import `defineExtension` crashed the server at start (circular import).
+
 ### Changed
+- **ERP field ownership is enforced.** Fields mastered by vinX are locked in the product form and are not offered as bulk actions.
+- The vinX article sync matches producers by their ERP key. Renaming a producer in the admin no longer creates a duplicate.
+- Demo content is fully translated into Italian. The German home page now has a German headline, so switching the language is visible at once.
+- Page titles follow the selected language.
 - Database migrations are bundled into the server build. This works on serverless hosts and is compatible with existing installations.
 - `docker-compose.yml` is now the single-container setup. App + Postgres moved to `docker-compose.postgres.yml`.
 

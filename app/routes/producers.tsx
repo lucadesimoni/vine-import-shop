@@ -6,7 +6,7 @@ import { shopContext } from "~/.server/context";
 import { producersList, searchProducts } from "~/.server/catalog";
 import { originFacets } from "~/.server/origins";
 import { getDb, schema } from "~/.server/db";
-import { useI18n, type MessageKey } from "~/lib/i18n";
+import { metaT, useI18n, type MessageKey } from "~/lib/i18n";
 import { cn } from "~/lib/cn";
 import { useRootData } from "~/lib/root-data";
 import { ButtonLink, Chip, Eyebrow } from "~/components/ui";
@@ -64,8 +64,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export const meta: Route.MetaFunction = ({ matches }) => {
-  const root = matches[0].loaderData as { brand: { name: string } } | undefined;
-  return [{ title: `Herkunft & Produzenten · ${root?.brand.name ?? ""}` }];
+  const root = matches[0].loaderData as { brand: { name: string }; shop: { terms: { producers: string } } } | undefined;
+  const t = metaT(matches);
+  return [{ title: `${t(`term.producers.${root?.shop.terms.producers ?? "producers"}` as MessageKey)} · ${t("origin.eyebrow")} · ${root?.brand.name ?? ""}` }];
 };
 
 export default function Producers({ loaderData }: Route.ComponentProps) {

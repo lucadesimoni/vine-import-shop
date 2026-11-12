@@ -27,3 +27,9 @@ type I18nValue = { locale: Locale; locales: Locale[]; t: T };
 export const I18nContext = createContext<I18nValue>({ locale: "de", locales: ["de"], t: makeT(de) });
 export const useI18n = () => useContext(I18nContext);
 export type { MessageKey };
+
+/** t() for meta functions: uses the messages the root loader sent for the active locale. */
+export function metaT(matches: readonly ({ loaderData?: unknown } | undefined)[]): T {
+  const root = matches[0]?.loaderData as { messages?: Messages } | undefined;
+  return makeT(root?.messages ?? (de as Messages));
+}

@@ -3,7 +3,7 @@ import { ArrowRight, ShoppingBag, X } from "lucide-react";
 import type { Route } from "./+types/order-list";
 import { shopContext } from "~/.server/context";
 import { cartSummary, getCart } from "~/.server/cart";
-import { useI18n } from "~/lib/i18n";
+import { useI18n, metaT } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
 import { useRootData } from "~/lib/root-data";
 import { usePath } from "~/lib/channel";
@@ -17,7 +17,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   return { summary: await cartSummary(ctx, cart.items, cart.couponCode) };
 }
 
-export const meta: Route.MetaFunction = () => [{ title: "Bestellliste" }, { name: "robots", content: "noindex" }];
+export const meta: Route.MetaFunction = ({ matches }) => [{ title: metaT(matches)("nav.orderList") }, { name: "robots", content: "noindex" }];
 
 export default function OrderList({ loaderData }: Route.ComponentProps) {
   const { summary } = loaderData;

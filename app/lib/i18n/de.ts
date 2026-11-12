@@ -17,6 +17,7 @@ const de = {
   "nav.admin": "Admin",
   "nav.skip": "Zum Inhalt springen",
   "nav.theme": "Hell/Dunkel",
+  "footer.language": "Sprache",
 
   "common.all": "Alle",
   "common.save": "Speichern",

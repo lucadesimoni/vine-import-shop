@@ -204,7 +204,8 @@ export function ThemeToggle({ className }: { className?: string }) {
 /* ── Footer ────────────────────────────────────────────────────────────── */
 
 export function Footer() {
-  const { t, locale } = useI18n();
+  const { t, locale, locales } = useI18n();
+  const location = useLocation();
   const { brand, footerPages } = useRootData();
   const c = brand.contact;
   const quote = tl(brand.footerQuote, locale);
@@ -239,10 +240,21 @@ export function Footer() {
       <div className="border-t border-on-inverse/15">
         <div className="container-page flex flex-wrap items-center justify-between gap-4 py-6 text-[12px] text-on-inverse/65">
           <span>© {new Date().getFullYear()} {brand.legalName || brand.name} · {t("footer.rights")}</span>
-          <nav className="flex flex-wrap gap-5">
+          <nav className="flex flex-wrap items-center gap-5">
             {footerPages.map((p) => (
               <Link key={p.slug} to={`/page/${p.slug}`} className="hover:text-on-inverse">{p.title}</Link>
             ))}
+            {locales.length > 1 && (
+              <span className="flex items-center gap-1 border-l border-on-inverse/20 pl-5" role="group" aria-label={t("footer.language")}>
+                {locales.map((l) => (
+                  <Form key={l} method="post" action="/set-locale" className="contents">
+                    <input type="hidden" name="locale" value={l} />
+                    <input type="hidden" name="redirectTo" value={location.pathname + location.search} />
+                    <button lang={l} aria-current={l === locale} className={cn("rounded-badge px-1.5 py-0.5 uppercase tracking-wider transition-colors", l === locale ? "bg-on-inverse/15 text-on-inverse" : "hover:text-on-inverse")}>{l}</button>
+                  </Form>
+                ))}
+              </span>
+            )}
           </nav>
         </div>
       </div>

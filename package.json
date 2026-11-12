@@ -25,6 +25,7 @@
     "backup": "tsx scripts/backup.ts",
     "restore": "tsx scripts/restore.ts",
     "version:bump": "node scripts/version.mjs",
+    "i18n:check": "node scripts/check-i18n.mjs",
     "changelog:check": "node scripts/check-changelog.mjs"
   },
   "dependencies": {

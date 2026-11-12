@@ -61,3 +61,11 @@ describe("SVG logo upload guard", () => {
     "<html><body>no svg</body></html>",
   ])("rejects %s", (svg) => expect(isSafeSvg(svg)).toBe(false));
 });
+
+import { cn } from "~/lib/cn";
+describe("cn()", () => {
+  it("lets the last display utility win so responsive hiding works on components", () => {
+    expect(cn("inline-flex items-center", "hidden md:inline-flex")).toBe("items-center hidden md:inline-flex");
+    expect(cn("flex", false, "gap-2")).toBe("flex gap-2");
+  });
+});

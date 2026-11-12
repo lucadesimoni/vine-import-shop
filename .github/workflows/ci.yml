@@ -9,6 +9,7 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm run changelog:check
+      - run: npm run i18n:check
       - run: npm run typecheck
       - run: npm test
       - run: npm run build

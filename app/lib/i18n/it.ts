@@ -35,7 +35,7 @@ const it: Partial<Messages> = {
   "checkout.placeRequest": "Invia richiesta", "checkout.haveAccount": "Già cliente?", "checkout.loggedInAs": "Connesso come {email}", "checkout.createAccount": "Crea un conto",
   "checkout.summary": "Riepilogo", "checkout.errors": "Verifichi i campi evidenziati.", "checkout.noGuest": "Acceda per ordinare.",
   "payment.invoice": "Fattura", "payment.invoiceText": "Pagabile entro {days} giorni", "payment.prepayment": "Pagamento anticipato", "payment.prepaymentText": "Bonifico, spedizione dopo il pagamento",
-  "payment.stripe": "Carta / TWINT", "payment.request": "Offerta", "payment.pending": "In sospeso", "payment.paid": "Pagato", "payment.failed": "Non riuscito",
+  "footer.language": "Lingua", "nav.admin": "Admin", "payment.stripeText": "Visa, Mastercard, Apple Pay, Google Pay, TWINT", "payment.stripe": "Carta / TWINT", "payment.request": "Offerta", "payment.pending": "In sospeso", "payment.paid": "Pagato", "payment.failed": "Non riuscito",
   "done.title": "Grazie!", "done.orderText": "Il suo ordine {number} è stato ricevuto. Abbiamo inviato una conferma a {email}.",
   "done.requestText": "La sua richiesta {number} è stata ricevuta. La contatteremo con la nostra offerta.", "done.bank": "Dati di pagamento", "done.holder": "Titolare", "done.reference": "Riferimento",
   "status.new": "Ricevuto", "status.confirmed": "Confermato", "status.processing": "In lavorazione", "status.shipped": "Spedito", "status.completed": "Concluso", "status.cancelled": "Annullato",
