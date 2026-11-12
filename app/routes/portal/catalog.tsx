@@ -79,7 +79,7 @@ export default function PortalCatalog({ loaderData }: Route.ComponentProps) {
                 {result.items.flatMap((p) =>
                   p.variants.map((v, i) => (
                     <tr key={v.id} className="border-b border-border last:border-0 hover:bg-bg/60">
-                      <td className="w-14 py-2 pl-4">{i === 0 && <Link to={`/portal/product/${p.slug}`} className="relative block h-12 w-9" tabIndex={-1}><ProductImage product={p} /></Link>}</td>
+                      <td className="w-14 py-2 pl-4">{i === 0 && <Link to={`/portal/product/${p.slug}`} className="relative block h-12 w-10 rounded-badge bg-media p-0.5" tabIndex={-1}><ProductImage product={p} /></Link>}</td>
                       <td className="px-4 py-2.5">
                         {i === 0 ? (
                           <>
@@ -95,7 +95,7 @@ export default function PortalCatalog({ loaderData }: Route.ComponentProps) {
                       <td className="px-4 py-2.5"><StockLabel level={v.stock} qty={v.stockQty} /></td>
                       <td className="px-4 py-2.5 text-right tabular-nums">
                         {v.price ? formatMoney(v.price.display, shop.currency, locale) : "—"}
-                        {v.price && v.price.tiers.length > 0 && <span className="block text-[11px] text-primary">{t("price.tiers")}</span>}
+                        {v.price?.applied?.length ? <span className="block text-[11px] text-primary">{v.price.applied.map((a) => a.label).join(" · ")}</span> : v.price && v.price.tiers.length > 0 && <span className="block text-[11px] text-primary">{t("price.tiers")}</span>}
                       </td>
                       <td className="w-28 px-4 py-2 text-right">
                         <Input name={`qty:${v.id}`} type="number" min={0} step={1} placeholder="0" aria-label={`${t("cart.qty")} ${p.name}`} size="sm" className="ml-auto w-20 text-right tabular-nums" disabled={v.stock === "out"} />

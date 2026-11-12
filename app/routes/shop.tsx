@@ -1,9 +1,12 @@
 import { Form, Link, useNavigation, useSearchParams, useSubmit } from "react-router";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Map as MapIcon, Search, SlidersHorizontal, X } from "lucide-react";
 import { useState } from "react";
 import type { Route } from "./+types/shop";
 import { shopContext } from "~/.server/context";
 import { categoryTree, producerFacets, searchProducts } from "~/.server/catalog";
+import { originFacets } from "~/.server/origins";
+import { countryName, regionName } from "~/lib/maps/names";
+import type { MessageKey } from "~/lib/i18n";
 import { useI18n } from "~/lib/i18n";
 import { cn } from "~/lib/cn";
 import { useRootData } from "~/lib/root-data";
@@ -20,14 +23,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     producer: q.get("producer") ?? "",
     sort: q.get("sort") ?? "",
     promo: q.get("promo") === "1",
+    kind: q.get("kind") ?? "",
+    region: q.get("region") ?? "",
+    origin: q.get("origin")?.toUpperCase() ?? "",
     page: Number(q.get("page") ?? 1),
   };
-  const [result, categories, producers] = await Promise.all([
-    searchProducts(ctx, { ...params, perPage: 24 }),
+  const [result, categories, producers, origins] = await Promise.all([
+    searchProducts(ctx, { ...params, kind: params.kind || undefined, region: params.region || undefined, origin: params.origin || undefined, perPage: 24 }),
     categoryTree(ctx),
     producerFacets(ctx, 12),
+    originFacets(ctx),
   ]);
-  return { result, categories, producers, params };
+  return { result, categories, producers, params, origins: { regions: origins.regions.slice(0, 10).map((r) => ({ id: r.id, count: r.count })), countries: origins.countries.map((c) => ({ iso: c.iso, count: c.count })) }, mapEnabled: ctx.shop.originMap.mode !== "off" };
 }
 
 export const meta: Route.MetaFunction = ({ matches }) => {
@@ -36,8 +43,8 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export default function Shop({ loaderData }: Route.ComponentProps) {
-  const { result, categories, producers, params } = loaderData;
-  const { t } = useI18n();
+  const { result, categories, producers, params, origins, mapEnabled } = loaderData;
+  const { t, locale } = useI18n();
   const { showPrices, user } = useRootData();
   const [searchParams] = useSearchParams();
   const submit = useSubmit();
@@ -100,6 +107,21 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
         </ul>
         <Link to="/producers" className="mt-3 inline-block px-2 text-[13px] text-muted-fg underline-offset-4 hover:text-fg hover:underline">{t("common.showAll")}</Link>
       </div>
+      {origins.regions.length > 0 && (
+        <div>
+          <p className="text-eyebrow mb-4 text-[11px] text-muted-fg">{t("shop.origin")}</p>
+          <ul className="grid gap-0.5 text-[14px]">
+            {origins.regions.map((r) => (
+              <li key={r.id}>
+                <Link to={link({ region: params.region === r.id ? null : r.id, origin: null })} className={cn("flex justify-between gap-3 rounded-control px-2 py-1.5 hover:bg-muted", params.region === r.id && "font-semibold text-primary")}>
+                  <span className="truncate">{regionName(r.id, locale)}</span><span className="text-muted-fg tabular-nums">{r.count}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {mapEnabled && <Link to="/producers" className="mt-3 inline-flex items-center gap-1.5 px-2 text-[13px] text-muted-fg underline-offset-4 hover:text-fg hover:underline"><MapIcon size={13} /> {t("shop.onMap")}</Link>}
+        </div>
+      )}
     </div>
   );
 
@@ -107,7 +129,7 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
     <div className="container-page pb-24 pt-12 md:pt-16">
       <header className="mb-10 grid gap-3 md:mb-14">
         <Eyebrow line>{t("shop.eyebrow")}</Eyebrow>
-        <h1 className="text-h1">{activeCat?.name ?? (params.promo ? t("shop.promo") : t("shop.title"))}</h1>
+        <h1 className="text-h1">{activeCat?.name ?? (params.region ? regionName(params.region, locale) : params.origin ? countryName(params.origin, locale) : params.promo ? t("shop.promo") : t("shop.title"))}</h1>
         <p className="text-muted-fg">
           {t("shop.count", { count: result.total.toLocaleString("de-CH") })}
           {!showPrices && <> · {user ? t("price.onRequest") : t("price.loginForPrices")}</>}
@@ -138,11 +160,14 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
             </Form>
           </div>
 
-          {(params.q || params.producer || params.promo) && (
+          {(params.q || params.producer || params.promo || params.region || params.origin || params.kind) && (
             <div className="mb-6 flex flex-wrap gap-2">
               {params.q && <Chip removable to={link({ q: null })}>«{params.q}»</Chip>}
               {params.producer && <Chip removable to={link({ producer: null })}>{producers.find((p) => p.slug === params.producer)?.name ?? params.producer}</Chip>}
               {params.promo && <Chip removable to={link({ promo: null })}>{t("shop.promo")}</Chip>}
+              {params.kind && <Chip removable to={link({ kind: null })}>{t(`kind.${params.kind}` as MessageKey)}</Chip>}
+              {params.region && <Chip removable to={link({ region: null })}>{regionName(params.region, locale)}</Chip>}
+              {params.origin && <Chip removable to={link({ origin: null })}>{countryName(params.origin, locale)}</Chip>}
             </div>
           )}
 

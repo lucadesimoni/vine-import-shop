@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Dark mode = [data-theme=dark] on <html> (resolved before paint from cookie / OS, see root.tsx) */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 /*
  * ─── Design tokens ──────────────────────────────────────────────────────
  * Brand values are injected at runtime as CSS variables (see app/lib/theme.ts,
@@ -20,12 +23,15 @@
   --color-border-strong: color-mix(in oklab, var(--t-border) 70%, var(--t-fg));
   --color-inverse: var(--t-inverse);
   --color-on-inverse: var(--t-on-inverse);
-  --color-success: #2f6b45;
-  --color-success-soft: #e6f0e9;
-  --color-warning: #8a5a12;
-  --color-warning-soft: #f7eedd;
-  --color-danger: #a12a2a;
-  --color-danger-soft: #f8e6e6;
+  --color-media: var(--t-media);
+  --color-scrim: var(--t-scrim);
+  --color-success: var(--t-success);
+  --color-success-soft: var(--t-success-soft);
+  --color-warning: var(--t-warning);
+  --color-warning-soft: var(--t-warning-soft);
+  --color-danger: var(--t-danger);
+  --color-danger-soft: var(--t-danger-soft);
+  --color-on-danger: var(--t-on-danger);
 
   --font-display: var(--t-font-display), Georgia, "Times New Roman", serif;
   --font-sans: var(--t-font-body), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -41,8 +47,10 @@
   --radius-btn: var(--t-radius-btn);
   --radius-badge: var(--t-radius-badge);
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -18px rgb(0 0 0 / 0.22);
-  --shadow-pop: 0 24px 64px -24px rgb(0 0 0 / 0.35);
+  --shadow-card: 0 1px 2px color-mix(in srgb, var(--t-shadow) 4%, transparent), 0 12px 32px -18px color-mix(in srgb, var(--t-shadow) 22%, transparent);
+  --shadow-pop: 0 24px 64px -24px color-mix(in srgb, var(--t-shadow) 35%, transparent);
+  --shadow-bar: 0 8px 24px -20px color-mix(in srgb, var(--t-shadow) 50%, transparent);
+  --shadow-inset-btn: inset 0 -1px 0 color-mix(in srgb, var(--t-shadow) 12%, transparent);
 
   --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
   --tracking-eyebrow: 0.2em;
@@ -61,6 +69,16 @@
   --t-border: #e2dcd5;
   --t-inverse: #1c1917;
   --t-on-inverse: #f7f5f2;
+  --t-media: #ffffff;
+  --t-scrim: #000000;
+  --t-shadow: #000000;
+  --t-success: #2f6b45;
+  --t-success-soft: #e6f0e9;
+  --t-warning: #8a5a12;
+  --t-warning-soft: #f7eedd;
+  --t-danger: #a12a2a;
+  --t-danger-soft: #f8e6e6;
+  --t-on-danger: #ffffff;
   --t-font-display: "Fraunces";
   --t-font-body: "Inter";
   --t-radius: 6px;

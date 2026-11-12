@@ -7,7 +7,7 @@ import { useI18n, type MessageKey } from "~/lib/i18n";
 import { cn } from "~/lib/cn";
 import { useRootData } from "~/lib/root-data";
 import { ButtonLink, Card, Eyebrow } from "~/components/ui";
-import { Logo, Toast } from "~/components/shop";
+import { Logo, ThemeToggle, Toast } from "~/components/shop";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const user = await requireUser(request);
@@ -82,6 +82,7 @@ export default function PortalLayout({ loaderData }: Route.ComponentProps) {
           </div>
           <div className="flex items-center justify-between">
             <Form method="post" action="/logout"><button className="flex items-center gap-2 text-[13px] text-muted-fg hover:text-fg"><LogOut size={14} /> {t("nav.logout")}</button></Form>
+            <ThemeToggle className="h-8 w-8" />
             {shop.locales.length > 1 && (
               <div className="flex gap-2 text-[12px] uppercase">
                 {shop.locales.map((l) => (

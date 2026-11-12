@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Form, Link, NavLink, useFetcher, useLocation } from "react-router";
-import { Building2, Check, Leaf, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Building2, Check, Leaf, Menu, Moon, Search, ShoppingBag, Sun, User, X } from "lucide-react";
 import { useI18n, type MessageKey } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
 import { cn } from "~/lib/cn";
@@ -16,10 +16,15 @@ import { Badge, Button, buttonClass, Stepper } from "./ui";
 export function Logo({ inverse = false, compact = false, to = "/", sub }: { inverse?: boolean; compact?: boolean; to?: string; sub?: string }) {
   const { brand } = useRootData();
   const src = inverse ? brand.logoInverseUrl || brand.logoUrl : brand.logoUrl;
+  // In dark mode the regular logo swaps to the inverse (light) artwork when one is configured.
+  const darkSrc = !inverse && brand.darkMode !== "off" && brand.logoInverseUrl ? brand.logoInverseUrl : null;
   return (
     <Link to={to} className="group flex shrink-0 items-center gap-3" aria-label={brand.name}>
       {src ? (
-        <img src={src} alt="" className={cn("w-auto", compact ? "h-9" : "h-10 md:h-12")} />
+        <>
+          <img src={src} alt="" className={cn("w-auto", compact ? "h-9" : "h-10 md:h-12", darkSrc && "dark:hidden")} />
+          {darkSrc && <img src={darkSrc} alt="" className={cn("hidden w-auto dark:block", compact ? "h-9" : "h-10 md:h-12")} />}
+        </>
       ) : (
         <span className={cn("grid h-10 w-10 place-items-center rounded-full font-display text-xl italic", inverse ? "bg-on-inverse text-inverse" : "bg-primary text-on-primary")}>{brand.name.slice(0, 1)}</span>
       )}
@@ -61,7 +66,7 @@ export function Header() {
   }, []);
 
   return (
-    <header className={cn("sticky top-0 z-40 border-b bg-bg/90 backdrop-blur-md transition-[border-color,box-shadow] duration-300", scrolled ? "border-border shadow-[0_8px_24px_-20px_rgb(0_0_0/0.5)]" : "border-transparent")}>
+    <header className={cn("sticky top-0 z-40 border-b bg-bg/90 backdrop-blur-md transition-[border-color,box-shadow] duration-300", scrolled ? "border-border shadow-bar" : "border-transparent")}>
       {announcement && (
         <div className="bg-primary px-4 py-1.5 text-center text-[11px] tracking-wide text-on-primary">{announcement}</div>
       )}
@@ -108,6 +113,7 @@ export function Header() {
               <Building2 size={15} strokeWidth={1.6} /> {t("portal.title")}
             </a>
           )}
+          <ThemeToggle className="hidden sm:inline-flex" />
           <button className={buttonClass({ variant: "ghost", size: "icon" })} onClick={() => setSearch((s) => !s)} aria-label={t("nav.search")}>
             <Search size={19} strokeWidth={1.5} />
           </button>
@@ -152,7 +158,8 @@ export function Header() {
               <Building2 size={16} strokeWidth={1.6} /> {t("portal.title")}
             </a>
           )}
-          <div className="mt-auto flex gap-4 pt-6 text-sm uppercase tracking-wider">
+          <div className="mt-auto flex items-center gap-4 pt-6 text-sm uppercase tracking-wider">
+            <ThemeToggle className="-ml-2.5" />
             {locales.map((l) => (
               <Form key={l} method="post" action="/set-locale">
                 <input type="hidden" name="locale" value={l} />
@@ -164,6 +171,25 @@ export function Header() {
         </nav>
       </div>
     </header>
+  );
+}
+
+/** Light/dark switch (only when the brand allows a visitor toggle). Pure client-side + cookie; SSR reads the cookie. */
+export function ThemeToggle({ className }: { className?: string }) {
+  const { brand } = useRootData();
+  const { t } = useI18n();
+  if (brand.darkMode !== "toggle") return null;
+  const toggle = () => {
+    const d = document.documentElement;
+    const next = d.dataset.theme === "dark" ? "light" : "dark";
+    d.dataset.theme = next;
+    document.cookie = `theme=${next}; path=/; max-age=31536000; samesite=lax`;
+  };
+  return (
+    <button type="button" onClick={toggle} className={cn(buttonClass({ variant: "ghost", size: "icon" }), className)} aria-label={t("nav.theme")} title={t("nav.theme")}>
+      <Moon size={18} strokeWidth={1.5} className="dark:hidden" />
+      <Sun size={18} strokeWidth={1.5} className="hidden dark:block" />
+    </button>
   );
 }
 
@@ -218,7 +244,17 @@ export function Footer() {
 
 /* ── Product presentation ──────────────────────────────────────────────── */
 
-const ART_TONES: Record<string, string> = { red: "#6b1f2a", white: "#c9b36b", rose: "#d99a90", sparkling: "#b9bd86", sweet: "#b9822b", spirit: "#9fb3b8", food: "#8a7a5a", beverage: "#7d9aa6" };
+/** Placeholder art is drawn from brand tokens only (adapts to every palette & dark mode). */
+const ART_TONES: Record<string, string> = {
+  red: "var(--t-primary)",
+  white: "color-mix(in oklab, var(--t-accent) 70%, var(--t-card))",
+  rose: "color-mix(in oklab, var(--t-primary) 45%, var(--t-card))",
+  sparkling: "color-mix(in oklab, var(--t-accent) 55%, var(--t-card))",
+  sweet: "color-mix(in oklab, var(--t-accent) 80%, var(--t-fg))",
+  spirit: "color-mix(in oklab, var(--t-muted-fg) 55%, var(--t-card))",
+  food: "color-mix(in oklab, var(--t-muted-fg) 70%, var(--t-card))",
+  beverage: "color-mix(in oklab, var(--t-muted-fg) 45%, var(--t-card))",
+};
 
 /** Product image with an on-brand fallback silhouette when no packshot exists. */
 export function ProductImage({ product, className }: { product: Pick<Card, "image" | "name" | "kind" | "color">; className?: string }) {
@@ -234,15 +270,15 @@ export function ProductImage({ product, className }: { product: Pick<Card, "imag
     <svg viewBox="0 0 200 300" role="img" aria-label={product.name} preserveAspectRatio="xMidYMid meet" className={cn("block h-full w-full", className)}>
       {bottle ? (
         <>
-          <path d="M90 22h20v60c0 10 26 22 26 52v146c0 6-4 10-10 10H74c-6 0-10-4-10-10V134c0-30 26-42 26-52z" fill={tone} />
-          <rect x="88" y="16" width="24" height="24" rx="3" fill="#1c1917" opacity=".85" />
-          <rect x="72" y="172" width="56" height="66" rx="2" fill="#fff" opacity=".9" />
+          <path d="M90 22h20v60c0 10 26 22 26 52v146c0 6-4 10-10 10H74c-6 0-10-4-10-10V134c0-30 26-42 26-52z" style={{ fill: tone }} />
+          <rect x="88" y="16" width="24" height="24" rx="3" style={{ fill: "var(--t-fg)" }} opacity=".85" />
+          <rect x="72" y="172" width="56" height="66" rx="2" style={{ fill: "var(--t-media)" }} opacity=".92" />
         </>
       ) : (
         <>
-          <rect x="62" y="72" width="76" height="16" rx="4" fill="#1c1917" opacity=".8" />
-          <rect x="56" y="88" width="88" height="160" rx="14" fill={tone} />
-          <rect x="68" y="140" width="64" height="56" rx="3" fill="#fff" opacity=".9" />
+          <rect x="62" y="72" width="76" height="16" rx="4" style={{ fill: "var(--t-fg)" }} opacity=".8" />
+          <rect x="56" y="88" width="88" height="160" rx="14" style={{ fill: tone }} />
+          <rect x="68" y="140" width="64" height="56" rx="3" style={{ fill: "var(--t-media)" }} opacity=".92" />
         </>
       )}
     </svg>
@@ -258,8 +294,13 @@ export function PriceTag({ price, size = "md", className }: { price: PriceInfo |
   return (
     <div className={cn("flex flex-wrap items-baseline gap-x-2", className)}>
       <span className={cn("font-semibold tabular-nums", size === "lg" ? "font-display text-3xl font-normal" : "text-[15px]")}>{formatMoney(price.display, shop.currency, locale)}</span>
-      {price.reduced && price.displayMode === "gross" && <s className="text-[13px] text-muted-fg tabular-nums">{formatMoney(price.listGross, shop.currency, locale)}</s>}
+      {price.reduced && <s className="text-[13px] text-muted-fg tabular-nums">{formatMoney(price.displayMode === "net" ? price.listNet : price.listGross, shop.currency, locale)}</s>}
       <span className="w-full text-[11px] text-muted-fg">{price.displayMode === "net" ? t("price.exclVat") : t("price.inclVat")}</span>
+      {price.applied && price.applied.length > 0 && (
+        <span className="mt-1 flex w-full flex-wrap gap-1">
+          {price.applied.map((a) => <Badge key={a.id} tone="soft">{a.label}</Badge>)}
+        </span>
+      )}
     </div>
   );
 }
@@ -291,7 +332,7 @@ export function ProductCard({ product, priority = false }: { product: Card; prio
   const to = usePath();
   return (
     <article className="group relative flex flex-col">
-      <Link to={to(`/product/${product.slug}`)} className="relative block aspect-[4/5] overflow-hidden rounded-surface bg-surface transition-shadow duration-300 group-hover:shadow-card" tabIndex={-1}>
+      <Link to={to(`/product/${product.slug}`)} className="relative block aspect-[4/5] overflow-hidden rounded-surface bg-media transition-shadow duration-300 group-hover:shadow-card" tabIndex={-1}>
         <div className="absolute inset-[9%] transition-transform duration-500 ease-out group-hover:scale-[1.04]">
           <ProductImage product={product} className={priority ? "" : undefined} />
         </div>

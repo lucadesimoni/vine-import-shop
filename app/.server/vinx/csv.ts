@@ -49,6 +49,7 @@ export function decodeUpload(bytes: ArrayBuffer): string {
  */
 export class CsvClient implements ErpClient {
   readonly name = "CSV file exchange";
+  readonly mapping = "csv" as const;
   constructor(private files: { articles?: string; stock?: string; prices?: string } = {}) {}
   async ping() {
     return "CSV mode — upload exports in Admin or POST to /api/vinx/import";

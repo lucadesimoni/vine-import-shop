@@ -30,6 +30,8 @@ async function job<T extends { items: number; message: string }>(name: string, f
   }
 }
 
+const mappingFor = (cfg: Settings["vinx"], client: ErpClient) => (client.mapping === "csv" ? cfg.csvMapping : cfg.mapping);
+
 /** erpId (vinX articleId) and SKU (article number) → variant id */
 async function variantRefs() {
   const db = await getDb();
@@ -67,7 +69,7 @@ export async function syncArticles(client: ErpClient, full = false) {
     const categoryCache = new Map<string, number | null>();
 
     for await (const raw of client.articles(since)) {
-      const a = mapArticle(raw, cfg.mapping);
+      const a = mapArticle(raw, mappingFor(cfg, client));
       if (!a.sku) { skipped++; continue; }
 
       let producerId: number | undefined;
@@ -76,6 +78,8 @@ export async function syncArticles(client: ErpClient, full = false) {
         if (!producerId) {
           const found = await db.query.producers.findFirst({ where: eq(schema.producers.name, a.producer) });
           producerId = found?.id ?? (await db.insert(schema.producers).values({ name: a.producer, slug: await uniqueSlug("producers", slugify(a.producer)), country: a.product.country, region: a.product.region }).returning())[0].id;
+          // origin from supplier master data: fill producer region/country once known
+          if (found && !found.region && a.product.region) await db.update(schema.producers).set({ region: a.product.region, country: found.country ?? a.product.country }).where(eq(schema.producers.id, found.id));
           producerCache.set(a.producer, producerId);
         }
       }
@@ -95,6 +99,7 @@ export async function syncArticles(client: ErpClient, full = false) {
       if (owned.has("size") && a.variant.size) { vPatch.size = a.variant.size; vPatch.volumeMl = a.variant.volumeMl; }
       if (owned.has("packSize") && a.variant.packSize) vPatch.packSize = a.variant.packSize;
       if (owned.has("active") && a.variant.active != null) vPatch.active = a.variant.active;
+      if (a.variant.discountGroup) vPatch.discountGroup = a.variant.discountGroup;
 
       const existing = await db.query.variants.findFirst({ where: eq(schema.variants.sku, a.sku) });
       if (existing) {
@@ -145,7 +150,7 @@ export async function syncStock(client: ErpClient) {
     let n = 0;
     const ids = await variantRefs();
     for await (const raw of client.stock()) {
-      const s = mapStock(raw, cfg.mapping);
+      const s = mapStock(raw, mappingFor(cfg, client));
       const id = ids.get(s.ref);
       if (!id) continue;
       await db.update(schema.variants).set({ stock: s.stock, syncedAt: new Date() }).where(eq(schema.variants.id, id));
@@ -155,32 +160,96 @@ export async function syncStock(client: ErpClient) {
   });
 }
 
+/**
+ * Prices (vinX BaseData/SellingPrices or CSV): consumer price group → variant list price (incl. VAT);
+ * trade price groups → group tier prices (excl. VAT); promotion prices → conditions (source "vinx").
+ * Price groups flagged pricesWithVat are converted with the article's VAT rate.
+ */
 export async function syncPrices(client: ErpClient) {
   return job("prices", async () => {
     const cfg = await getSetting("vinx");
+    const shop = await getSetting("shop");
     const db = await getDb();
     const groups = await db.select().from(schema.customerGroups);
+    const erpGroups = new Map((await client.priceGroups?.().catch(() => [])) ?.map((g) => [g.id, g]) ?? []);
     const groupFor = (list: string) => groups.find((g) => g.code === cfg.groupMap[list]) ?? groups.find((g) => g.erpCode === list);
-    const variantIds = await variantRefs();
+    const consumerList = cfg.consumerPriceGroupId != null ? String(cfg.consumerPriceGroupId) : Object.entries(cfg.groupMap).find(([, code]) => code === "consumer")?.[0];
+    const variants = await db.select({ id: schema.variants.id, sku: schema.variants.sku, erpId: schema.variants.erpId, taxClass: schema.products.taxClass }).from(schema.variants).innerJoin(schema.products, eq(schema.products.id, schema.variants.productId));
+    const byRef = new Map<string, (typeof variants)[number]>();
+    for (const v of variants) { byRef.set(v.sku, v); if (v.erpId) byRef.set(v.erpId, v); }
+    const rate = (taxClass: string) => (taxClass === "reduced" ? shop.tax.reduced : shop.tax.standard) / 100;
+
     const tiers = new Map<string, { minQty: number; netCents: number }[]>();
+    const listPrices = new Map<number, number>();
+    const promos: (typeof schema.conditions.$inferInsert)[] = [];
     for await (const raw of client.prices()) {
-      const pr = mapPrice(raw, cfg.mapping);
+      const pr = mapPrice(raw, mappingFor(cfg, client));
+      const v = byRef.get(pr.ref);
+      if (!v || !pr.current || pr.netCents <= 0) continue;
+      const withVat = erpGroups.get(pr.list)?.pricesWithVat ?? pr.list === consumerList;
+      const toNet = (c: number) => (withVat ? Math.round(c / (1 + rate(v.taxClass))) : c);
+      const toGross = (c: number) => (withVat ? c : Math.round(c * (1 + rate(v.taxClass))));
       const g = groupFor(pr.list);
-      const vid = variantIds.get(pr.ref);
-      if (!g || !vid || pr.netCents <= 0) continue;
-      const k = `${vid}:${g.id}`;
-      tiers.set(k, [...(tiers.get(k) ?? []), { minQty: pr.minQty, netCents: pr.netCents }]);
+      if (pr.list === consumerList && pr.minQty <= 1) listPrices.set(v.id, toGross(pr.netCents));
+      else if (g) {
+        const k = `${v.id}:${g.id}`;
+        tiers.set(k, [...(tiers.get(k) ?? []), { minQty: pr.minQty, netCents: toNet(pr.netCents) }]);
+      }
+      if (cfg.syncConditions && pr.promoCents && pr.promoCents > 0 && (raw.isPromotion !== false || pr.promoValidTo)) {
+        promos.push({
+          source: "vinx", erpId: `promo:${pr.ref}:${pr.list}:${pr.minQty}`, type: "promotion_price",
+          groupId: pr.list === consumerList ? null : (g?.id ?? null), targetType: "variant", target: String(v.id), calc: "fixed_price",
+          value: String(toNet(pr.promoCents)), minQty: pr.minQty > 1 ? pr.minQty : 0, validFrom: pr.promoValidFrom, validTo: pr.promoValidTo,
+          label: { de: String(raw.promotionText ?? "") || "Aktionspreis" },
+        });
+      }
     }
     let rows = 0;
     await db.transaction(async (tx) => {
+      for (const [id, cents] of listPrices) await tx.update(schema.variants).set({ priceCents: cents, syncedAt: new Date() }).where(eq(schema.variants.id, id));
       for (const [k, list] of tiers) {
         const [variantId, groupId] = k.split(":").map(Number);
         await tx.delete(schema.prices).where(and(eq(schema.prices.variantId, variantId), eq(schema.prices.groupId, groupId)));
         await tx.insert(schema.prices).values(list.map((t) => ({ variantId, groupId, ...t })));
         rows += list.length;
       }
+      if (cfg.syncConditions) {
+        await tx.delete(schema.conditions).where(and(eq(schema.conditions.source, "vinx"), eq(schema.conditions.type, "promotion_price")));
+        if (promos.length) await tx.insert(schema.conditions).values(promos);
+      }
     });
-    return { items: rows, message: `${rows} price rows for ${tiers.size} variant/list pairs` };
+    return { items: rows + listPrices.size, message: `${listPrices.size} list prices, ${rows} tier rows (${tiers.size} variant/group pairs), ${promos.length} promotions` };
+  });
+}
+
+/** vinX BaseData/SpecialPrices → customer special-price conditions (source "vinx"). */
+export async function syncSpecialPrices(client: ErpClient) {
+  return job("conditions", async () => {
+    const cfg = await getSetting("vinx");
+    if (!client.specialPrices || !cfg.syncConditions) return { items: 0, message: "not supported by driver" };
+    const db = await getDb();
+    const users = new Map((await db.select({ id: schema.users.id, erpId: schema.users.erpId }).from(schema.users)).filter((u) => u.erpId).map((u) => [u.erpId!, u.id]));
+    const refs = await variantRefs();
+    const rowsOut: (typeof schema.conditions.$inferInsert)[] = [];
+    let skipped = 0;
+    for await (const r of client.specialPrices()) {
+      const userId = users.get(String(r.addressId));
+      const variantId = refs.get(String(r.articleId));
+      if (!userId || !variantId) { skipped++; continue; }
+      const percent = r.calculationMode === "percent";
+      rowsOut.push({
+        source: "vinx", erpId: `special:${r.id}`, type: "special_price", customerId: userId, targetType: "variant", target: String(variantId),
+        calc: percent ? "percent" : "fixed_price", value: String(percent ? Number(r.unitPrice) : Math.round(Number(r.unitPrice) * 100)),
+        minQty: Number(r.fromQuantity ?? 0), onNetPrices: !r.isNetto,
+        validFrom: r.priceValidFrom ? new Date(String(r.priceValidFrom)) : null, validTo: r.priceValidUntil ? new Date(String(r.priceValidUntil)) : null,
+        label: { de: "Spezialpreis", it: "Prezzo speciale" },
+      });
+    }
+    await db.transaction(async (tx) => {
+      await tx.delete(schema.conditions).where(and(eq(schema.conditions.source, "vinx"), eq(schema.conditions.type, "special_price")));
+      if (rowsOut.length) await tx.insert(schema.conditions).values(rowsOut);
+    });
+    return { items: rowsOut.length, message: `${rowsOut.length} special prices${skipped ? `, ${skipped} skipped (customer/article not linked)` : ""}` };
   });
 }
 
@@ -264,7 +333,7 @@ export async function retryOutbox(id: number) {
 }
 
 /** Scheduled run: called by /api/cron, `npm run jobs`, or a platform cron. */
-export async function runScheduled(jobs: string[] = ["outbox", "stock", "prices", "articles"]) {
+export async function runScheduled(jobs: string[] = ["outbox", "stock", "prices", "conditions", "articles"]) {
   const cfg = await getSetting("vinx");
   if (!cfg.enabled) return { skipped: "vinx disabled" };
   const client = await erpClient(cfg);
@@ -274,6 +343,7 @@ export async function runScheduled(jobs: string[] = ["outbox", "stock", "prices"
       j === "outbox" ? await processOutbox(client)
       : j === "stock" ? await syncStock(client)
       : j === "prices" ? await syncPrices(client)
+      : j === "conditions" ? await syncSpecialPrices(client)
       : j === "articles" ? await syncArticles(client)
       : j === "articles:full" ? await syncArticles(client, true)
       : { ok: false, message: "unknown job" };

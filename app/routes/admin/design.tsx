@@ -119,6 +119,8 @@ export default function Design({ loaderData }: Route.ComponentProps) {
               <Field label="Textschrift">{(id) => <Select id={id} name="fonts.body" defaultValue={brand.fonts.body}>{BODY_FONTS.map((f) => <option key={f}>{f}</option>)}</Select>}</Field>
               <Field label={`Eckenradius · ${draft.radius}px`}>{(id) => <input id={id} type="range" name="radius" min={0} max={20} defaultValue={brand.radius} className="mt-3 w-full accent-[var(--t-primary)]" />}</Field>
               <Field label="Buttons">{(id) => <Select id={id} name="buttonStyle" defaultValue={brand.buttonStyle}><option value="square">Eckig</option><option value="rounded">Abgerundet</option><option value="pill">Pille</option></Select>}</Field>
+              <Field label="Button-Beschriftung">{(id) => <Select id={id} name="buttonCase" defaultValue={brand.buttonCase}><option value="normal">Normal</option><option value="upper">VERSALIEN, gesperrt</option></Select>}</Field>
+              <Field label="Dunkelmodus" hint="Dunkle Farben werden aus der Marke abgeleitet (Kontrast ≥ 4.5:1).">{(id) => <Select id={id} name="darkMode" defaultValue={brand.darkMode}><option value="toggle">System + Umschalter für Besucher</option><option value="system">Folgt dem Betriebssystem</option><option value="off">Aus (immer hell)</option></Select>}</Field>
             </div>
           </Panel>
 

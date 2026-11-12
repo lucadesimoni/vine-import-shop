@@ -53,6 +53,10 @@ export const brandSchema = z.object({
   buttonStyle: z.enum(["square", "rounded", "pill"]).default("rounded"),
   /** Button & chip label case — one rule for every size. */
   buttonCase: z.enum(["normal", "upper"]).default("normal"),
+  /** Dark mode for shop & portal: off · follow the OS · OS default + visitor toggle */
+  darkMode: z.enum(["off", "system", "toggle"]).default("toggle"),
+  /** Optional manual dark palette (any key of `colors`); unset keys are derived from the light palette. */
+  colorsDark: z.record(z.string(), hex).default({}),
   contact: z
     .object({
       street: z.string().default(""),
@@ -97,10 +101,19 @@ export const shopSchema = z.object({
   locales: z.array(z.enum(LOCALES)).min(1).default(["de"]),
   defaultLocale: z.enum(LOCALES).default("de"),
   currency: z.string().length(3).default("CHF"),
+  /** Origin map on the producers page: Italian-style region map, abstract world map, or automatic. */
+  originMap: z
+    .object({
+      mode: z.enum(["auto", "regions", "world", "off"]).default("auto"),
+      country: z.string().length(2).default("IT"),
+    })
+    .prefault({}),
   /** Who sees prices in the storefront (the portal always shows trade prices). Hidden prices turn checkout into a quote request. */
   priceVisibility: z.enum(["public", "login", "trade"]).default("public"),
   /** Where customer / customer-group prices come from — see .server/price-sources.ts */
   priceSource: z.string().default("platform"),
+  /** vinX price finding: "priority" (special → promotion → list → base) or "lowest" (cheapest valid price) */
+  priceFinding: z.enum(["priority", "lowest"]).default("priority"),
   consumerCheckout: z.boolean().default(true), // false = trade-only shop (order requests)
   guestCheckout: z.boolean().default(true),
   stockDisplay: z.enum(["levels", "exact", "hidden"]).default("levels"),
@@ -203,27 +216,58 @@ export const vinxSchema = z.object({
   consumerPriceGroupId: z.number().int().nullable().default(null),
   /** vinX article used to transmit shop vouchers as negative position (priceCalculationRule "fromShop"). */
   promoArticleId: z.number().int().nullable().default(null),
-  /** Shop shipping code → vinX ShippingCode id (0 = generic delivery). */
-  shippingCodeMap: z.record(z.string(), z.number().int()).default({ post: 0, delivery: 0 }),
-  /** OData field used for delta sync. */
-  modifiedField: z.string().default("modifiedDate"),
-  /** vinX article entity field → shop field. Verify against <baseUrl>/swagger (installations may differ). */
+  /** OAuth client id for /api/Identity/Realm/RequestToken (I-AG default: "Integrated"). */
+  clientId: z.string().default("Integrated"),
+  /** Shop shipping code → vinX BaseData/DeliveryCondition id (required by Online/Basket). */
+  deliveryConditionMap: z.record(z.string(), z.number().int()).default({}),
+  defaultDeliveryConditionId: z.number().int().nullable().default(null),
+  /** Shop payment method → vinX BaseData/PaymentCondition id (required by Online/Basket). */
+  paymentConditionMap: z.record(z.string(), z.number().int()).default({}),
+  defaultPaymentConditionId: z.number().int().nullable().default(null),
+  /** Online/Basket only knows calculate | order: quote requests stay in the shop (skip) or are sent as orders flagged in orderText. */
+  requestsToErp: z.enum(["skip", "order"]).default("skip"),
+  /** OData field used for delta sync (BaseData/Article.changedOn). */
+  modifiedField: z.string().default("changedOn"),
+  /**
+   * REST3 field mapping, verified against the Shop API v2.0 OpenAPI spec (<baseUrl>/swagger → "I-AG Standard Shop API v2.0").
+   * The client enriches each article with its looked-up producer / region(Top) / country / category / filling / tradingUnit,
+   * so nested paths below resolve. Paths may list fallbacks with "|".
+   */
   mapping: z
     .object({
       article: z.record(z.string(), z.string()).default({
-        erpId: "id", sku: "number", name: "designation", name_fr: "designationFr", name_it: "designationIt", name_en: "designationEn",
-        product: "wineInfoId", producer: "producer.name", category: "articleCategory.designation", vintage: "vintage", size: "contentDesignation",
-        volumeCl: "contentCl", alcohol: "alcoholContent", color: "wineColor", price: "salesPrice", taxCode: "vatCode", packSize: "packagingUnit",
-        stock: "", active: "isShopArticle", articleType: "articleType", country: "country.designation", region: "region.designation", grapes: "grapeVariety",
+        erpId: "id", sku: "articleNumber", name: "designationWeb|designation", product: "wineId|articleNumber",
+        producer: "producer.designation", category: "category.designation", vintage: "vintage", size: "filling.designation",
+        volumeCl: "filling.contentInCl", alcohol: "volume", price: "", taxRate: "vatPercentage", packSize: "tradingUnit.unitsPerTradingUnit",
+        active: "isActive", articleType: "articleType", country: "country.isoCode|country.designation", region: "regionTop.designation",
+        appellation: "region.designation", grapes: "grapes", description: "description",
       }),
-      stock: z.record(z.string(), z.string()).default({ sku: "articleId", stock: "availableQuantity" }),
-      price: z.record(z.string(), z.string()).default({ sku: "articleId", list: "priceGroupId", minQty: "quantity", net: "price", promo: "pricePromotion" }),
+      stock: z.record(z.string(), z.string()).default({ sku: "articleId", stock: "quantityAvailableForShop" }),
+      price: z.record(z.string(), z.string()).default({ sku: "articleId", list: "priceGroupId", minQty: "fromQuantity", net: "unitPrice", promo: "promotionPrice" }),
       colors: z.record(z.string(), z.string()).default({ Rot: "red", Weiss: "white", "Rosé": "rose", Schaumwein: "sparkling", "Süsswein": "sweet", red: "red", white: "white" }),
       taxCodes: z.record(z.string(), z.string()).default({ N: "standard", R: "reduced", "1": "standard", "2": "reduced" }),
-      /** vinX Artikeltyp → shop kind (2 Wein, 3 Mineral/Saft, 4 Bier, 5 Spirituosen, 10 Food, 12 Non-Food) */
-      articleTypes: z.record(z.string(), z.string()).default({ "2": "wine", "3": "beverage", "4": "beverage", "5": "spirit", "10": "food", "12": "food" }),
+      /** vinX ArticleCategoryKindV20 → shop kind */
+      articleTypes: z.record(z.string(), z.string()).default({ wine: "wine", spirits: "spirit", mineral: "beverage", beer: "beverage", fruits: "beverage", food: "food", diverse: "food", nonFood: "food" }),
     })
     .prefault({}),
+  /** Column headers of CSV/Excel exports (file-exchange driver). */
+  csvMapping: z
+    .object({
+      article: z.record(z.string(), z.string()).default({
+        erpId: "ArtikelID|ArtikelNr", sku: "ArtikelNr", name: "Bezeichnung", name_it: "Bezeichnung_IT", name_fr: "Bezeichnung_FR", product: "WeinID|ArtikelNr",
+        producer: "Produzent", category: "Kategorie", vintage: "Jahrgang", size: "Abfuellung", volumeCl: "InhaltCl", alcohol: "Alkohol",
+        price: "Preis", taxCode: "MWST", packSize: "Gebinde", active: "Aktiv", articleType: "Artikeltyp", country: "Land", region: "Region",
+        appellation: "Unterregion", grapes: "Traubensorten", color: "Farbe", discountGroup: "Rabattgruppe",
+      }),
+      stock: z.record(z.string(), z.string()).default({ sku: "ArtikelNr", stock: "Bestand" }),
+      price: z.record(z.string(), z.string()).default({ sku: "ArtikelNr", list: "Preisgruppe", minQty: "AbMenge", net: "Preis", promo: "Aktionspreis" }),
+      colors: z.record(z.string(), z.string()).default({ Rot: "red", Weiss: "white", "Rosé": "rose", Schaumwein: "sparkling", "Süsswein": "sweet" }),
+      taxCodes: z.record(z.string(), z.string()).default({ N: "standard", R: "reduced", "8.1": "standard", "2.6": "reduced" }),
+      articleTypes: z.record(z.string(), z.string()).default({ Wein: "wine", Spirituosen: "spirit", Food: "food", Lebensmittel: "food", Getraenke: "beverage" }),
+    })
+    .prefault({}),
+  /** Sync vinX SellingPrices promotions / SpecialPrices / SpecialCondition into the conditions table (source "vinx"). */
+  syncConditions: z.boolean().default(true),
   ownedFields: z.array(z.string()).default(["price", "stock", "vintage", "size", "active", "taxClass", "packSize"]),
   /** vinX price group id (or code) → shop customer group code */
   groupMap: z.record(z.string(), z.string()).default({ "1": "consumer", "2": "trade", "3": "gastro" }),

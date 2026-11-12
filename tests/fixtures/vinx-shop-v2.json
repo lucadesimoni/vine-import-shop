@@ -1,0 +1,466 @@
+{
+ "source": "I-AG Standard Shop API v2.0 2.0 — https://vinxapi.i-ag.ch/swagger/Shopv20/swagger.json (extract: field names & enums only)",
+ "fetched": "2026-11-12",
+ "paths": [
+  "/api/v2.0/Core/VinX/Shop/BaseData/Address",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Address({id})/ChangeShopUsername",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Article",
+  "/api/v2.0/Core/VinX/Shop/BaseData/ArticleCategory",
+  "/api/v2.0/Core/VinX/Shop/BaseData/ArticleSelectionCode",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Brand",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Chain",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Classification",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Condition",
+  "/api/v2.0/Core/VinX/Shop/BaseData/ContactPerson",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Country",
+  "/api/v2.0/Core/VinX/Shop/BaseData/CustomerCategory",
+  "/api/v2.0/Core/VinX/Shop/BaseData/CustomerMarketing",
+  "/api/v2.0/Core/VinX/Shop/BaseData/DeliveryCondition",
+  "/api/v2.0/Core/VinX/Shop/BaseData/DeliveryDay",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Department",
+  "/api/v2.0/Core/VinX/Shop/BaseData/DiscountGroupArticleCustomer",
+  "/api/v2.0/Core/VinX/Shop/BaseData/DistributionChannel",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Document({id})",
+  "/api/v2.0/Core/VinX/Shop/BaseData/DocumentInfo",
+  "/api/v2.0/Core/VinX/Shop/BaseData/ECommerceGroup",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Filling",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Grape",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Ingredients",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Marketing",
+  "/api/v2.0/Core/VinX/Shop/BaseData/PaymentCondition",
+  "/api/v2.0/Core/VinX/Shop/BaseData/PaymentMeans",
+  "/api/v2.0/Core/VinX/Shop/BaseData/PlatformAssortment",
+  "/api/v2.0/Core/VinX/Shop/BaseData/PriceGroup",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Producer",
+  "/api/v2.0/Core/VinX/Shop/BaseData/ProductCycle",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Rating",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Receipt",
+  "/api/v2.0/Core/VinX/Shop/BaseData/ReceiptType",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Region",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Reservation",
+  "/api/v2.0/Core/VinX/Shop/BaseData/SalesRepresentative",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Salutation",
+  "/api/v2.0/Core/VinX/Shop/BaseData/SelectionCode",
+  "/api/v2.0/Core/VinX/Shop/BaseData/SellingPrices",
+  "/api/v2.0/Core/VinX/Shop/BaseData/SellingSet",
+  "/api/v2.0/Core/VinX/Shop/BaseData/ShippingPackage",
+  "/api/v2.0/Core/VinX/Shop/BaseData/SpecialCondition",
+  "/api/v2.0/Core/VinX/Shop/BaseData/SpecialPrices",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Tour",
+  "/api/v2.0/Core/VinX/Shop/BaseData/TradingUnit",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Warehouse",
+  "/api/v2.0/Core/VinX/Shop/BaseData/Wine",
+  "/api/v2.0/Core/VinX/Shop/BaseData/WineComposition",
+  "/api/v2.0/Core/VinX/Shop/BaseData/WineRating",
+  "/api/v2.0/Core/VinX/Shop/Calculated/OrderProposal",
+  "/api/v2.0/Core/VinX/Shop/Calculated/ProductInfo",
+  "/api/v2.0/Core/VinX/Shop/Calculated/ProductInfoCondition",
+  "/api/v2.0/Core/VinX/Shop/Calculated/StockData",
+  "/api/v2.0/Core/VinX/Shop/Online/Basket",
+  "/api/v2.0/Core/VinX/Shop/Online/OnlineAddress",
+  "/api/v2.0/Core/VinX/Shop/Online/OnlineAddress({id})"
+ ],
+ "schemas": {
+  "Article": {
+   "fields": [
+    "articleCategoryId",
+    "articleNumber",
+    "articleType",
+    "basePrice",
+    "brandId",
+    "changedOn",
+    "countryId",
+    "createdDate",
+    "description",
+    "designation",
+    "designationWeb",
+    "eCommerceGroupId",
+    "ean1",
+    "ean2",
+    "ean3",
+    "fillingUnitId",
+    "id",
+    "isActive",
+    "isRarity",
+    "packagesPerPalette",
+    "picturePathLocal",
+    "priceUnit",
+    "producerId",
+    "productCycleId",
+    "regionId",
+    "searchTerm",
+    "shortNameWeb",
+    "substituteArticleId",
+    "substituteArticleText",
+    "tradingUnitId",
+    "unitFactor",
+    "unitsPerPalette",
+    "vatPercentage",
+    "vintage",
+    "volume",
+    "weight",
+    "wineId",
+    "withStock"
+   ]
+  },
+  "Producer": {
+   "fields": [
+    "addressId",
+    "description",
+    "designation",
+    "hasRarities",
+    "history",
+    "historyRtf",
+    "id",
+    "inhouseProduction",
+    "website"
+   ]
+  },
+  "Region": {
+   "fields": [
+    "countryId",
+    "designation",
+    "id",
+    "parentId",
+    "sortOrder"
+   ]
+  },
+  "Country": {
+   "fields": [
+    "code",
+    "designation",
+    "id",
+    "isoCode",
+    "sortOrder"
+   ]
+  },
+  "ArticleCategory": {
+   "fields": [
+    "designation",
+    "id",
+    "sortOrder"
+   ]
+  },
+  "Filling": {
+   "fields": [
+    "articleId ",
+    "contentInCl",
+    "designation",
+    "id",
+    "isChargeable",
+    "searchTerm",
+    "shortName",
+    "shortNameWeb",
+    "sortOrder"
+   ]
+  },
+  "TradingUnit": {
+   "fields": [
+    "articleId",
+    "designationWeb",
+    "hasSplitUsageFee",
+    "id",
+    "isChargeable",
+    "isFillingDepositIncluded",
+    "isSplitUsageAllowed",
+    "minimalUnit",
+    "searchTerm",
+    "shortName",
+    "shortNameWeb",
+    "splitUsageArticleId",
+    "splitUsageQuantity",
+    "unitsPerTradingUnit",
+    "weightingForQuantityDiscount"
+   ]
+  },
+  "WineComposition": {
+   "fields": [
+    "grapeId",
+    "id",
+    "proportion",
+    "sortOrder",
+    "wineId"
+   ]
+  },
+  "Grape": {
+   "fields": [
+    "characteristic",
+    "characteristicRtf",
+    "designation",
+    "history",
+    "historyRtf",
+    "id"
+   ]
+  },
+  "StockDataHead": {
+   "fields": [
+    "articleId",
+    "conditionId",
+    "quantityAvailableForShop",
+    "quantityAvailableTotal",
+    "quantityCurrent",
+    "quantityInOnlineOrder",
+    "stockDataDetails"
+   ]
+  },
+  "SellingPrice": {
+   "fields": [
+    "articleId",
+    "fromQuantity",
+    "id",
+    "isPromotion",
+    "priceGroupId",
+    "priceValidFrom",
+    "priceValidUntil",
+    "promotionPrice",
+    "promotionText",
+    "promotionValidFrom",
+    "promotionValidUntil",
+    "unitPrice"
+   ]
+  },
+  "SpecialPrice": {
+   "fields": [
+    "addressId",
+    "articleId",
+    "calculationMode",
+    "fromQuantity",
+    "id",
+    "isNetto",
+    "priceValidFrom",
+    "priceValidUntil",
+    "unitPrice"
+   ]
+  },
+  "PriceGroup": {
+   "fields": [
+    "active",
+    "designation",
+    "fallbackId",
+    "id",
+    "pricesWithVat"
+   ]
+  },
+  "ProductInfo": {
+   "fields": [
+    "applicableTaxRate",
+    "articleId",
+    "discounts",
+    "divisionId",
+    "isNetto",
+    "price",
+    "priceCalculationRule",
+    "priceGroupId",
+    "pricePromotion",
+    "promotionText",
+    "quantity",
+    "stock"
+   ]
+  },
+  "ProductInfoDiscount": {
+   "fields": [
+    "articleDiscountGroupId",
+    "customerDiscountGroupId",
+    "discount",
+    "discountText"
+   ]
+  },
+  "PriceParameter": {
+   "fields": [
+    "articleParameters",
+    "customerId",
+    "divisionId",
+    "priceGroupId",
+    "validDate"
+   ]
+  },
+  "ArticleParameter": {
+   "fields": [
+    "articleId",
+    "quantity"
+   ]
+  },
+  "Basket": {
+   "fields": [
+    "Id",
+    "action",
+    "amountPayed",
+    "billingAddressId",
+    "billingOnlineAddress",
+    "chargeTotalAmount",
+    "charges",
+    "conditionAddressId",
+    "customerWithVat",
+    "deliveryAddressId",
+    "deliveryConditionId",
+    "deliveryDateRequested",
+    "deliveryOnlineAddress",
+    "discountTotalAmount",
+    "discounts",
+    "divisionId",
+    "grandTotalAmount",
+    "lineCumulativeTotalAmount",
+    "lineTotalAmount",
+    "orderNumber",
+    "orderText",
+    "orderingAddressId",
+    "orderingOnlineAddress",
+    "packages",
+    "packagesTotalAmount",
+    "paymentConditionId",
+    "paymentMeansId",
+    "paymentTerms",
+    "positions",
+    "providerId",
+    "roundingAmount",
+    "saferPayFee",
+    "saferPayId",
+    "saferPayToken",
+    "shopId",
+    "taxBaseTotalAmount",
+    "taxTotalAmount",
+    "validDate",
+    "vatSummations"
+   ]
+  },
+  "BasketPosition": {
+   "fields": [
+    "applicableTaxRate",
+    "articleId",
+    "articleNumber",
+    "billedQuantity",
+    "chargeTotalAmount",
+    "charges",
+    "conditionId",
+    "deliveredQuantity",
+    "description",
+    "discountTotalAmount",
+    "discountValue",
+    "discounts",
+    "grandTotalAmount",
+    "isNetto",
+    "lineCumulativeTotalAmount",
+    "lineTotalAmount",
+    "orderedQuantity",
+    "packages",
+    "packagesTotalAmount",
+    "posNumber",
+    "posType",
+    "priceCalculationRule",
+    "stockQuantity",
+    "taxBaseTotalAmount",
+    "taxTotalAmount",
+    "unitPrice",
+    "unitPriceWithTax"
+   ]
+  },
+  "OnlineAddress": {
+   "fields": [
+    "additionalAddressLine1",
+    "additionalAddressLine2",
+    "addressId",
+    "changeType",
+    "city",
+    "country",
+    "divisionId",
+    "email",
+    "faxBusiness",
+    "firstName",
+    "homepage",
+    "id",
+    "language",
+    "lastName",
+    "loginName",
+    "marketingCodeList",
+    "onlineActive",
+    "phoneBusiness",
+    "phoneDirect",
+    "phoneMobile",
+    "phonePrivate",
+    "salutationId",
+    "street",
+    "title",
+    "zipcode"
+   ]
+  },
+  "DeliveryCondition": {
+   "fields": [
+    "designation",
+    "id"
+   ]
+  },
+  "PaymentCondition": {
+   "fields": [
+    "active",
+    "cashDiscountDays",
+    "cashDiscountPercentage",
+    "designation",
+    "id",
+    "paymentDays",
+    "paymentTerms"
+   ]
+  },
+  "BasketActionTypeV20": {
+   "enum": [
+    "calculate",
+    "order"
+   ]
+  },
+  "AddressChangeTypeV20": {
+   "enum": [
+    "new",
+    "change",
+    "subscribeNewsletter",
+    "unsubscribeNewsletter",
+    "nop"
+   ]
+  },
+  "PriceCalculationKindV20": {
+   "enum": [
+    "customer",
+    "promotion",
+    "priceGroup",
+    "article",
+    "override",
+    "fromShop",
+    "notFound"
+   ]
+  },
+  "OrderPositionTypeV20": {
+   "enum": [
+    "orderPos",
+    "discount",
+    "charge",
+    "shipping",
+    "package",
+    "fee",
+    "cashDiscount"
+   ]
+  },
+  "ArticleCategoryKindV20": {
+   "enum": [
+    "wine",
+    "mineral",
+    "beer",
+    "spirits",
+    "fuel",
+    "fruits",
+    "diverse",
+    "food",
+    "nonFood",
+    "rental",
+    "service",
+    "tax",
+    "set",
+    "expense",
+    "fee"
+   ]
+  },
+  "CustomerPriceCalculationModeV20": {
+   "enum": [
+    "percent",
+    "value"
+   ]
+  }
+ }
+}

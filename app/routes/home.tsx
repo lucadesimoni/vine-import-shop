@@ -41,7 +41,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {/* Hero */}
       <section className="relative isolate -mt-px overflow-hidden bg-inverse text-on-inverse">
         {hero.imageUrl && <img src={hero.imageUrl} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" fetchPriority="high" />}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/70 via-black/35 to-black/10" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-scrim/70 via-scrim/35 to-scrim/10" />
         <div className="container-page grid min-h-[min(78vh,760px)] content-center gap-8 py-20">
           {L(hero.eyebrow) && <Eyebrow line className="animate-fade-up text-on-inverse/85">{L(hero.eyebrow)}</Eyebrow>}
           <h1 className="text-display animate-fade-up max-w-3xl [animation-delay:80ms]"><Lines text={L(hero.title)} /></h1>
@@ -111,7 +111,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {spotlight && (
         <section className="container-page py-20 md:py-28">
           <div className="mx-auto grid max-w-5xl overflow-hidden rounded-surface border border-border bg-surface md:grid-cols-2">
-            <div className="relative min-h-96 bg-muted"><div className="absolute inset-[10%]"><ProductImage product={spotlight.card} /></div></div>
+            <div className="relative min-h-96 bg-media"><div className="absolute inset-[10%]"><ProductImage product={spotlight.card} /></div></div>
             <div className="grid content-center gap-5 p-8 md:p-12">
               <Eyebrow>{L(home.spotlight.eyebrow)}</Eyebrow>
               <div>

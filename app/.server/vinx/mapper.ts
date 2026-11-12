@@ -5,6 +5,13 @@ type Mapping = Settings["vinx"]["mapping"];
 
 export function pick(row: Raw, path: string | undefined): unknown {
   if (!path) return undefined;
+  if (path.includes("|")) {
+    for (const p of path.split("|")) {
+      const v = pick(row, p.trim());
+      if (v != null && v !== "") return v;
+    }
+    return undefined;
+  }
   let v: unknown = row;
   for (const seg of path.split(".")) {
     if (v == null || typeof v !== "object") return undefined;
@@ -33,7 +40,7 @@ export type MappedArticle = {
   category: string | null;
   kind: "wine" | "food" | "spirit" | "beverage" | null;
   product: { country?: string; region?: string; appellation?: string; grapes?: string; alcohol?: number; color?: string; taxClass?: "standard" | "reduced" };
-  variant: { vintage?: string; size?: string; volumeMl?: number; priceCents?: number; packSize?: number; stock?: number; active?: boolean; erpId?: string };
+  variant: { vintage?: string; size?: string; volumeMl?: number; priceCents?: number; packSize?: number; stock?: number; active?: boolean; erpId?: string; discountGroup?: string };
 };
 
 export function mapArticle(row: Raw, m: Mapping): MappedArticle {
@@ -54,6 +61,7 @@ export function mapArticle(row: Raw, m: Mapping): MappedArticle {
   const alcohol = decimal(pick(row, a.alcohol));
   const color = s("color");
   const tax = s("taxCode");
+  const taxRate = decimal(pick(row, a.taxRate));
   const sku = s("sku") ?? "";
   const type = s("articleType");
   const kind = (type ? m.articleTypes[type] : undefined) as MappedArticle["kind"] | undefined;
@@ -67,7 +75,8 @@ export function mapArticle(row: Raw, m: Mapping): MappedArticle {
     product: {
       country: s("country"), region: s("region"), appellation: s("appellation"), grapes: s("grapes"),
       alcohol: alcohol ?? undefined, color: color ? m.colors[color] : undefined,
-      taxClass: tax ? (m.taxCodes[tax] === "reduced" ? "reduced" : "standard") : undefined,
+      // vinX delivers vatPercentage (8.1 / 2.6); CSV may deliver a code (N / R)
+      taxClass: taxRate != null ? (taxRate < 5 ? "reduced" : "standard") : tax ? (m.taxCodes[tax] === "reduced" ? "reduced" : "standard") : undefined,
     },
     variant: {
       vintage: s("vintage"),
@@ -78,6 +87,7 @@ export function mapArticle(row: Raw, m: Mapping): MappedArticle {
       stock: stock != null ? Math.max(0, Math.floor(stock)) : undefined,
       active: a.active && pick(row, a.active) !== undefined ? truthy(pick(row, a.active)) : undefined,
       erpId: s("erpId") ?? sku,
+      discountGroup: s("discountGroup"),
     },
   };
 }
@@ -88,7 +98,14 @@ export function mapStock(row: Raw, m: Mapping) {
 }
 
 export function mapPrice(row: Raw, m: Mapping) {
+  const now = Date.now();
+  const promoFrom = row.promotionValidFrom ? Date.parse(String(row.promotionValidFrom)) : null;
+  const promoTo = row.promotionValidUntil ? Date.parse(String(row.promotionValidUntil)) : null;
   return {
+    promoValidFrom: promoFrom ? new Date(promoFrom) : null,
+    promoValidTo: promoTo ? new Date(promoTo) : null,
+    // SellingPrices: a price row only counts while valid
+    current: (!row.priceValidFrom || Date.parse(String(row.priceValidFrom)) <= now) && (!row.priceValidUntil || Date.parse(String(row.priceValidUntil)) >= now),
     ref: String(pick(row, m.price.sku) ?? ""),
     list: String(pick(row, m.price.list) ?? ""),
     minQty: Math.max(1, Math.floor(decimal(pick(row, m.price.minQty)) ?? 1)),

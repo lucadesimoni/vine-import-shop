@@ -42,6 +42,10 @@ export async function action({ request }: Route.ActionArgs) {
       portalHost: cleanHost(o.channels?.portalHost),
       shopHost: cleanHost(o.channels?.shopHost),
     },
+    originMap: {
+      mode: ["auto", "regions", "world", "off"].includes(o.originMap?.mode) ? o.originMap.mode : shop.originMap.mode,
+      country: /^[A-Za-z]{2}$/.test(o.originMap?.country ?? "") ? String(o.originMap.country).toUpperCase() : shop.originMap.country,
+    },
     priceVisibility: o.priceVisibility,
     priceSource: listPriceSources().some((x) => x.id === o.priceSource) ? o.priceSource : shop.priceSource,
     consumerCheckout: form.has("consumerCheckout"),
@@ -102,6 +106,23 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
             </Field>
           </div>
           <p className="mt-4 text-[13px] text-muted-fg">Beide Domains auf dieselbe Installation zeigen lassen. Für ein gemeinsames Login über Subdomains <code className="rounded-badge bg-muted px-1.5 py-0.5 text-[12px]">COOKIE_DOMAIN=.example.ch</code> setzen.</p>
+        </Panel>
+        <Panel title="Herkunftskarte" description="Produzenten-Seite: Herkunft aus Lieferanten-/Produzentendaten (Region, Land), je Produkt übersteuerbar.">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Kartentyp">
+              {(id) => (
+                <Select id={id} name="originMap.mode" defaultValue={shop.originMap.mode}>
+                  <option value="auto">Automatisch</option>
+                  <option value="regions">Regionen eines Landes</option>
+                  <option value="world">Weltkarte (abstrahiert)</option>
+                  <option value="off">Aus (nur A–Z)</option>
+                </Select>
+              )}
+            </Field>
+            <Field label="Heimatland (ISO)" hint="Regionenkarte verfügbar: IT">
+              {(id) => <Input id={id} name="originMap.country" defaultValue={shop.originMap.country} maxLength={2} className="uppercase" />}
+            </Field>
+          </div>
         </Panel>
         <Panel title="Verkaufsmodell" description="B2B-only, B2C oder beides — mit Preisanzeige je Kundengruppe.">
           <div className="grid gap-4">

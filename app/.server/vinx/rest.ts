@@ -4,15 +4,17 @@ import type { BasketLine, BasketRequest, BasketResult, CustomerPayload, ErpClien
 type Cfg = Settings["vinx"];
 
 /**
- * vinX REST3 client (Shop API V1.0/V2.0) — implemented from the public I-AG spec:
- *  - Auth: POST /api/Identity/Realm/RequestToken {client_id:"Integrated", scope:"VinX.Shop", username, password} → Bearer token
- *  - Paths: /api/{v}/Core/VinX/Shop/{BaseData|Calculated|Online}/…
- *  - OData: $filter, $top, $skip, $select; deltas via `modifiedDate gt <ISO>`
- *  - Errors: RFC 7807 application/problem+json (title/detail/errorCode)
- * Password/secret: env VINX_PASSWORD. Server-to-server only (vinX REST adapter must sit behind TLS / IP allow-list).
+ * vinX REST3 client — implemented against the official OpenAPI spec "I-AG Standard Shop API v2.0"
+ * (<host>/swagger → /swagger/Shopv20/swagger.json; contract-tested in tests/vinx-contract.test.ts):
+ *  - Auth: POST /api/Identity/Realm/RequestToken {client_id, grant_type:"password", scope:"VinX.Shop", username, password} → access_token
+ *  - Paths: /api/v2.0/Core/VinX/Shop/{BaseData|Calculated|Online}/…  (OData $filter/$top/$skip/$select/$orderby)
+ *  - Delta: BaseData/Article?$filter=changedOn gt <ISO>
+ *  - Errors: RFC 7807 application/problem+json
+ * Password: env VINX_PASSWORD. Server-to-server only.
  */
 export class Rest3Client implements ErpClient {
   readonly name = "vinX REST3";
+  readonly mapping = "rest" as const;
   private token: { value: string; exp: number } | null = null;
 
   constructor(private cfg: Cfg, private locale = "de") {}
@@ -30,7 +32,7 @@ export class Rest3Client implements ErpClient {
     const res = await fetch(`${this.root}/api/Identity/Realm/RequestToken`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ client_id: "Integrated", scope: "VinX.Shop", username: this.cfg.username, password: process.env.VINX_PASSWORD ?? "" }),
+      body: JSON.stringify({ client_id: this.cfg.clientId, grant_type: "password", scope: "VinX.Shop", username: this.cfg.username, password: process.env.VINX_PASSWORD ?? "" }),
       signal: AbortSignal.timeout(20_000),
     });
     if (!res.ok) throw new Error(`vinX auth failed: HTTP ${res.status} ${await problem(res)}`);
@@ -62,6 +64,7 @@ export class Rest3Client implements ErpClient {
 
   /** OData paging over a GET collection. */
   private async *collection(path: string, filter?: string): AsyncIterable<Raw> {
+    // vinX OData endpoints return the array (minimal metadata) — tolerate the { value: [] } envelope too.
     const top = this.cfg.pageSize;
     for (let skip = 0; skip < 1_000_000; skip += top) {
       const u = new URL(this.shop(path));
@@ -77,65 +80,118 @@ export class Rest3Client implements ErpClient {
 
   async ping() {
     await this.auth();
-    const u = new URL(this.shop("BaseData/ShippingCode"));
+    const u = new URL(this.shop("BaseData/DeliveryCondition"));
     u.searchParams.set("$top", "1");
     await this.request("GET", u.toString());
     return `Connected to ${this.root} (${this.cfg.apiVersion})`;
   }
 
-  articles(since?: Date | null) {
-    return this.collection("BaseData/Article", since ? `${this.cfg.modifiedField} gt ${since.toISOString()}` : undefined);
+  private async all(path: string) {
+    const out: Raw[] = [];
+    for await (const r of this.collection(path)) out.push(r);
+    return out;
+  }
+
+  /** Lookup tables referenced by Article (ids → records), loaded once per sync run. */
+  private async lookups() {
+    const [producers, regions, countries, categories, fillings, units, compositions, grapes] = await Promise.all(
+      ["BaseData/Producer", "BaseData/Region", "BaseData/Country", "BaseData/ArticleCategory", "BaseData/Filling", "BaseData/TradingUnit", "BaseData/WineComposition", "BaseData/Grape"].map((p) => this.all(p).catch(() => [] as Raw[])),
+    );
+    const byId = (rows: Raw[]) => new Map(rows.map((r) => [Number(r.id), r]));
+    const grapeName = byId(grapes);
+    const wineGrapes = new Map<number, string[]>();
+    for (const c of [...compositions].sort((a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0))) {
+      const g = grapeName.get(Number(c.grapeId))?.designation;
+      if (g) wineGrapes.set(Number(c.wineId), [...(wineGrapes.get(Number(c.wineId)) ?? []), String(g)]);
+    }
+    return { producers: byId(producers), regions: byId(regions), countries: byId(countries), categories: byId(categories), fillings: byId(fillings), units: byId(units), wineGrapes };
+  }
+
+  /** Articles enriched with their referenced master data so the generic mapper can use nested paths. */
+  async *articles(since?: Date | null) {
+    const L = await this.lookups();
+    const top = (id: unknown): Raw | undefined => {
+      let r = L.regions.get(Number(id));
+      for (let i = 0; r && r.parentId != null && i < 6; i++) r = L.regions.get(Number(r.parentId)) ?? r;
+      return r;
+    };
+    for await (const a of this.collection("BaseData/Article", since ? `${this.cfg.modifiedField} gt ${since.toISOString()}` : undefined)) {
+      yield {
+        ...a,
+        producer: L.producers.get(Number(a.producerId)),
+        region: L.regions.get(Number(a.regionId)),
+        regionTop: top(a.regionId),
+        country: L.countries.get(Number(a.countryId)),
+        category: L.categories.get(Number(a.articleCategoryId)),
+        filling: L.fillings.get(Number(a.fillingUnitId)),
+        tradingUnit: L.units.get(Number(a.tradingUnitId)),
+        grapes: a.wineId != null ? (L.wineGrapes.get(Number(a.wineId)) ?? []).join(", ") || undefined : undefined,
+      };
+    }
   }
 
   stock() {
-    return this.collection("Calculated/StockInfo");
+    return this.collection("Calculated/StockData");
   }
 
-  /** Price-group prices: one ProductInfo batch per mapped price group. */
-  async *prices(): AsyncIterable<Raw> {
-    for (const groupId of Object.keys(this.cfg.groupMap).map(Number).filter(Number.isFinite)) {
-      const rows = await this.request<Raw[]>("POST", this.shop("Calculated/ProductInfo"), { priceGroupId: groupId });
-      for (const r of rows ?? []) yield { ...r, priceGroupId: groupId };
-    }
+  /** BaseData/SellingPrices: per price group, from-quantity tiers, optional promotion price with validity. */
+  prices() {
+    return this.collection("BaseData/SellingPrices");
+  }
+
+  async priceGroups() {
+    return (await this.all("BaseData/PriceGroup")).map((g) => ({ id: String(g.id), name: String(g.designation ?? g.id), pricesWithVat: !!g.pricesWithVat }));
+  }
+
+  specialPrices() {
+    return this.collection("BaseData/SpecialPrices");
   }
 
   async productInfo(req: { customerId?: number | null; priceGroupId?: number | null; articles: { erpId: string; qty: number }[] }) {
     const rows = await this.request<Raw[]>("POST", this.shop("Calculated/ProductInfo"), {
-      customerId: req.customerId ?? undefined,
-      priceGroupId: req.customerId ? undefined : (req.priceGroupId ?? undefined),
+      validDate: new Date().toISOString(),
+      ...(req.customerId ? { customerId: req.customerId } : { priceGroupId: req.priceGroupId ?? undefined }),
       articleParameters: req.articles.map((a) => ({ articleId: Number(a.erpId), quantity: a.qty })),
     });
     const out = new Map<string, ProductInfo>();
-    for (const r of rows ?? []) {
-      out.set(String(r.articleId), {
-        unitNet: cents(r.price),
-        promoNet: r.pricePromotion != null ? cents(r.pricePromotion) : null,
-        promoText: (r.promotionText as string) || null,
-      });
+    for (const r of Array.isArray(rows) ? rows : []) {
+      const qty = Math.max(1, Number(r.quantity ?? 1));
+      const list = cents(r.price);
+      const promo = r.pricePromotion != null ? cents(r.pricePromotion) : null;
+      const discounts = ((r.discounts as Raw[]) ?? []).map((d) => ({ text: String(d.discountText ?? ""), amount: cents(d.discount), articleDiscountGroupId: d.articleDiscountGroupId != null ? Number(d.articleDiscountGroupId) : null }));
+      // discount amounts are for the queried quantity → per unit
+      const perUnit = discounts.reduce((a, d) => a + d.amount, 0) / qty;
+      out.set(String(r.articleId), { listNet: list, promoNet: promo, promoText: (r.promotionText as string) || null, discounts, unitNet: Math.max(0, Math.round((promo ?? list) - perUnit)) });
     }
     return out;
   }
 
   private basketBody(b: BasketRequest) {
     const positions: Raw[] = b.positions.map((p, i) => ({
+      posType: "orderPos",
       posNumber: String(i + 1),
       articleId: Number(p.erpId),
       orderedQuantity: p.qty,
       ...(p.fromShop && p.unitNet != null ? { unitPrice: p.unitNet / 100, priceCalculationRule: "fromShop" } : {}),
     }));
     if (b.voucher && this.cfg.promoArticleId) {
-      positions.push({ posNumber: String(positions.length + 1), articleId: this.cfg.promoArticleId, orderedQuantity: 1, unitPrice: -b.voucher.amountNet / 100, priceCalculationRule: "fromShop" });
+      positions.push({ posType: "orderPos", posNumber: String(positions.length + 1), articleId: this.cfg.promoArticleId, orderedQuantity: 1, unitPrice: -b.voucher.amountNet / 100, priceCalculationRule: "fromShop" });
     }
     const customerId = b.customerErpId ? Number(b.customerErpId) : undefined;
     const o = b.online;
+    const delivery = this.cfg.deliveryConditionMap[b.shippingCode] ?? this.cfg.defaultDeliveryConditionId;
+    const payment = (b.paymentMethod && this.cfg.paymentConditionMap[b.paymentMethod]) ?? this.cfg.defaultPaymentConditionId;
+    const notes = o ? [o.order.kind === "request" ? "OFFERTANFRAGE / RICHIESTA D'OFFERTA" : "", o.order.poNumber && `Ref: ${o.order.poNumber}`, o.order.notes].filter(Boolean).join("\n") : undefined;
     return {
       action: b.action,
       ...(customerId ? { orderingAddressId: customerId, conditionAddressId: customerId } : {}),
-      ...(!customerId && o ? { orderingOnlineAddress: onlineAddress(o.billing, o.order.email, "new") } : {}),
-      ...(o?.shipping && o.shipping !== o.billing ? { deliveryOnlineAddress: onlineAddress(o.shipping, o.order.email, "new") } : {}),
-      ...(this.cfg.apiVersion === "v2.0" ? { shippingCodeId: this.cfg.shippingCodeMap[b.shippingCode] ?? 0 } : {}),
+      ...(!customerId && o ? { orderingOnlineAddress: onlineAddress(o.billing, o.order.email, "new", o.order.locale) } : {}),
+      ...(o?.shipping && o.shipping !== o.billing ? { deliveryOnlineAddress: onlineAddress(o.shipping, o.order.email, "new", o.order.locale) } : {}),
+      ...(delivery != null ? { deliveryConditionId: delivery } : {}),
+      ...(payment != null ? { paymentConditionId: payment } : {}),
+      validDate: new Date().toISOString(),
       ...(b.deliveryDate ? { deliveryDateRequested: new Date(b.deliveryDate).toISOString() } : {}),
-      ...(o ? { externalOrderNumber: o.order.number, remarks: [o.order.poNumber && `Ref: ${o.order.poNumber}`, o.order.notes].filter(Boolean).join("\n") } : {}),
+      ...(o ? { shopId: o.order.number, orderNumber: o.order.number, orderText: notes || undefined } : {}),
       positions,
     };
   }
@@ -147,41 +203,43 @@ export class Rest3Client implements ErpClient {
 
   async pushOrder(p: OrderPayload) {
     const r = await this.request<Raw>("POST", this.shop("Online/Basket"), this.basketBody({
-      action: p.order.kind === "request" ? (this.cfg.apiVersion === "v2.0" ? "quote" : "order") : "order",
+      action: "order",
+      paymentMethod: p.order.paymentMethod,
       customerErpId: p.order.customerErpId,
       shippingCode: p.order.shippingMethod,
       deliveryDate: p.order.deliveryDate,
       positions: p.items.map((i) => ({ sku: i.sku, erpId: i.erpId ?? null, qty: i.qty })),
       online: p,
     }));
-    return String(r?.onlineOrderId ?? r?.id ?? r?.orderId ?? "");
+    return String(r?.Id ?? r?.id ?? "");
   }
 
   async pushCustomer(c: CustomerPayload) {
     const r = await this.request<Raw>("POST", this.shop("Online/OnlineAddress"), {
+      ...onlineAddress({ ...(c.billing ?? {}), company: c.company ?? undefined, name: c.name, phone: c.phone ?? undefined }, c.email, c.erpId ? "change" : "new", c.locale),
       ...(c.erpId ? { addressId: Number(c.erpId) } : {}),
-      ...onlineAddress({ ...(c.billing ?? {}), company: c.company ?? undefined, name: c.name, phone: c.phone ?? undefined }, c.email, c.erpId ? "change" : "new"),
-      language: c.locale.toUpperCase(),
-      vatNumber: c.uidNumber ?? undefined,
     });
     return String(r?.addressId ?? r?.id ?? "");
   }
 }
 
-function onlineAddress(a: Record<string, string | undefined>, email: string, changeType: "new" | "change" | "nop") {
+/** OnlineAddress per spec (no company field → company goes to additionalAddressLine1). */
+function onlineAddress(a: Record<string, string | undefined>, email: string, changeType: "new" | "change" | "nop", locale = "de") {
   const [firstName, ...rest] = (a.name ?? "").split(" ");
   return {
     changeType,
-    company: a.company || undefined,
     firstName: rest.length ? firstName : undefined,
     lastName: rest.length ? rest.join(" ") : a.name,
+    additionalAddressLine1: a.company || undefined,
     street: a.street,
     zipcode: a.zip,
     city: a.city,
-    countryCode: a.country,
-    phone: a.phone || undefined,
+    country: a.country,
+    phoneBusiness: a.phone || undefined,
     email,
+    language: locale.toUpperCase(),
     loginName: email,
+    onlineActive: true,
   };
 }
 

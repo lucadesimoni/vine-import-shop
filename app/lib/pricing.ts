@@ -1,3 +1,4 @@
+import { applyConditions, type AppliedCondition, type ConditionResult, type ConditionRule, type PriceFacts } from "./conditions";
 import { roundCash } from "./money";
 import type { ShippingMethod } from "./settings";
 
@@ -23,6 +24,9 @@ export type PriceInfo = {
   display: number;
   displayMode: "net" | "gross";
   tiers: Tier[];
+  /** B2B conditions that shaped this price (customer discount, special price, free goods …) */
+  applied?: AppliedCondition[];
+  freeUnits?: number;
 };
 
 export function netFromGross(gross: number, rate: number) {
@@ -30,6 +34,14 @@ export function netFromGross(gross: number, rate: number) {
 }
 export function grossFromNet(net: number, rate: number) {
   return Math.round(net * (1 + rate / 100));
+}
+
+/** Apply a conditions-engine result to a list/tier price. */
+export function withConditions(p: PriceInfo, r: ConditionResult | null): PriceInfo {
+  if (!r || !r.applied.length) return p;
+  const net = r.net;
+  const gross = grossFromNet(net, p.taxRate);
+  return { ...p, net, gross, reduced: net < p.listNet, display: p.displayMode === "net" ? net : gross, applied: r.applied, freeUnits: r.freeUnits };
 }
 
 export function priceFor(args: { listGross: number; taxRate: number; group: PriceGroup | null; tiers?: Tier[]; qty?: number }): PriceInfo {
@@ -48,7 +60,11 @@ export function priceFor(args: { listGross: number; taxRate: number; group: Pric
   return { net, gross, listGross, listNet, taxRate, reduced: net < listNet, display: displayMode === "net" ? net : gross, displayMode, tiers };
 }
 
-export type LineInput = { key: number; qty: number; listGross: number; taxRate: number; tiers: Tier[]; units?: number };
+export type LineInput = {
+  key: number; qty: number; listGross: number; taxRate: number; tiers: Tier[]; units?: number;
+  /** B2B conditions for this line (facts + matching rules); evaluated with the line quantity */
+  conditions?: { facts: PriceFacts; rules: ConditionRule[]; mode?: "priority" | "lowest" };
+};
 export type Coupon = { code: string; type: "percent" | "fixed"; value: number; minTotalCents: number; consumerOnly: boolean; expiresAt: Date | null };
 
 export type Totals = {
@@ -94,7 +110,10 @@ export function computeTotals(args: {
   let units = 0;
 
   const lines = args.lines.map((l) => {
-    const price = priceFor({ listGross: l.listGross, taxRate: l.taxRate, group, tiers: l.tiers, qty: l.qty });
+    const base = priceFor({ listGross: l.listGross, taxRate: l.taxRate, group, tiers: l.tiers, qty: l.qty });
+    const price = l.conditions?.rules.length
+      ? withConditions(base, applyConditions({ listNet: base.net, qty: l.qty, facts: l.conditions.facts, rules: l.conditions.rules, mode: l.conditions.mode, now: args.now }))
+      : base;
     const lineNet = price.net * l.qty;
     const lineGross = price.gross * l.qty;
     subtotalNet += lineNet;

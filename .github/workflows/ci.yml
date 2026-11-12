@@ -17,3 +17,10 @@ jobs:
           SESSION_SECRET=ci-secret-ci-secret-ci-secret-1234 npm start &
           npx wait-on http://localhost:3000/api/health
           npm run e2e
+      - name: E2E full platform (fresh data; portal, conditions, admin, integrations, APIs)
+        run: |
+          pkill -f "node server.js" || true
+          rm -rf data
+          SESSION_SECRET=ci-secret-ci-secret-ci-secret-1234 CRON_SECRET=e2e-cron VINX_WEBHOOK_SECRET=e2e-hook STRIPE_WEBHOOK_SECRET=whsec_e2e npm start &
+          npx wait-on http://localhost:3000/api/health
+          npm run e2e:platform

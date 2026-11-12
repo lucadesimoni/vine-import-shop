@@ -1,4 +1,5 @@
 import { customerTiers } from "./price-sources";
+import { factsFor, rulesFor } from "./conditions";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { computeTotals, type Coupon, type Tier } from "~/lib/pricing";
 import { tl } from "~/lib/localized";
@@ -91,6 +92,8 @@ export type CartLine = {
   unitDisplay: number;
   lineDisplay: number;
   tierApplied: boolean;
+  conditions: string[];
+  freeUnits: number;
 };
 
 /** Single source of truth for order list, mini-cart, checkout and order creation. */
@@ -110,6 +113,8 @@ export async function cartSummary(ctx: ShopContext, items: CartItem[], couponCod
     ? await db.select().from(prices).where(and(eq(prices.groupId, ctx.group.id), inArray(prices.variantId, visible.map((r) => r.v.id))))
     : [];
   const custom = await customerTiers(ctx, visible.map((r) => r.v));
+  const rules = ctx.showPrices ? await rulesFor(ctx) : [];
+  const facts = rules.length ? await factsFor(visible.map((r) => ({ productId: r.p.id, variantId: r.v.id, categoryId: r.p.categoryId, producerId: r.p.producerId, discountGroup: r.v.discountGroup }))) : null;
   const tiers = (id: number): Tier[] => custom?.get(id) ?? tierRows.filter((t) => t.variantId === id).map((t) => ({ minQty: t.minQty, netCents: t.netCents }));
   const ordered = items.map((i) => ({ i, row: visible.find((r) => r.v.id === i.variantId) })).filter((x) => x.row);
 
@@ -121,6 +126,7 @@ export async function cartSummary(ctx: ShopContext, items: CartItem[], couponCod
       listGross: row!.v.priceCents,
       taxRate: row!.p.taxClass === "reduced" ? ctx.shop.tax.reduced : ctx.shop.tax.standard,
       tiers: tiers(row!.v.id),
+      conditions: facts && !custom?.has(row!.v.id) ? { facts: facts.get(row!.v.id)!, rules, mode: ctx.shop.priceFinding } : undefined,
     })),
     group: ctx.group,
     shipping: ctx.shop.shipping,
@@ -151,6 +157,8 @@ export async function cartSummary(ctx: ShopContext, items: CartItem[], couponCod
       unitDisplay: net ? t.price.net : t.price.gross,
       lineDisplay: net ? t.lineNet : t.lineGross,
       tierApplied: t.price.reduced,
+      conditions: (t.price.applied ?? []).map((a) => a.label),
+      freeUnits: t.price.freeUnits ?? 0,
     };
   });
 

@@ -70,7 +70,7 @@ registerPriceSource({
     const out = new Map<number, Tier[]>();
     for (const v of linked) {
       const p = info.get(v.erpId!);
-      if (p) out.set(v.id, [{ minQty: 1, netCents: p.promoNet ?? p.unitNet }]);
+      if (p) out.set(v.id, [{ minQty: 1, netCents: p.unitNet }]); // vinX: promotion + customer discounts already applied
     }
     vinxCache.set(key, { at: Date.now(), value: out });
     if (vinxCache.size > 500) vinxCache.delete(vinxCache.keys().next().value!);

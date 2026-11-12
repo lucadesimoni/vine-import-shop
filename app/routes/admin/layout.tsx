@@ -1,5 +1,5 @@
 import { Form, NavLink, Outlet } from "react-router";
-import { ExternalLink, FileText, LayoutDashboard, LogOut, Package, Palette, PlugZap, Settings, ShoppingCart, Users } from "lucide-react";
+import { ExternalLink, Percent, FileText, LayoutDashboard, LogOut, Package, Palette, PlugZap, Settings, ShoppingCart, Users } from "lucide-react";
 import { count, eq } from "drizzle-orm";
 import type { Route } from "./+types/layout";
 import { requireStaff } from "~/.server/auth";
@@ -25,6 +25,7 @@ const NAV = [
   { to: "/admin/orders", label: "Bestellungen", icon: ShoppingCart, badge: "orders" },
   { to: "/admin/products", label: "Produkte", icon: Package },
   { to: "/admin/customers", label: "Kunden", icon: Users, badge: "customers" },
+  { to: "/admin/conditions", label: "Konditionen", icon: Percent },
   { section: "Shop" },
   { to: "/admin/design", label: "Design & Marke", icon: Palette },
   { to: "/admin/content", label: "Inhalte", icon: FileText },

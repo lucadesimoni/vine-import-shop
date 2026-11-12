@@ -22,7 +22,10 @@ function flushSoon() {
 on("order.placed", async ({ orderId }) => {
   const { vinx } = await getSettings("vinx");
   if (vinx.enabled && vinx.pushOrders) {
-    await enqueue("order", orderId, await orderPayload(orderId));
+    const payload = await orderPayload(orderId);
+    // vinX Online/Basket knows only calculate | order → quote requests stay in the shop unless configured
+    if (payload.order.kind === "request" && vinx.requestsToErp === "skip") return;
+    await enqueue("order", orderId, payload);
     flushSoon();
   }
 });

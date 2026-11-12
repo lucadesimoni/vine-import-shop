@@ -136,6 +136,8 @@ export const variants = pgTable(
     size: text("size"), // display label, e.g. "75 cl", "2.5 kg"
     volumeMl: integer("volume_ml"),
     packSize: integer("pack_size").notNull().default(1), // units per case
+    /** vinX "Artikelgruppe für Kundenrabatt" — key for group-wide customer discounts */
+    discountGroup: text("discount_group"),
     priceCents: integer("price_cents").notNull().default(0), // list price incl. VAT
     stock: integer("stock").notNull().default(0),
     active: boolean("active").notNull().default(true),
@@ -238,6 +240,37 @@ export const orderItems = pgTable(
     lineGross: integer("line_gross").notNull(),
   },
   (t) => [index("order_items_order_idx").on(t.orderId)],
+);
+
+/**
+ * B2B conditions (Konditionen) — evaluated by lib/conditions.ts.
+ * source = "platform" (maintained in admin) | "vinx" | any other ERP connector id; synced rows carry erpId.
+ */
+export const conditions = pgTable(
+  "conditions",
+  {
+    id: serial("id").primaryKey(),
+    source: text("source").notNull().default("platform"),
+    erpId: text("erp_id"),
+    type: text("type", { enum: ["special_price", "promotion_price", "customer_discount", "quantity_discount", "promotion_discount", "free_goods"] }).notNull(),
+    customerId: integer("customer_id").references(() => users.id, { onDelete: "cascade" }),
+    groupId: integer("group_id").references(() => customerGroups.id, { onDelete: "cascade" }),
+    targetType: text("target_type", { enum: ["all", "product", "variant", "category", "producer", "discount_group"] }).notNull().default("all"),
+    target: text("target"),
+    calc: text("calc", { enum: ["percent", "amount_per_unit", "fixed_price", "n_for_m"] }).notNull().default("percent"),
+    value: numeric("value", { precision: 12, scale: 2 }).notNull().default("0"),
+    minQty: integer("min_qty").notNull().default(0),
+    minAmountCents: integer("min_amount_cents").notNull().default(0),
+    buyQty: integer("buy_qty").notNull().default(0),
+    payQty: integer("pay_qty").notNull().default(0),
+    validFrom: timestamp("valid_from", { withTimezone: true }),
+    validTo: timestamp("valid_to", { withTimezone: true }),
+    onNetPrices: boolean("on_net_prices").notNull().default(false),
+    label: jsonb("label").$type<Localized>(),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("conditions_customer_idx").on(t.customerId), index("conditions_group_idx").on(t.groupId), uniqueIndex("conditions_erp_idx").on(t.source, t.erpId)],
 );
 
 export const coupons = pgTable("coupons", {

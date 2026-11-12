@@ -12,12 +12,12 @@ import { cn } from "~/lib/cn";
 const buttonBase =
   "btn-label inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-btn transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease-out disabled:pointer-events-none disabled:opacity-45 active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2";
 const buttonVariants = {
-  primary: "bg-primary text-on-primary hover:bg-[color-mix(in_oklab,var(--t-primary)_86%,black)] shadow-[inset_0_-1px_0_rgb(0_0_0/0.12)]",
+  primary: "bg-primary text-on-primary hover:bg-[color-mix(in_oklab,var(--t-primary)_86%,var(--t-fg))] shadow-inset-btn",
   secondary: "border border-border-strong bg-transparent text-fg hover:border-fg",
   ghost: "text-fg hover:bg-muted",
   inverse: "bg-on-inverse text-inverse hover:opacity-90",
   outlineInverse: "border border-on-inverse/50 text-on-inverse hover:border-on-inverse hover:bg-on-inverse/10",
-  danger: "bg-danger text-white hover:opacity-90",
+  danger: "bg-danger text-on-danger hover:opacity-90",
   link: "text-fg underline decoration-border-strong underline-offset-4 hover:decoration-fg px-0! h-auto! normal-case! tracking-normal!",
 } as const;
 const buttonSizes = {
@@ -73,10 +73,11 @@ export function Card({ className, ...props }: ComponentProps<"div">) {
   return <div className={cn("rounded-surface border border-border bg-surface", className)} {...props} />;
 }
 
-export function Badge({ tone = "neutral", className, ...props }: ComponentProps<"span"> & { tone?: "neutral" | "primary" | "success" | "warning" | "danger" | "inverse" }) {
+export function Badge({ tone = "neutral", className, ...props }: ComponentProps<"span"> & { tone?: "neutral" | "primary" | "soft" | "success" | "warning" | "danger" | "inverse" }) {
   const tones = {
     neutral: "bg-muted text-muted-fg",
     primary: "bg-primary text-on-primary",
+    soft: "bg-primary-soft text-primary",
     success: "bg-success-soft text-success",
     warning: "bg-warning-soft text-warning",
     danger: "bg-danger-soft text-danger",

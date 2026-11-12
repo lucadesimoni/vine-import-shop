@@ -5,7 +5,7 @@ import type { Route } from "./+types/integrations";
 import { getDb, schema } from "~/.server/db";
 import { getSettings, saveSetting } from "~/.server/settings";
 import { decodeUpload } from "~/.server/vinx/csv";
-import { erpClient, lastSuccess, outboxCounts, processOutbox, retryOutbox, syncArticles, syncPrices, syncStock } from "~/.server/vinx/sync";
+import { erpClient, lastSuccess, outboxCounts, processOutbox, retryOutbox, syncArticles, syncPrices, syncSpecialPrices, syncStock } from "~/.server/vinx/sync";
 import { Badge, Button, buttonClass, Field, Input, Notice, Select, Textarea } from "~/components/ui";
 import { DataTable, label, PageHeader, Panel, Stat, Toggle } from "~/components/admin";
 
@@ -16,7 +16,7 @@ export async function loader() {
     db.select().from(schema.syncLog).orderBy(desc(schema.syncLog.id)).limit(15),
     db.select().from(schema.erpOutbox).where(inArray(schema.erpOutbox.status, ["pending", "retry", "failed"])).orderBy(desc(schema.erpOutbox.id)).limit(30),
     outboxCounts(),
-    Promise.all(["articles", "stock", "prices", "outbox"].map(lastSuccess)),
+    Promise.all(["articles", "stock", "prices", "conditions", "outbox"].map(lastSuccess)),
   ]);
   return { vinx, logs, outbox, counts, last, secrets: { password: !!process.env.VINX_PASSWORD, cron: !!process.env.CRON_SECRET, webhook: !!process.env.VINX_WEBHOOK_SECRET } };
 }
@@ -38,6 +38,13 @@ export async function action({ request }: Route.ActionArgs) {
       username: String(form.get("username") ?? ""), livePrices: form.has("livePrices"), liveBasket: form.has("liveBasket"),
       pushOrders: form.has("pushOrders"), pushCustomers: form.has("pushCustomers"),
       promoArticleId: Number(form.get("promoArticleId")) || null,
+      clientId: String(form.get("clientId") ?? "").trim() || "Integrated",
+      defaultDeliveryConditionId: Number(form.get("defaultDeliveryConditionId")) || null,
+      defaultPaymentConditionId: Number(form.get("defaultPaymentConditionId")) || null,
+      deliveryConditionMap: parseMap(form.get("deliveryConditionMap")),
+      paymentConditionMap: parseMap(form.get("paymentConditionMap")),
+      requestsToErp: form.get("requestsToErp") === "order" ? "order" : "skip",
+      syncConditions: form.has("syncConditions"),
     });
     return { ok: true, message: "Konfiguration gespeichert" };
   }
@@ -60,6 +67,7 @@ export async function action({ request }: Route.ActionArgs) {
       : intent === "articles" ? await syncArticles(client, form.has("full"))
       : intent === "stock" ? await syncStock(client)
       : intent === "prices" ? await syncPrices(client)
+      : intent === "conditions" ? await syncSpecialPrices(client)
       : intent === "outbox" ? await processOutbox(client)
       : { ok: false, message: "unknown" };
     return { ok: r.ok, message: r.message };
@@ -68,11 +76,18 @@ export async function action({ request }: Route.ActionArgs) {
   }
 }
 
+/** "post=1, pickup=4" → { post: 1, pickup: 4 } */
+function parseMap(v: FormDataEntryValue | null): Record<string, number> {
+  return Object.fromEntries(String(v ?? "").split(/[,\n]/).map((p) => p.split("=").map((x) => x.trim())).filter(([k, n]) => k && Number.isFinite(Number(n)) && n !== "").map(([k, n]) => [k, Number(n)]));
+}
+const fmtMap = (m: Record<string, number>) => Object.entries(m).map(([k, v]) => `${k}=${v}`).join(", ");
+
 const JOBS = [
   ["ping", "Verbindung testen", Zap],
   ["articles", "Artikel (Delta)", Play],
   ["stock", "Lagerbestand", Play],
-  ["prices", "Preislisten", Play],
+  ["prices", "Preislisten & Aktionen", Play],
+  ["conditions", "Spezialpreise", Play],
   ["outbox", "Bestellungen senden", Play],
 ] as const;
 
@@ -119,10 +134,11 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
             <div className="grid gap-4">
               <div className="divide-y divide-border">
                 <Toggle name="enabled" label="Integration aktiv" defaultChecked={vinx.enabled} />
-                <Toggle name="pushOrders" label="Bestellungen an vinX (Warenkorb action=order / quote)" defaultChecked={vinx.pushOrders} />
+                <Toggle name="pushOrders" label="Bestellungen an vinX (Online/Basket action=order)" defaultChecked={vinx.pushOrders} />
                 <Toggle name="pushCustomers" label="Neukunden als Onlineadresse" defaultChecked={vinx.pushCustomers} />
                 <Toggle name="livePrices" label="Live-Preise (Calculated/ProductInfo)" defaultChecked={vinx.livePrices} />
                 <Toggle name="liveBasket" label="Warenkorbberechnung durch vinX (B2B)" description="Konditionen, Aktionen, Gebinde, LSVA, Fracht" defaultChecked={vinx.liveBasket} />
+                <Toggle name="syncConditions" label="Aktions- & Spezialpreise als Konditionen übernehmen" description="SellingPrices.promotionPrice, SpecialPrices → Admin › Konditionen (Quelle vinX)" defaultChecked={vinx.syncConditions} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Treiber">{(id) => <Select id={id} name="driver" defaultValue={vinx.driver}><option value="mock">Demo (Mock)</option><option value="rest3">vinX REST3</option><option value="csv">CSV-Dateiaustausch</option></Select>}</Field>
@@ -131,8 +147,14 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
                 <Field label="Benutzer">{(id) => <Input id={id} name="username" defaultValue={vinx.username} autoComplete="off" />}</Field>
                 <Field label="Passwort" hint={secrets.password ? "VINX_PASSWORD gesetzt" : "Umgebungsvariable VINX_PASSWORD fehlt"}>{(id) => <Input id={id} disabled value="••••••••" readOnly />}</Field>
                 <Field label="Aktionsartikel (Gutscheine)" hint="vinX-Artikel-ID für Rabattpositionen">{(id) => <Input id={id} name="promoArticleId" defaultValue={vinx.promoArticleId ?? ""} inputMode="numeric" />}</Field>
+                <Field label="Client-ID (Token)">{(id) => <Input id={id} name="clientId" defaultValue={vinx.clientId} />}</Field>
+                <Field label="Lieferbedingung (Standard)" hint="BaseData/DeliveryCondition id — Pflicht im Warenkorb">{(id) => <Input id={id} name="defaultDeliveryConditionId" defaultValue={vinx.defaultDeliveryConditionId ?? ""} inputMode="numeric" />}</Field>
+                <Field label="Zahlungskondition (Standard)" hint="BaseData/PaymentCondition id — Pflicht im Warenkorb">{(id) => <Input id={id} name="defaultPaymentConditionId" defaultValue={vinx.defaultPaymentConditionId ?? ""} inputMode="numeric" />}</Field>
+                <Field label="Versandart → Lieferbedingung" hint="z. B. post=1, pickup=4">{(id) => <Input id={id} name="deliveryConditionMap" defaultValue={fmtMap(vinx.deliveryConditionMap)} />}</Field>
+                <Field label="Zahlart → Zahlungskondition" hint="z. B. invoice=2, prepayment=5, stripe=7">{(id) => <Input id={id} name="paymentConditionMap" defaultValue={fmtMap(vinx.paymentConditionMap)} />}</Field>
+                <Field label="Offertanfragen" hint="vinX kennt im Warenkorb nur calculate | order">{(id) => <Select id={id} name="requestsToErp" defaultValue={vinx.requestsToErp}><option value="skip">Im Shop bearbeiten (nicht senden)</option><option value="order">Als Bestellung mit Vermerk senden</option></Select>}</Field>
               </div>
-              <Field label="Feld-Mapping (vinX → Shop)" hint="Mit der Swagger-Definition Ihrer Installation abgleichen (<Basis-URL>/swagger).">
+              <Field label="Feld-Mapping (vinX → Shop)" hint="Geprüft gegen Shop API v2.0 (Swagger). Pfade mit «|» = Fallback; producer/region/country/category/filling/tradingUnit werden aufgelöst.">
                 {(id) => <Textarea id={id} name="mapping" rows={12} spellCheck={false} defaultValue={JSON.stringify(vinx.mapping, null, 2)} className="font-mono text-[12px]" />}
               </Field>
               <Button type="submit" className="w-fit" disabled={running === "config"}>Speichern</Button>

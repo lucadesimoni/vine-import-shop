@@ -1,6 +1,9 @@
 import { customerTiers } from "./price-sources";
+import { factsFor, rulesFor } from "./conditions";
+import { applyConditions } from "~/lib/conditions";
+import { originConditions } from "./origins";
 import { and, asc, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
-import { priceFor, stockLevel, type PriceInfo, type StockLevel, type Tier } from "~/lib/pricing";
+import { priceFor, stockLevel, withConditions, type PriceInfo, type StockLevel, type Tier } from "~/lib/pricing";
 import { tl } from "~/lib/localized";
 import type { ShopContext } from "./context";
 import { getDb, schema } from "./db";
@@ -68,6 +71,14 @@ export async function toCards(ctx: ShopContext, ids: number[]): Promise<ProductC
     tiersFor(vrows.map((x) => x.id), ctx.group?.id),
   ]);
   const custom = ctx.showPrices ? await customerTiers(ctx, vrows) : null;
+  const rules = ctx.showPrices ? await rulesFor(ctx) : [];
+  const facts = rules.length ? await factsFor(vrows.map((x) => { const prod = rows.find((r) => r.id === x.productId); return { productId: x.productId, variantId: x.id, categoryId: prod?.categoryId ?? null, producerId: prod?.producerId ?? null, discountGroup: x.discountGroup }; })) : null;
+  const priced = (x: (typeof vrows)[number], taxClass: "standard" | "reduced") => {
+    const base = priceFor({ listGross: x.priceCents, taxRate: taxRate(ctx, taxClass), group: ctx.group, tiers: custom?.get(x.id) ?? tiers.get(x.id) ?? [] });
+    // live ERP prices already include the customer's conditions
+    if (!facts || custom?.has(x.id)) return base;
+    return withConditions(base, applyConditions({ listNet: base.net, qty: 1, facts: facts.get(x.id)!, rules, mode: ctx.shop.priceFinding }));
+  };
   const byId = new Map(rows.map((r) => [r.id, r]));
   const { stockDisplay, stockLow, stockHigh } = ctx.shop;
 
@@ -102,9 +113,7 @@ export async function toCards(ctx: ShopContext, ids: number[]): Promise<ProductC
             packSize: x.packSize,
             stock: stockLevel(x.stock, stockLow, stockHigh),
             stockQty: stockDisplay === "exact" ? x.stock : null,
-            price: ctx.showPrices
-              ? priceFor({ listGross: x.priceCents, taxRate: taxRate(ctx, r.taxClass), group: ctx.group, tiers: custom?.get(x.id) ?? tiers.get(x.id) ?? [] })
-              : null,
+            price: ctx.showPrices ? priced(x, r.taxClass) : null,
           })),
       };
     });
@@ -119,6 +128,8 @@ export type SearchParams = {
   page?: number;
   perPage?: number;
   promo?: boolean;
+  region?: string;
+  origin?: string;
 };
 
 export async function categoryAndDescendants(slug: string): Promise<number[]> {
@@ -145,6 +156,7 @@ export async function searchProducts(ctx: ShopContext, params: SearchParams) {
     const prod = await db.query.producers.findFirst({ where: eq(pr.slug, params.producer) });
     where.push(prod ? eq(p.producerId, prod.id) : sql`false`);
   }
+  where.push(...(await originConditions(params)));
   if (params.q?.trim()) {
     const q = `%${params.q.trim().toLowerCase()}%`;
     where.push(

@@ -197,14 +197,14 @@ export async function seedDeSimoniDemo(db: DB) {
   const groups = await db.select().from(schema.customerGroups);
   const tradeGroup = groups.find((g) => g.code === "trade")!;
   const gastro = groups.find((g) => g.code === "gastro")!;
-  const promoNames = ["Riserva Sassella", "Black Gin", "Mozzarella con latte di bufala 250", "Salame Turista", "Olio Extra Vergine di Oliva BIO", "Involtini di Melanzane", "Campania Aglianico", "Coppa ca."];
+  const promoNames = ["Sassella Riserva", "Taurus Black Gin", "Mozzarella di bufala 250", "Salame turista", "Tenuta Arcamone", "Involtini di melanzane", "Campania Aglianico", "Coppa stagionata"];
   let spotlightSlug = "";
   let skuCounter = 0;
 
   for (const p of products as DemoProduct[]) {
     let producerId = producerIds.get(p.producer);
     if (!producerId) {
-      const [row] = await db.insert(schema.producers).values({ slug: slugify(p.producer), name: p.producer, country: "Italia", featured: producerIds.size < 12 }).onConflictDoNothing().returning();
+      const [row] = await db.insert(schema.producers).values({ slug: slugify(p.producer), name: p.producer, country: "Italia", region: p.region ?? null, featured: producerIds.size < 12 }).onConflictDoNothing().returning();
       producerId = row?.id ?? (await db.query.producers.findFirst({ where: eq(schema.producers.slug, slugify(p.producer)) }))!.id;
       producerIds.set(p.producer, producerId);
     }
@@ -221,19 +221,20 @@ export async function seedDeSimoniDemo(db: DB) {
         producerId,
         color: p.color,
         country: "Italia",
+        region: p.region ?? null,
         alcohol: p.alcohol,
-        organic: /bio/i.test(p.name),
+        organic: /\bBio\b/.test(p.name),
         taxClass: p.kind === "food" ? "reduced" : "standard",
         ageRestricted: p.kind !== "food",
         promo: isPromo,
         featured: isPromo,
-        isNew: /Spaghetti di FARRO/.test(p.name),
+        isNew: /di farro/.test(p.name),
         image: p.image,
       })
       .onConflictDoNothing()
       .returning();
     if (!prod) continue;
-    if (/Paccheri Rigati/.test(p.name)) spotlightSlug = slug;
+    if (/Paccheri rigati/.test(p.name)) spotlightSlug = slug;
 
     for (const [i, v] of p.variants.entries()) {
       const [variant] = await db
@@ -242,6 +243,7 @@ export async function seedDeSimoniDemo(db: DB) {
           productId: prod.id, sku: v.sku, erpId: String(500000 + ++skuCounter), vintage: v.vintage, size: v.size,
           volumeMl: v.size?.endsWith("cl") ? Number(v.size.replace(/[^\d.]/g, "")) * 10 : null,
           packSize: p.kind === "wine" ? 6 : 1, priceCents: Math.round(v.price * 100), stock: v.stock, sort: i,
+          discountGroup: p.kind === "wine" ? "WEIN" : p.kind === "spirit" ? "SPIRITUOSEN" : "FOOD", // vinX "Artikelgruppe für Kundenrabatt"
         })
         .onConflictDoNothing()
         .returning();
@@ -266,7 +268,7 @@ export async function seedDeSimoniDemo(db: DB) {
   await db.insert(schema.users).values([
     {
       email: "gastro@demo.ch", passwordHash: await hashPassword("gastro-demo-1234"), name: "Marco Rossi", company: "Trattoria Demo GmbH",
-      uidNumber: "CHE-123.456.789", role: "customer", groupId: gastro.id, tradeStatus: "approved", locale: "de",
+      uidNumber: "CHE-123.456.789", role: "customer", groupId: gastro.id, tradeStatus: "approved", locale: "de", erpId: "41001", // vinX address id
       billing: { company: "Trattoria Demo GmbH", name: "Marco Rossi", street: "Pilatusstrasse 12", zip: "6003", city: "Luzern", country: "CH", phone: "+41 41 000 00 00" },
     },
     {
@@ -276,11 +278,27 @@ export async function seedDeSimoniDemo(db: DB) {
     },
   ]);
   await db.insert(schema.coupons).values({ code: "BENVENUTO10", type: "percent", value: 10, minTotalCents: 10000, consumerOnly: true });
+
+  // Demo B2B conditions (vinX model) — source "platform" = maintained in the shop admin.
+  // With vinX connected these rows are synced (source "vinx") or vinX calculates live.
+  const [marco] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, "gastro@demo.ch"));
+  const variantBySku = async (sku: string) => (await db.query.variants.findFirst({ where: eq(schema.variants.sku, sku) }))?.id;
+  const felicetti = await db.query.producers.findFirst({ where: eq(schema.producers.slug, "felicetti") });
+  const in60 = new Date(Date.now() + 60 * 864e5);
+  const sassella = await variantBySku("10679");
+  await db.insert(schema.conditions).values([
+    { type: "customer_discount", customerId: marco.id, targetType: "discount_group", target: "SPIRITUOSEN", calc: "percent", value: "8", label: { de: "Kundenrabatt 8 %", it: "Sconto cliente 8 %" } },
+    ...(sassella ? [{ type: "special_price" as const, customerId: marco.id, targetType: "variant" as const, target: String(sassella), calc: "fixed_price" as const, value: "2950", label: { de: "Spezialpreis", it: "Prezzo speciale" } }] : []),
+    { type: "customer_discount", groupId: gastro.id, targetType: "discount_group", target: "WEIN", calc: "percent", value: "3", label: { de: "Gastro-Rabatt Wein 3 %", it: "Sconto gastro vino 3 %" } },
+    ...(felicetti ? [{ type: "quantity_discount" as const, groupId: gastro.id, targetType: "producer" as const, target: String(felicetti.id), calc: "percent" as const, value: "5", minQty: 24, label: { de: "Mengenrabatt ab 24 Stk. 5 %", it: "Sconto quantità da 24 pz. 5 %" } }] : []),
+    { type: "free_goods", groupId: gastro.id, targetType: "category", target: String(catIds.get("rotwein")), calc: "n_for_m", buyQty: 12, payQty: 11, label: { de: "12 für 11", it: "12 per 11" } },
+    { type: "promotion_discount", targetType: "category", target: String(catIds.get("olivenoel")), calc: "percent", value: "10", validTo: in60, onNetPrices: true, label: { de: "Aktion Olivenöl −10 %", it: "Promozione olio −10 %" } },
+  ]);
   await seedLegalStubs(db, brand.legalName);
 }
 
 type DemoProduct = {
-  name: string; category: string; kind: "wine" | "food" | "spirit"; producer: string; color: "red" | "white" | null; alcohol: number | null; image: string | null;
+  name: string; category: string; kind: "wine" | "food" | "spirit"; producer: string; region?: string | null; color: "red" | "white" | null; alcohol: number | null; image: string | null;
   variants: { sku: string; vintage: string | null; size: string | null; price: number; stock: number }[];
 };
 

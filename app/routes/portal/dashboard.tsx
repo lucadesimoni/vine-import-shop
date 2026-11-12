@@ -130,7 +130,7 @@ export default function PortalDashboard({ loaderData }: Route.ComponentProps) {
               <Card className="divide-y divide-border">
                 {frequent.map(({ card, variant }) => (
                   <div key={variant.id} className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-3.5">
-                    <Link to={`/portal/product/${card.slug}`} className="relative h-14 w-10 shrink-0" tabIndex={-1}><ProductImage product={card} /></Link>
+                    <Link to={`/portal/product/${card.slug}`} className="relative h-14 w-11 shrink-0 rounded-badge bg-media p-1" tabIndex={-1}><ProductImage product={card} /></Link>
                     <div className="min-w-48 flex-1">
                       <Link to={`/portal/product/${card.slug}`} className="line-clamp-1 font-medium hover:underline">{card.name}</Link>
                       <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[12px] text-muted-fg">

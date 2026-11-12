@@ -39,7 +39,7 @@ export default function Products({ loaderData }: Route.ComponentProps) {
       <DataTable head={["", "Produkt", "Kategorie", "Varianten", "Preis", "Lager", "Status"]} empty={!loaderData.rows.length}>
         {loaderData.rows.map((p) => (
           <tr key={p.id}>
-            <td className="w-14"><div className="relative h-12 w-10"><ProductImage product={{ image: p.image, name: p.name.de ?? "", kind: p.kind, color: p.color }} /></div></td>
+            <td className="w-14"><div className="relative h-12 w-10 rounded-badge bg-media p-0.5"><ProductImage product={{ image: p.image, name: p.name.de ?? "", kind: p.kind, color: p.color }} /></div></td>
             <td><Link to={`/admin/products/${p.id}`} className="font-medium hover:underline">{p.name.de}</Link><span className="block text-[12px] text-muted-fg">{p.producer}</span></td>
             <td className="text-muted-fg">{p.category?.de}</td>
             <td className="font-mono text-[12px] text-muted-fg">{p.variants.map((v) => v.sku).join(", ")}</td>

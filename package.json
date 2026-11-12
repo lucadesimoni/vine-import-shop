@@ -16,7 +16,9 @@
     "jobs": "tsx scripts/jobs.ts",
     "test": "vitest run",
     "e2e": "node tests/e2e/smoke.mjs",
-    "smoke": "tsx scripts/smoke.ts"
+    "smoke": "tsx scripts/smoke.ts",
+    "vinx:spec": "node scripts/vinx-spec.mjs",
+    "e2e:platform": "node tests/e2e/platform.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",

@@ -1,9 +1,9 @@
 [
  {
-  "name": "Riserva Sassella Rocce Rosse DOCG ARPEPE",
+  "name": "Valtellina Superiore Sassella Riserva «Rocce Rosse» DOCG",
   "category": "rotwein",
   "kind": "wine",
-  "producer": "ARPEPE S.r.l Societa' Agricola",
+  "producer": "ARPEPE",
   "color": "red",
   "alcohol": null,
   "variants": [
@@ -15,13 +15,14 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/10679.jpg"
+  "image": "/demo/desimoni/products/10679.jpg",
+  "region": "Lombardia"
  },
  {
-  "name": "Riserva Grumello Buon Consiglio DOCG ARPEPE",
+  "name": "Valtellina Superiore Grumello Riserva «Buon Consiglio» DOCG",
   "category": "rotwein",
   "kind": "wine",
-  "producer": "ARPEPE S.r.l Societa' Agricola",
+  "producer": "ARPEPE",
   "color": "red",
   "alcohol": null,
   "variants": [
@@ -33,13 +34,14 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10681.jpg"
+  "image": "/demo/desimoni/products/10681.jpg",
+  "region": "Lombardia"
  },
  {
-  "name": "Sassella Stella Retica DOCG ARPEPE",
+  "name": "Valtellina Superiore Sassella «Stella Retica» DOCG",
   "category": "rotwein",
   "kind": "wine",
-  "producer": "ARPEPE S.r.l Societa' Agricola",
+  "producer": "ARPEPE",
   "color": "red",
   "alcohol": null,
   "variants": [
@@ -51,13 +53,14 @@
     "stock": 6
    }
   ],
-  "image": "/demo/desimoni/products/10680.jpg"
+  "image": "/demo/desimoni/products/10680.jpg",
+  "region": "Lombardia"
  },
  {
-  "name": "Il Pettirosso Nebbiolo DOCG ARPEPE",
+  "name": "Valtellina Superiore Nebbiolo «Il Pettirosso» DOCG",
   "category": "rotwein",
   "kind": "wine",
-  "producer": "ARPEPE S.r.l Societa' Agricola",
+  "producer": "ARPEPE",
   "color": "red",
   "alcohol": null,
   "variants": [
@@ -69,13 +72,14 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10682.png"
+  "image": "/demo/desimoni/products/10682.png",
+  "region": "Lombardia"
  },
  {
-  "name": "Rosso di Valtellina Nebbiolo DOC ARPEPE",
+  "name": "Rosso di Valtellina Nebbiolo DOC",
   "category": "rotwein",
   "kind": "wine",
-  "producer": "ARPEPE S.r.l Societa' Agricola",
+  "producer": "ARPEPE",
   "color": "red",
   "alcohol": null,
   "variants": [
@@ -87,13 +91,14 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/10683.jpg"
+  "image": "/demo/desimoni/products/10683.jpg",
+  "region": "Lombardia"
  },
  {
-  "name": "Taurasi DOCG Riserva Vigna Olmo Di Meo",
+  "name": "Taurasi Riserva «Vigna Olmo» DOCG",
   "category": "rotwein",
   "kind": "wine",
-  "producer": "Azienda Agricola di Meo S.a.S.",
+  "producer": "Di Meo",
   "color": "red",
   "alcohol": null,
   "variants": [
@@ -112,13 +117,14 @@
     "stock": 46
    }
   ],
-  "image": "/demo/desimoni/products/10657.jpg"
+  "image": "/demo/desimoni/products/10657.jpg",
+  "region": "Campania"
  },
  {
-  "name": "Campania Aglianico IGT Di Meo",
+  "name": "Campania Aglianico IGT",
   "category": "rotwein",
   "kind": "wine",
-  "producer": "Azienda Agricola di Meo S.a.S.",
+  "producer": "Di Meo",
   "color": "red",
   "alcohol": null,
   "variants": [
@@ -137,13 +143,14 @@
     "stock": 13
    }
   ],
-  "image": "/demo/desimoni/products/10655.jpg"
+  "image": "/demo/desimoni/products/10655.jpg",
+  "region": "Campania"
  },
  {
-  "name": "PINTA Isola dei Nuraghi Cagnulari rosso IGT Cagnulari Binza ‘e su Re",
+  "name": "Isola dei Nuraghi Cagnulari «Pinta» IGT",
   "category": "rotwein",
   "kind": "wine",
-  "producer": "Binza ‘e su Re",
+  "producer": "Binza ’e su Re",
   "color": "red",
   "alcohol": null,
   "variants": [
@@ -162,10 +169,11 @@
     "stock": 13
    }
   ],
-  "image": "/demo/desimoni/products/9328.png"
+  "image": "/demo/desimoni/products/9328.png",
+  "region": "Sardegna"
  },
  {
-  "name": "Spaghetti Bio organic il Valentino CAPPELLI Monograno Felicetti Astuccio nr.9108",
+  "name": "Spaghetti «Il Valentino» Cappelli Bio",
   "category": "pasta-mehl",
   "kind": "food",
   "producer": "Felicetti",
@@ -180,10 +188,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/7739.jpg"
+  "image": "/demo/desimoni/products/7739.jpg",
+  "region": "Trentino-Alto Adige"
  },
  {
-  "name": "Spaghettoni Bio-organic n.107 CAPPELLI Monograno Felicetti Astuccio",
+  "name": "Spaghettoni n.107 Cappelli Bio",
   "category": "pasta-mehl",
   "kind": "food",
   "producer": "Felicetti",
@@ -198,10 +207,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/7896.jpg"
+  "image": "/demo/desimoni/products/7896.jpg",
+  "region": "Trentino-Alto Adige"
  },
  {
-  "name": "Paccheri Rigati Bio-organic n. 137 CAPPELLI Monograno Felicetti Astuccio",
+  "name": "Paccheri rigati n.137 Cappelli Bio",
   "category": "pasta-mehl",
   "kind": "food",
   "producer": "Felicetti",
@@ -216,10 +226,11 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/9797.jpg"
+  "image": "/demo/desimoni/products/9797.jpg",
+  "region": "Trentino-Alto Adige"
  },
  {
-  "name": "Pasta Mista Bio-organic n. 139 MATT Monograno Catering Monograno Felicetti",
+  "name": "Pasta mista n.139 Bio",
   "category": "pasta-mehl",
   "kind": "food",
   "producer": "Felicetti",
@@ -234,10 +245,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10074.jpg"
+  "image": null,
+  "region": "Trentino-Alto Adige"
  },
  {
-  "name": "Spaghetti di FARRO Bio-organic n.105 Monograno Felicetti Astuccio",
+  "name": "Spaghetti di farro n.105 Bio",
   "category": "pasta-mehl",
   "kind": "food",
   "producer": "Felicetti",
@@ -252,10 +264,11 @@
     "stock": 6
    }
   ],
-  "image": "/demo/desimoni/products/7737.jpg"
+  "image": "/demo/desimoni/products/7737.jpg",
+  "region": "Trentino-Alto Adige"
  },
  {
-  "name": "Rigatini di FARRO Bio-organic n.169 Monograno Felicetti Astuccio",
+  "name": "Rigatini di farro Bio",
   "category": "pasta-mehl",
   "kind": "food",
   "producer": "Felicetti",
@@ -270,10 +283,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10075.jpg"
+  "image": "/demo/desimoni/products/10075.jpg",
+  "region": "Trentino-Alto Adige"
  },
  {
-  "name": "Penne rigate di FARRO Bio-organic n.169 Monograno Felicetti Astuccio",
+  "name": "Penne rigate di farro Bio",
   "category": "pasta-mehl",
   "kind": "food",
   "producer": "Felicetti",
@@ -288,10 +302,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/7738.jpg"
+  "image": "/demo/desimoni/products/7738.jpg",
+  "region": "Trentino-Alto Adige"
  },
  {
-  "name": "Ditalini di FARRO Bio-organic n.23 Monograno Felicetti Astuccio",
+  "name": "Ditalini di farro n.23 Bio",
   "category": "pasta-mehl",
   "kind": "food",
   "producer": "Felicetti",
@@ -306,10 +321,11 @@
     "stock": 6
    }
   ],
-  "image": "/demo/desimoni/products/8044.jpg"
+  "image": "/demo/desimoni/products/8044.jpg",
+  "region": "Trentino-Alto Adige"
  },
  {
-  "name": "Condimento al peperoncino a base di olio extra vergine di oliva italiano BACHMANN",
+  "name": "Condimento al peperoncino con olio EVO",
   "category": "olivenoel",
   "kind": "food",
   "producer": "Cazzola e Fiorini",
@@ -324,10 +340,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10960.jpg"
+  "image": null,
+  "region": null
  },
  {
-  "name": "Olio Tenuta Torre di Mossa DOP 50 cl",
+  "name": "Olio EVO «Tenuta Torre di Mossa» DOP",
   "category": "olivenoel",
   "kind": "food",
   "producer": "De Carlo",
@@ -342,10 +359,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/8426.jpg"
+  "image": "/demo/desimoni/products/8426.jpg",
+  "region": "Puglia"
  },
  {
-  "name": "Olio Extra Vergine di Oliva BIO Tenuta Arcamone DOP",
+  "name": "Olio EVO «Tenuta Arcamone» DOP Bio",
   "category": "olivenoel",
   "kind": "food",
   "producer": "De Carlo",
@@ -360,10 +378,11 @@
     "stock": 6
    }
   ],
-  "image": "/demo/desimoni/products/10476.jpg"
+  "image": "/demo/desimoni/products/10476.jpg",
+  "region": "Puglia"
  },
  {
-  "name": "Olio Extra Vergine di Oliva il Biologico 50cl",
+  "name": "Olio EVO «Il Biologico»",
   "category": "olivenoel",
   "kind": "food",
   "producer": "De Carlo",
@@ -378,10 +397,11 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/10474.jpg"
+  "image": "/demo/desimoni/products/10474.jpg",
+  "region": "Puglia"
  },
  {
-  "name": "Condimento 18 Fl. EVO Espositore 3x limone, 3x mandarino, 3x aglio, 3x tartufo, 3x basilico, 3x peperoncino a 10cl DE CARLO",
+  "name": "Condimenti EVO – Espositore 18 × 10 cl",
   "category": "olivenoel",
   "kind": "food",
   "producer": "De Carlo",
@@ -396,10 +416,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/8466.jpg"
+  "image": "/demo/desimoni/products/8466.jpg",
+  "region": "Puglia"
  },
  {
-  "name": "Olio Extra Vergine di Oliva Latta Feudo Disisa",
+  "name": "Olio extra vergine di oliva – Latta",
   "category": "olivenoel",
   "kind": "food",
   "producer": "Feudo Disisa",
@@ -414,10 +435,11 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/9930.jpg"
+  "image": null,
+  "region": "Sicilia"
  },
  {
-  "name": "Olio extra vergine di oliva Feudo Disisa",
+  "name": "Olio extra vergine di oliva",
   "category": "olivenoel",
   "kind": "food",
   "producer": "Feudo Disisa",
@@ -432,10 +454,11 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/11064.jpg"
+  "image": "/demo/desimoni/products/11064.jpg",
+  "region": "Sicilia"
  },
  {
-  "name": "Conf. selezione di oro verde di Calabria 3 bottiglie",
+  "name": "Oro verde di Calabria – Selezione 3 bottiglie",
   "category": "olivenoel",
   "kind": "food",
   "producer": "Madeo",
@@ -450,13 +473,14 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/10494.jpg"
+  "image": null,
+  "region": "Calabria"
  },
  {
-  "name": "Coppa ca.1.8-2kg Salumificio Bazza",
+  "name": "Coppa stagionata intera",
   "category": "wurstwaren",
   "kind": "food",
-  "producer": "SALUMIFICIO BAZZA",
+  "producer": "Salumificio Bazza",
   "color": null,
   "alcohol": null,
   "variants": [
@@ -468,13 +492,14 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/9350.jpg"
+  "image": "/demo/desimoni/products/9350.jpg",
+  "region": "Emilia-Romagna"
  },
  {
-  "name": "Coppa 1/2 SV Salumificio Bazza",
+  "name": "Coppa – mezza, sottovuoto",
   "category": "wurstwaren",
   "kind": "food",
-  "producer": "SALUMIFICIO BAZZA",
+  "producer": "Salumificio Bazza",
   "color": null,
   "alcohol": null,
   "variants": [
@@ -486,10 +511,11 @@
     "stock": 6
    }
   ],
-  "image": "/demo/desimoni/products/9351.jpg"
+  "image": "/demo/desimoni/products/9351.jpg",
+  "region": "Emilia-Romagna"
  },
  {
-  "name": "Lardo del Poggio ca. 2 kg Cascina Stella",
+  "name": "Lardo del Poggio",
   "category": "wurstwaren",
   "kind": "food",
   "producer": "Cascina Stella",
@@ -504,10 +530,11 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/10275.webp"
+  "image": "/demo/desimoni/products/10275.jpg",
+  "region": null
  },
  {
-  "name": "Salame Turista al Cinghiale ca.350g Cascina Stella",
+  "name": "Salame turista al cinghiale",
   "category": "wurstwaren",
   "kind": "food",
   "producer": "Cascina Stella",
@@ -522,10 +549,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/9659.jpg"
+  "image": "/demo/desimoni/products/9659.jpg",
+  "region": null
  },
  {
-  "name": "Salsiccia arrotolata al peperoncino ca. 350g Cascina Stella vakuumiert",
+  "name": "Salsiccia arrotolata al peperoncino",
   "category": "wurstwaren",
   "kind": "food",
   "producer": "Cascina Stella",
@@ -540,10 +568,11 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/8905.jpg"
+  "image": "/demo/desimoni/products/8905.jpg",
+  "region": null
  },
  {
-  "name": "Salsiccia arrotolata al finocchio ca. 350g Cascina Stella vakuumiert",
+  "name": "Salsiccia arrotolata al finocchio",
   "category": "wurstwaren",
   "kind": "food",
   "producer": "Cascina Stella",
@@ -558,10 +587,11 @@
     "stock": 6
    }
   ],
-  "image": "/demo/desimoni/products/8906.jpg"
+  "image": "/demo/desimoni/products/8906.jpg",
+  "region": null
  },
  {
-  "name": "Salsicciotto al peperoncino 2xca. 80g Cascina Stella vakuumiert",
+  "name": "Salsicciotto al peperoncino",
   "category": "wurstwaren",
   "kind": "food",
   "producer": "Cascina Stella",
@@ -576,10 +606,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/8907.png"
+  "image": "/demo/desimoni/products/8907.png",
+  "region": null
  },
  {
-  "name": "Salsicciotto al finocchio 2xca. 80g Cascina Stella vakuumiert",
+  "name": "Salsicciotto al finocchio",
   "category": "wurstwaren",
   "kind": "food",
   "producer": "Cascina Stella",
@@ -594,10 +625,11 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/8908.png"
+  "image": "/demo/desimoni/products/8908.png",
+  "region": null
  },
  {
-  "name": "Bocconcino Mozzarella con latte di bufala 5x50g= 250g in Beutel Barlotti MDP0050BA0250BR",
+  "name": "Bocconcini di bufala 5 × 50 g",
   "category": "kaese",
   "kind": "food",
   "producer": "Barlotti",
@@ -607,15 +639,16 @@
    {
     "sku": "10263",
     "vintage": null,
-    "size": "3 kg",
+    "size": "250 g",
     "price": 27.0,
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10263.jpg"
+  "image": "/demo/desimoni/products/10263.jpg",
+  "region": "Campania"
  },
  {
-  "name": "Mozzarella con latte di bufala 125g in Beutel Barlotti MDP00125BA0250BR",
+  "name": "Mozzarella di bufala 125 g",
   "category": "kaese",
   "kind": "food",
   "producer": "Barlotti",
@@ -625,15 +658,16 @@
    {
     "sku": "10264",
     "vintage": null,
-    "size": "3 kg",
+    "size": "125 g",
     "price": 30.4,
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/10264.jpg"
+  "image": "/demo/desimoni/products/10264.jpg",
+  "region": "Campania"
  },
  {
-  "name": "Mozzarella con latte di bufala 250 g in Beutel Barlotti MDP0250BA0250BR",
+  "name": "Mozzarella di bufala 250 g",
   "category": "kaese",
   "kind": "food",
   "producer": "Barlotti",
@@ -643,15 +677,16 @@
    {
     "sku": "10265",
     "vintage": null,
-    "size": "3 kg",
+    "size": "250 g",
     "price": 33.5,
     "stock": 6
    }
   ],
-  "image": "/demo/desimoni/products/10265.jpg"
+  "image": "/demo/desimoni/products/10265.jpg",
+  "region": "Campania"
  },
  {
-  "name": "Stracciata con latte di bufala 200 g in bicchiere Barlotti STRACCIABUF200G",
+  "name": "Stracciata di bufala",
   "category": "kaese",
   "kind": "food",
   "producer": "Barlotti",
@@ -666,10 +701,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10266.jpg"
+  "image": "/demo/desimoni/products/10266.jpg",
+  "region": "Campania"
  },
  {
-  "name": "Ciliegine di Mozzarella con latte di bufala 20g in Beutel Cardinali MDP0020BA0250BR Barlotti",
+  "name": "Ciliegine di bufala 20 g",
   "category": "kaese",
   "kind": "food",
   "producer": "Barlotti",
@@ -679,15 +715,16 @@
    {
     "sku": "10273",
     "vintage": null,
-    "size": "3 kg",
+    "size": "250 g",
     "price": 11.55,
     "stock": 6
    }
   ],
-  "image": "/demo/desimoni/products/10273.jpg"
+  "image": "/demo/desimoni/products/10273.jpg",
+  "region": "Campania"
  },
  {
-  "name": "Treccina con latte di bufala 250g Barlotti MDT0250BA0500BR",
+  "name": "Treccina di bufala",
   "category": "kaese",
   "kind": "food",
   "producer": "Barlotti",
@@ -697,15 +734,16 @@
    {
     "sku": "10274",
     "vintage": null,
-    "size": "3 kg",
+    "size": "250 g",
     "price": 27.15,
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/10274.png"
+  "image": "/demo/desimoni/products/10274.png",
+  "region": "Campania"
  },
  {
-  "name": "Yogurt con latte di bufala 125g in vasetto Barlotti YOGURTBUFVAS125*8",
+  "name": "Yogurt di latte di bufala",
   "category": "kaese",
   "kind": "food",
   "producer": "Barlotti",
@@ -720,10 +758,11 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/10281.jpg"
+  "image": null,
+  "region": "Campania"
  },
  {
-  "name": "Ricotta con latte di bufala 250g in vasetto Barlotti RIC250VASETTOTERMO",
+  "name": "Ricotta di bufala",
   "category": "kaese",
   "kind": "food",
   "producer": "Barlotti",
@@ -738,13 +777,14 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10282.jpg"
+  "image": "/demo/desimoni/products/10282.jpg",
+  "region": "Campania"
  },
  {
-  "name": "Filetti di alici marinate cod. 113001200 Buscema",
+  "name": "Filetti di alici marinate",
   "category": "antipasti",
   "kind": "food",
-  "producer": "Buscema Gastronomia",
+  "producer": "Buscema",
   "color": null,
   "alcohol": null,
   "variants": [
@@ -756,13 +796,14 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/10789.jpg"
+  "image": "/demo/desimoni/products/10789.jpg",
+  "region": "Sicilia"
  },
  {
-  "name": "Olive Nere secche (al forno) Buscema",
+  "name": "Olive nere secche al forno",
   "category": "antipasti",
   "kind": "food",
-  "producer": "Buscema Gastronomia",
+  "producer": "Buscema",
   "color": null,
   "alcohol": null,
   "variants": [
@@ -774,13 +815,14 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/11116.jpg"
+  "image": "/demo/desimoni/products/11116.jpg",
+  "region": "Sicilia"
  },
  {
-  "name": "Involtini Speck al Formaggio 1Kg Buscema",
+  "name": "Involtini di speck al formaggio",
   "category": "antipasti",
   "kind": "food",
-  "producer": "Buscema Gastronomia",
+  "producer": "Buscema",
   "color": null,
   "alcohol": null,
   "variants": [
@@ -792,13 +834,14 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10241.jpg"
+  "image": "/demo/desimoni/products/10241.jpg",
+  "region": "Sicilia"
  },
  {
-  "name": "Peperoni Ripieni al Formaggio 1Kg Buscema",
+  "name": "Peperoni ripieni al formaggio",
   "category": "antipasti",
   "kind": "food",
-  "producer": "Buscema Gastronomia",
+  "producer": "Buscema",
   "color": null,
   "alcohol": null,
   "variants": [
@@ -810,13 +853,14 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10246.jpg"
+  "image": "/demo/desimoni/products/10246.jpg",
+  "region": "Sicilia"
  },
  {
-  "name": "Involtini di Melanzane 1Kg Buscema",
+  "name": "Involtini di melanzane",
   "category": "antipasti",
   "kind": "food",
-  "producer": "Buscema Gastronomia",
+  "producer": "Buscema",
   "color": null,
   "alcohol": null,
   "variants": [
@@ -828,13 +872,14 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/10247.png"
+  "image": "/demo/desimoni/products/10247.png",
+  "region": "Sicilia"
  },
  {
-  "name": "Involtini di Peperoni 1Kg Buscema",
+  "name": "Involtini di peperoni",
   "category": "antipasti",
   "kind": "food",
-  "producer": "Buscema Gastronomia",
+  "producer": "Buscema",
   "color": null,
   "alcohol": null,
   "variants": [
@@ -846,13 +891,14 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/10367.jpg"
+  "image": "/demo/desimoni/products/10367.jpg",
+  "region": "Sicilia"
  },
  {
-  "name": "Peperoni Gran Ripieno al Tonno 1Kg Buscema",
+  "name": "Peperoni gran ripieno al tonno",
   "category": "antipasti",
   "kind": "food",
-  "producer": "Buscema Gastronomia",
+  "producer": "Buscema",
   "color": null,
   "alcohol": null,
   "variants": [
@@ -864,13 +910,14 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10368.jpg"
+  "image": "/demo/desimoni/products/10368.jpg",
+  "region": "Sicilia"
  },
  {
-  "name": "Cipolle borettane Grigliate Buscema",
+  "name": "Cipolle borettane grigliate",
   "category": "antipasti",
   "kind": "food",
-  "producer": "Buscema Gastronomia",
+  "producer": "Buscema",
   "color": null,
   "alcohol": null,
   "variants": [
@@ -889,13 +936,14 @@
     "stock": 46
    }
   ],
-  "image": "/demo/desimoni/products/10236.jpg"
+  "image": "/demo/desimoni/products/10236.jpg",
+  "region": "Sicilia"
  },
  {
-  "name": "Acquavita di Gin Agrumata Bespoke",
+  "name": "Gin «Agrumata»",
   "category": "spirituosen",
   "kind": "spirit",
-  "producer": "Bespoke Distillery srl",
+  "producer": "Bespoke Distillery",
   "color": null,
   "alcohol": 40.0,
   "variants": [
@@ -907,13 +955,14 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/8450.png"
+  "image": "/demo/desimoni/products/8450.png",
+  "region": null
  },
  {
-  "name": "Acquavita di Gin Floreale Bespoke",
+  "name": "Gin «Floreale»",
   "category": "spirituosen",
   "kind": "spirit",
-  "producer": "Bespoke Distillery srl",
+  "producer": "Bespoke Distillery",
   "color": null,
   "alcohol": 40.0,
   "variants": [
@@ -925,13 +974,14 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/8451.png"
+  "image": "/demo/desimoni/products/8451.png",
+  "region": null
  },
  {
-  "name": "Acquavita di Gin Speziata Bespoke",
+  "name": "Gin «Speziata»",
   "category": "spirituosen",
   "kind": "spirit",
-  "producer": "Bespoke Distillery srl",
+  "producer": "Bespoke Distillery",
   "color": null,
   "alcohol": 40.0,
   "variants": [
@@ -943,13 +993,14 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/8452.png"
+  "image": "/demo/desimoni/products/8452.png",
+  "region": null
  },
  {
-  "name": "Emporia Dry Gin Caffo",
+  "name": "Emporia Dry Gin",
   "category": "spirituosen",
   "kind": "spirit",
-  "producer": "Caffo Deutschland GmbH",
+  "producer": "Distilleria Caffo",
   "color": null,
   "alcohol": 45.0,
   "variants": [
@@ -961,13 +1012,14 @@
     "stock": 6
    }
   ],
-  "image": "/demo/desimoni/products/11112.png"
+  "image": null,
+  "region": "Calabria"
  },
  {
-  "name": "Black Gin 42% Taurus",
+  "name": "Taurus Black Gin",
   "category": "spirituosen",
   "kind": "spirit",
-  "producer": "GINEVRA srl",
+  "producer": "Ginevra",
   "color": null,
   "alcohol": 42.0,
   "variants": [
@@ -979,10 +1031,11 @@
     "stock": 140
    }
   ],
-  "image": "/demo/desimoni/products/9833.jpg"
+  "image": "/demo/desimoni/products/9833.jpg",
+  "region": null
  },
  {
-  "name": "Amaro di Capri Caprisius 47",
+  "name": "Amaro di Capri «Caprisius»",
   "category": "spirituosen",
   "kind": "spirit",
   "producer": "Limited Capri",
@@ -997,10 +1050,11 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/9439.png"
+  "image": null,
+  "region": "Campania"
  },
  {
-  "name": "Gin Bathtub Montanaro",
+  "name": "Bathtub Gin",
   "category": "spirituosen",
   "kind": "spirit",
   "producer": "Montanaro",
@@ -1015,13 +1069,14 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/10571.jpg"
+  "image": "/demo/desimoni/products/10571.jpg",
+  "region": "Piemonte"
  },
  {
-  "name": "Blu lie - Vodka Italiana 23",
+  "name": "Blu Lie – Vodka italiana",
   "category": "spirituosen",
   "kind": "spirit",
-  "producer": "TPLF s.r.l.",
+  "producer": "TPLF",
   "color": null,
   "alcohol": null,
   "variants": [
@@ -1033,6 +1088,7 @@
     "stock": 40
    }
   ],
-  "image": "/demo/desimoni/products/8540.jpg"
+  "image": "/demo/desimoni/products/8540.jpg",
+  "region": null
  }
 ]

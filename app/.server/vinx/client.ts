@@ -1,24 +1,34 @@
 /**
- * ERP contract, modelled on the official vinX REST3 "Shop V2.0" API
- * (https://i-ag.atlassian.net/wiki → Technische Dokumentation → Spezifikation VinX-Api (REST3)).
+ * ERP contract. Modelled on — and verified against — the vinX REST3 "I-AG Standard Shop API v2.0"
+ * OpenAPI spec (<vinx-host>/swagger → Shopv20/swagger.json):
  *
- *   BaseData   (read, cached in shop, delta via OData modifiedDate) → articles()
- *   Calculated/StockInfo                                            → stock()
- *   Calculated/ProductInfo (per price group / per customer, live)   → prices(), productInfo()
- *   Online/Basket  action=calculate | order | quote                  → calculateBasket(), pushOrder()
- *   Online/OnlineAddress  changeType=new | change                    → pushCustomer()
+ *   BaseData/Article (+ Producer, Region, Country, ArticleCategory, Filling, TradingUnit, WineComposition)  → articles()
+ *   Calculated/StockData (quantityAvailableForShop)                                                       → stock()
+ *   BaseData/SellingPrices  (price group · fromQuantity · promotionPrice · validity)                      → prices()
+ *   BaseData/SpecialPrices  (customer address · article · percent|value · validity · isNetto)            → specialPrices()
+ *   BaseData/PriceGroup     (pricesWithVat)                                                              → priceGroups()
+ *   Calculated/ProductInfo  (customerId | priceGroupId → price, pricePromotion, discounts[])              → productInfo()
+ *   Online/Basket  action = calculate | order  (deliveryConditionId + paymentConditionId required)        → calculateBasket(), pushOrder()
+ *   Online/OnlineAddress  changeType = new | change                                                      → pushCustomer()
  *
- * Implementations return RAW records; the mapper converts article fields via admin-editable mapping.
+ * Customer discounts (Kundenrabatt matrix) are not exposed as rules by vinX; they are applied by vinX in
+ * ProductInfo/Basket. Implementations return RAW records; the mapper converts them via admin-editable mapping.
  */
 export type Raw = Record<string, unknown>;
 
 export interface ErpClient {
   readonly name: string;
+  /** which field mapping applies to this driver's raw records */
+  readonly mapping: "rest" | "csv";
   ping(): Promise<string>;
   articles(since?: Date | null): AsyncIterable<Raw>;
   stock(): AsyncIterable<Raw>;
-  /** Price-group prices (one row per article / group / min quantity). */
+  /** Price-group prices (one row per article / group / from-quantity, optional promotion price + validity). */
   prices(): AsyncIterable<Raw>;
+  /** Price groups incl. whether their prices include VAT. */
+  priceGroups?(): Promise<{ id: string; name: string; pricesWithVat: boolean }[]>;
+  /** Customer special prices (vinX SpecialPrices). */
+  specialPrices?(): AsyncIterable<Raw>;
   /** Live, customer-specific prices (B2B). Returns map erpArticleId → unit price excl. VAT in cents. */
   productInfo?(req: { customerId?: number | null; priceGroupId?: number | null; articles: { erpId: string; qty: number }[] }): Promise<Map<string, ProductInfo>>;
   /** Authoritative basket calculation (conditions, promotions, deposits, surcharges, freight). */
@@ -27,10 +37,18 @@ export interface ErpClient {
   pushCustomer(payload: CustomerPayload): Promise<string>;
 }
 
-export type ProductInfo = { unitNet: number; promoNet: number | null; promoText: string | null };
+export type ProductInfo = {
+  /** effective unit price excl. VAT in cents (promotion price if any, minus vinX discounts) */
+  unitNet: number;
+  listNet: number;
+  promoNet: number | null;
+  promoText: string | null;
+  discounts: { text: string; amount: number; articleDiscountGroupId: number | null }[];
+};
 
 export type BasketRequest = {
-  action: "calculate" | "order" | "quote";
+  action: "calculate" | "order";
+  paymentMethod?: string;
   customerErpId: string | null;
   shippingCode: string;
   deliveryDate?: string | null;

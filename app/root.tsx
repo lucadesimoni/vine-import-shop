@@ -43,6 +43,9 @@ function channelRedirect(request: Request, ctx: ShopContext) {
   if (mode === "separate" && canUsePortal && /^\/account(\/|$)/.test(path)) go(toPortal, portalHost || undefined);
 }
 
+/** Resolves "follow the OS" before first paint (no flash) and tracks OS changes until the visitor picks a theme. */
+const THEME_SCRIPT = `(function(){var d=document.documentElement,m=matchMedia("(prefers-color-scheme: dark)");function s(){if(!/(^|; )theme=(light|dark)/.test(document.cookie))d.dataset.theme=m.matches?"dark":"light"}s();m.addEventListener("change",s)})()`;
+
 /** Absolute origin for a configured channel domain, or "" to stay on the current one. */
 function hostUrl(request: Request, host: string) {
   if (!host) return "";
@@ -101,6 +104,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       footerPages: pages.filter((p) => p.showInFooter).map((p) => ({ slug: p.slug, title: tl(p.title, ctx.locale) })),
       toast,
       origin: new URL(request.url).origin,
+      theme: (request.headers.get("Cookie")?.match(/(?:^|;\s*)theme=(light|dark)/)?.[1] ?? "system") as "light" | "dark" | "system",
     },
     { headers },
   );
@@ -115,8 +119,10 @@ export const meta: Route.MetaFunction = ({ loaderData: data }) => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const root = useRouteLoaderData("root") as RootData | undefined;
+  const darkMode = root?.brand.darkMode ?? "off";
+  const pref = darkMode === "off" ? "light" : darkMode === "system" ? "system" : (root?.theme ?? "system");
   return (
-    <html lang={root?.locale ?? "de"}>
+    <html lang={root?.locale ?? "de"} data-theme={pref === "system" ? undefined : pref} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -125,6 +131,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <link rel="preconnect" href="https://fonts.bunny.net" />
             <link rel="stylesheet" href={fontsHref(root.brand)} />
             <style dangerouslySetInnerHTML={{ __html: themeCss(root.brand) }} />
+            {pref === "system" && <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />}
             <meta name="theme-color" content={root.brand.colors.background} />
             {root.brand.faviconUrl && <link rel="icon" href={root.brand.faviconUrl} />}
             {root.shop.locales.map((l) => <link key={l} rel="alternate" hrefLang={l} href={`?lang=${l}`} />)}

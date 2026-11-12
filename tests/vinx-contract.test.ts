@@ -1,0 +1,64 @@
+import { describe, expect, it } from "vitest";
+import spec from "./fixtures/vinx-shop-v2.json";
+import { parseSettings } from "~/lib/settings";
+
+/**
+ * Contract test: every field/endpoint the shop uses must exist in the official vinX
+ * "I-AG Standard Shop API v2.0" OpenAPI spec (extract in fixtures/, refresh with scripts/vinx-spec.mjs).
+ */
+const S = spec.schemas as Record<string, { fields?: string[]; enum?: string[] }>;
+const has = (schema: string, field: string) => !!S[schema]?.fields?.includes(field);
+const SHOP = "/api/v2.0/Core/VinX/Shop/";
+const ENRICHED: Record<string, string> = { producer: "Producer", region: "Region", regionTop: "Region", country: "Country", category: "ArticleCategory", filling: "Filling", tradingUnit: "TradingUnit" };
+
+describe("vinX Shop API v2.0 contract", () => {
+  it("uses only endpoints that exist", () => {
+    for (const p of ["BaseData/Article", "BaseData/Producer", "BaseData/Region", "BaseData/Country", "BaseData/ArticleCategory", "BaseData/Filling", "BaseData/TradingUnit", "BaseData/WineComposition", "BaseData/Grape",
+      "BaseData/SellingPrices", "BaseData/SpecialPrices", "BaseData/PriceGroup", "BaseData/DeliveryCondition", "Calculated/StockData", "Calculated/ProductInfo", "Online/Basket", "Online/OnlineAddress"]) {
+      expect(spec.paths, p).toContain(SHOP + p);
+    }
+  });
+
+  it("default article mapping resolves to real Article / lookup fields", () => {
+    const { article } = parseSettings("vinx", {}).mapping;
+    for (const [key, expr] of Object.entries(article)) {
+      for (const path of expr.split("|").filter(Boolean)) {
+        if (path === "grapes") continue; // computed from WineComposition + Grape
+        const [head, sub] = path.split(".");
+        if (sub) expect(has(ENRICHED[head], sub), `${key} → ${path}`).toBe(true);
+        else expect(has("Article", head), `${key} → ${path}`).toBe(true);
+      }
+    }
+  });
+
+  it("stock / price mappings match StockData and SellingPrices", () => {
+    const { stock, price } = parseSettings("vinx", {}).mapping;
+    for (const f of Object.values(stock)) expect(has("StockDataHead", f), f).toBe(true);
+    for (const f of Object.values(price)) expect(has("SellingPrice", f), f).toBe(true);
+    for (const f of ["articleId", "addressId", "unitPrice", "calculationMode", "isNetto", "fromQuantity", "priceValidFrom", "priceValidUntil"]) expect(has("SpecialPrice", f), f).toBe(true);
+    expect(has("PriceGroup", "pricesWithVat")).toBe(true);
+    expect(S.CustomerPriceCalculationModeV20.enum).toEqual(["percent", "value"]);
+  });
+
+  it("ProductInfo request/response and Basket payloads use spec fields & enums", () => {
+    for (const f of ["validDate", "customerId", "priceGroupId", "articleParameters"]) expect(has("PriceParameter", f), f).toBe(true);
+    for (const f of ["articleId", "quantity"]) expect(has("ArticleParameter", f), f).toBe(true);
+    for (const f of ["articleId", "price", "pricePromotion", "promotionText", "discounts", "quantity"]) expect(has("ProductInfo", f), f).toBe(true);
+    for (const f of ["discount", "discountText", "articleDiscountGroupId"]) expect(has("ProductInfoDiscount", f), f).toBe(true);
+    for (const f of ["action", "orderingAddressId", "conditionAddressId", "orderingOnlineAddress", "deliveryOnlineAddress", "deliveryConditionId", "paymentConditionId", "validDate", "deliveryDateRequested", "shopId", "orderNumber", "orderText", "positions", "vatSummations", "taxBaseTotalAmount", "taxTotalAmount", "grandTotalAmount", "roundingAmount", "Id"]) expect(has("Basket", f), f).toBe(true);
+    for (const f of ["posType", "posNumber", "articleId", "orderedQuantity", "unitPrice", "priceCalculationRule", "unitPriceWithTax", "applicableTaxRate", "grandTotalAmount", "articleNumber", "billedQuantity", "packages", "charges", "discounts"]) expect(has("BasketPosition", f), f).toBe(true);
+    expect(S.BasketActionTypeV20.enum).toEqual(["calculate", "order"]);
+    expect(S.PriceCalculationKindV20.enum).toContain("fromShop");
+    expect(S.OrderPositionTypeV20.enum).toContain("orderPos");
+  });
+
+  it("OnlineAddress payload uses spec fields", () => {
+    for (const f of ["changeType", "addressId", "firstName", "lastName", "additionalAddressLine1", "street", "zipcode", "city", "country", "phoneBusiness", "email", "language", "loginName", "onlineActive"]) expect(has("OnlineAddress", f), f).toBe(true);
+    expect(S.AddressChangeTypeV20.enum).toEqual(expect.arrayContaining(["new", "change"]));
+  });
+
+  it("articleType values in the default kind map are real ArticleCategoryKindV20 values", () => {
+    const { articleTypes } = parseSettings("vinx", {}).mapping;
+    for (const k of Object.keys(articleTypes)) expect(S.ArticleCategoryKindV20.enum, k).toContain(k);
+  });
+});
