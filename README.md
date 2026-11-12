@@ -35,9 +35,31 @@ Commands: `npm test` (22 unit tests), `npm run e2e` (end-to-end browser smoke te
 
 **Storefront.** Editorial home page (hero, categories, promotions carousel, product spotlight, story, brands, values), catalogue with category tree, producer facets, search (name, producer, region, article number) and sorting, product pages with **variants** (vintage and size, one article number each, as in vinX), stock levels, tier-price tables and schema.org data. Also producers A–Z, story/timeline, contact, editable legal pages, sitemap, robots and hreflang.
 
+**Sales channels (Admin → Einstellungen → Kanäle & Domains):**
+
+| Mode | Storefront | B2B portal (`/portal`) |
+|---|---|---|
+| `combined` | one shop for everyone; trade customers see their conditions | additional, for approved trade customers |
+| `separate` *(demo)* | B2C / direct-sales shop with consumer prices only | trade customers order here, at their own prices |
+| `portal-only` | shop pages lead into the portal (pure wholesale) | the only channel |
+| `shop-only` | trade customers use account + quick order in the shop | disabled |
+
+- Each channel can have **its own domain** (for example `shop.example.ch` and `b2b.example.ch`), served from the same installation. Requests are redirected to the right domain, and `/` on the portal domain opens the portal. Set `COOKIE_DOMAIN=.example.ch` to share one login across subdomains.
+- **The portal** is an app-style workspace with:
+  - a dashboard (KPIs, recent orders with reorder, frequently ordered items, the customer's conditions, contact and downloads);
+  - a dense **order-grid catalogue**, where quantities for many articles are entered at once;
+  - quick order, order list, checkout, order history and the price list.
+  - The cart, checkout and order modules are shared with the storefront, so the logic exists only once.
+
+**Customer prices: pluggable price source** (`app/.server/price-sources.ts`, setting `shop.priceSource`):
+
+- `platform` (default): the shop's own price lists per customer group, with quantity tiers and a group-discount fallback. They are maintained in the admin, by CSV/API import, or filled by any ERP sync.
+- `vinx`: live prices per customer from vinX (`Calculated/ProductInfo` with the customer's address id), including conditions and promotions, cached for 5 minutes. On timeout or error the shop falls back to the platform lists.
+- Another ERP adds itself with `registerPriceSource({ id, label, resolve })`.
+
 **Selling models (per shop):**
 
-- Prices visible to *everyone*, *signed-in customers* or *approved trade customers only*.
+- Storefront prices visible to *everyone*, *signed-in customers* or *approved trade customers only*. The portal always shows the customer's own prices.
 - When prices are hidden, the shop shows "price on request" and checkout becomes a **quote request**, which is sent to vinX as a basket with `action=quote`.
 - Consumer checkout and guest checkout can each be switched on or off.
 

@@ -1,3 +1,4 @@
+import { customerTiers } from "./price-sources";
 import { and, asc, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
 import { priceFor, stockLevel, type PriceInfo, type StockLevel, type Tier } from "~/lib/pricing";
 import { tl } from "~/lib/localized";
@@ -66,6 +67,7 @@ export async function toCards(ctx: ShopContext, ids: number[]): Promise<ProductC
     catIds.length ? db.select().from(c).where(inArray(c.id, catIds)) : [],
     tiersFor(vrows.map((x) => x.id), ctx.group?.id),
   ]);
+  const custom = ctx.showPrices ? await customerTiers(ctx, vrows) : null;
   const byId = new Map(rows.map((r) => [r.id, r]));
   const { stockDisplay, stockLow, stockHigh } = ctx.shop;
 
@@ -101,7 +103,7 @@ export async function toCards(ctx: ShopContext, ids: number[]): Promise<ProductC
             stock: stockLevel(x.stock, stockLow, stockHigh),
             stockQty: stockDisplay === "exact" ? x.stock : null,
             price: ctx.showPrices
-              ? priceFor({ listGross: x.priceCents, taxRate: taxRate(ctx, r.taxClass), group: ctx.group, tiers: tiers.get(x.id) ?? [] })
+              ? priceFor({ listGross: x.priceCents, taxRate: taxRate(ctx, r.taxClass), group: ctx.group, tiers: custom?.get(x.id) ?? tiers.get(x.id) ?? [] })
               : null,
           })),
       };

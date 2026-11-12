@@ -7,6 +7,7 @@ import { shopContext } from "~/.server/context";
 import { getDb, schema } from "~/.server/db";
 import { useI18n, type MessageKey } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
+import { usePath } from "~/lib/channel";
 import { Badge, Button, ButtonLink, Card, EmptyState, Eyebrow, Notice } from "~/components/ui";
 import { AccountNav } from "~/components/account-nav";
 
@@ -25,6 +26,7 @@ import { STATUS_TONE } from "~/components/status";
 export default function Account({ loaderData }: Route.ComponentProps) {
   const { orders, user, isTrade } = loaderData;
   const { t, locale } = useI18n();
+  const to = usePath();
   return (
     <div className="container-page pb-24 pt-12">
       <header className="mb-10 grid gap-3">
@@ -38,7 +40,7 @@ export default function Account({ loaderData }: Route.ComponentProps) {
           {isTrade && <Notice tone="success">{t("account.tradeApproved", { group: user.group ?? "" })}</Notice>}
           <h2 className="text-h3">{t("account.orders")}</h2>
           {orders.length === 0 ? (
-            <EmptyState title={t("account.noOrders")} action={<ButtonLink to="/shop">{t("cart.toShop")}</ButtonLink>} />
+            <EmptyState title={t("account.noOrders")} action={<ButtonLink to={to("/shop")}>{t("cart.toShop")}</ButtonLink>} />
           ) : (
             <Card className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -50,12 +52,12 @@ export default function Account({ loaderData }: Route.ComponentProps) {
                 <tbody>
                   {orders.map((o) => (
                     <tr key={o.id} className="border-b border-border last:border-0">
-                      <td className="px-5 py-4"><Link to={`/account/orders/${o.number}`} className="font-medium hover:underline">{o.number}</Link><span className="block text-[12px] text-muted-fg">{t(o.kind === "request" ? "account.request" : "account.order")}</span></td>
+                      <td className="px-5 py-4"><Link to={to(`/account/orders/${o.number}`)} className="font-medium hover:underline">{o.number}</Link><span className="block text-[12px] text-muted-fg">{t(o.kind === "request" ? "account.request" : "account.order")}</span></td>
                       <td className="px-5 py-4 tabular-nums">{new Date(o.createdAt).toLocaleDateString(`${locale}-CH`)}</td>
                       <td className="px-5 py-4"><Badge tone={STATUS_TONE[o.status]}>{t(`status.${o.status}` as MessageKey)}</Badge></td>
                       <td className="px-5 py-4 tabular-nums">{o.kind === "request" ? "—" : formatMoney(o.totalGross, o.currency, locale)}</td>
                       <td className="px-5 py-4 text-right">
-                        <Form method="post" action={`/account/orders/${o.number}`}>
+                        <Form method="post" action={to(`/account/orders/${o.number}`)}>
                           <input type="hidden" name="intent" value="reorder" />
                           <Button type="submit" variant="ghost" size="sm"><RotateCcw size={14} /> {t("account.reorder")}</Button>
                         </Form>

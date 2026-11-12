@@ -48,8 +48,8 @@ export default function AdminOrder({ loaderData }: Route.ComponentProps) {
         actions={
           <Form method="post" className="flex gap-2">
             <input type="hidden" name="intent" value="status" />
-            <Select name="status" defaultValue={o.status} className="h-10 w-44 text-sm">{ORDER_STATUSES.map((s) => <option key={s} value={s}>{label(s)}</option>)}</Select>
-            <Button type="submit" size="sm" className="h-10">Status setzen</Button>
+            <Select name="status" defaultValue={o.status} size="sm" className="w-44">{ORDER_STATUSES.map((s) => <option key={s} value={s}>{label(s)}</option>)}</Select>
+            <Button type="submit" size="sm">Status setzen</Button>
           </Form>
         }
       />
@@ -97,7 +97,7 @@ export default function AdminOrder({ loaderData }: Route.ComponentProps) {
               <li key={x.id} className="flex flex-wrap items-center gap-3">
                 <Badge tone={x.status === "sent" ? "success" : x.status === "failed" ? "danger" : "warning"}>{label(x.status)}</Badge>
                 <span className="text-muted-fg">{x.attempts} Versuch(e){x.sentAt ? ` · ${new Date(x.sentAt).toLocaleString("de-CH")}` : ""}</span>
-                {x.lastError && <code className="max-w-full truncate rounded bg-muted px-2 py-0.5 text-[12px]">{x.lastError}</code>}
+                {x.lastError && <code className="max-w-full truncate rounded-badge bg-muted px-2 py-0.5 text-[12px]">{x.lastError}</code>}
                 {x.status !== "sent" && <Form method="post"><input type="hidden" name="intent" value="retry" /><input type="hidden" name="outboxId" value={x.id} /><Button type="submit" size="sm" variant="secondary"><RotateCw size={13} /> Erneut senden</Button></Form>}
               </li>
             ))}

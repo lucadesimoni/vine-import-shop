@@ -30,13 +30,13 @@ export default function Orders({ loaderData }: Route.ComponentProps) {
       <Form method="get" onChange={(e) => submit(e.currentTarget, { replace: true })} className="mb-5 flex flex-wrap gap-3">
         <div className="relative min-w-64 flex-1">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-fg" />
-          <Input name="q" defaultValue={params.get("q") ?? ""} placeholder="Nummer oder E-Mail" className="h-10 pl-9 text-sm" />
+          <Input name="q" defaultValue={params.get("q") ?? ""} placeholder="Nummer oder E-Mail" size="sm" className="pl-9" />
         </div>
-        <Select name="status" defaultValue={params.get("status") ?? ""} className="h-10 w-44 text-sm">
+        <Select name="status" defaultValue={params.get("status") ?? ""} size="sm" className="w-44">
           <option value="">Alle Status</option>
           {loaderData.statuses.map((s) => <option key={s} value={s}>{label(s)}</option>)}
         </Select>
-        <Select name="type" defaultValue={params.get("type") ?? ""} className="h-10 w-40 text-sm">
+        <Select name="type" defaultValue={params.get("type") ?? ""} size="sm" className="w-40">
           <option value="">B2B + B2C</option>
           <option value="trade">Nur B2B</option>
           <option value="consumer">Nur B2C</option>

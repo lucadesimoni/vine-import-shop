@@ -52,5 +52,14 @@ const en: Partial<Messages> = {
   "newsletter.title": "Newsletter", "newsletter.text": "New arrivals, offers and tastings — about once a month.", "newsletter.cta": "Subscribe", "newsletter.thanks": "Thanks for subscribing!",
   "age.title": "Welcome", "age.text": "This shop sells alcoholic beverages. Please confirm you are at least {age} years old.", "age.confirm": "I am {age} or older", "age.leave": "Leave",
   "footer.rights": "All rights reserved", "footer.contact": "Contact", "footer.hours": "Opening hours", "footer.legal": "Legal",
+  "portal.title": "B2B portal", "portal.dashboard": "Overview", "portal.catalog": "Range", "portal.orders": "Orders",
+  "portal.toShop": "To the shop", "portal.toPortal": "To the B2B portal", "portal.welcome": "Welcome back, {name}",
+  "portal.kpi.ordersYear": "Orders {year}", "portal.kpi.revenueYear": "Revenue {year}", "portal.kpi.open": "In progress", "portal.kpi.list": "Order list",
+  "portal.minOrder": "Minimum order {amount} · {group} terms", "portal.recent": "Recent orders", "portal.frequent": "Frequently ordered",
+  "portal.contact": "Your contact", "portal.downloads": "Downloads", "portal.allOrders": "All orders", "portal.addSelected": "Add selected to list",
+  "portal.results": "{n} items", "portal.noAccess": "No access to the B2B portal",
+  "portal.noAccessText": "The portal is open to approved trade customers. Apply for a trade account.",
+  "portal.pendingText": "Your trade account is being reviewed.", "portal.loginTitle": "Trade customer login",
+  "portal.loginText": "Order at your terms, quick order, order history and price lists.", "portal.stock": "Stock", "portal.terms": "Your terms", "portal.discount": "Discount", "portal.minOrderShort": "Minimum order", "portal.unitPrice": "Price", "portal.netHint": "Net prices excl. VAT",
 };
 export default en;

@@ -21,6 +21,20 @@ export default [
     route("account/quick-order", "routes/quick-order.tsx"),
   ]),
 
+  // ── B2B portal (shares cart, checkout & order modules with the storefront) ──
+  route("portal/login", "routes/login.tsx", { id: "portal-login" }),
+  route("portal", "routes/portal/layout.tsx", [
+    index("routes/portal/dashboard.tsx"),
+    route("catalog", "routes/portal/catalog.tsx"),
+    route("product/:slug", "routes/product.tsx", { id: "portal-product" }),
+    route("quick-order", "routes/quick-order.tsx", { id: "portal-quick-order" }),
+    route("order-list", "routes/order-list.tsx", { id: "portal-order-list" }),
+    route("checkout", "routes/checkout.tsx", { id: "portal-checkout" }),
+    route("checkout/done/:number", "routes/checkout-done.tsx", { id: "portal-checkout-done" }),
+    route("orders", "routes/account.tsx", { id: "portal-orders" }),
+    route("orders/:number", "routes/account-order.tsx", { id: "portal-order" }),
+  ]),
+
   // ── Actions & resources ────────────────────────────────────────────────
   route("cart", "routes/resources/cart.ts"),
   route("logout", "routes/resources/logout.ts"),

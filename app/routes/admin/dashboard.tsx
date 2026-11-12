@@ -60,8 +60,8 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
               <div className="flex h-44 items-end gap-[3px] border-b border-border" role="img" aria-label="Umsatz pro Tag, letzte 30 Tage">
                 {days.map((d) => (
                   <div key={d.day} className="group relative flex h-full flex-1 items-end">
-                    <div className={`w-full rounded-t-[2px] transition-colors ${d.total ? "bg-primary/75 group-hover:bg-primary" : "bg-border/70"}`} style={{ height: d.total ? `${Math.max(4, (d.total / max) * 100)}%` : "2px" }} />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-sm bg-fg px-2 py-1 text-[11px] text-bg group-hover:block">{new Date(d.day).toLocaleDateString("de-CH")} · {m(d.total)}</span>
+                    <div className={`w-full rounded-t-badge transition-colors ${d.total ? "bg-primary/75 group-hover:bg-primary" : "bg-border/70"}`} style={{ height: d.total ? `${Math.max(4, (d.total / max) * 100)}%` : "2px" }} />
+                    <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-badge bg-fg px-2 py-1 text-[11px] text-bg group-hover:block">{new Date(d.day).toLocaleDateString("de-CH")} · {m(d.total)}</span>
                   </div>
                 ))}
               </div>

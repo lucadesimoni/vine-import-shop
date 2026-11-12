@@ -34,7 +34,7 @@ export default function Products({ loaderData }: Route.ComponentProps) {
       <PageHeader title="Produkte" subtitle="Stammdaten, Preise & Lager kommen aus vinX. Texte, Bilder & Sichtbarkeit pflegen Sie hier." actions={<ButtonLink to="/admin/products/new" size="sm"><Plus size={15} /> Neues Produkt</ButtonLink>} />
       <Form method="get" className="relative mb-5 max-w-md">
         <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-fg" />
-        <Input name="q" defaultValue={params.get("q") ?? ""} placeholder="Name, Produzent oder Art.-Nr." className="h-10 pl-9 text-sm" />
+        <Input name="q" defaultValue={params.get("q") ?? ""} placeholder="Name, Produzent oder Art.-Nr." size="sm" className="pl-9" />
       </Form>
       <DataTable head={["", "Produkt", "Kategorie", "Varianten", "Preis", "Lager", "Status"]} empty={!loaderData.rows.length}>
         {loaderData.rows.map((p) => (

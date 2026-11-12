@@ -1,30 +1,31 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Form, Link, NavLink, useFetcher, useLocation } from "react-router";
-import { Check, Leaf, Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Building2, Check, Leaf, Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { useI18n, type MessageKey } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
 import { cn } from "~/lib/cn";
 import { tl } from "~/lib/localized";
 import type { PriceInfo, StockLevel } from "~/lib/pricing";
 import { useRootData } from "~/lib/root-data";
+import { usePath } from "~/lib/channel";
 import type { ProductCard as Card } from "~/.server/catalog";
 import { Badge, Button, buttonClass, Stepper } from "./ui";
 
 /* ── Brand ─────────────────────────────────────────────────────────────── */
 
-export function Logo({ inverse = false, compact = false }: { inverse?: boolean; compact?: boolean }) {
+export function Logo({ inverse = false, compact = false, to = "/", sub }: { inverse?: boolean; compact?: boolean; to?: string; sub?: string }) {
   const { brand } = useRootData();
   const src = inverse ? brand.logoInverseUrl || brand.logoUrl : brand.logoUrl;
   return (
-    <Link to="/" className="group flex shrink-0 items-center gap-3" aria-label={brand.name}>
+    <Link to={to} className="group flex shrink-0 items-center gap-3" aria-label={brand.name}>
       {src ? (
         <img src={src} alt="" className={cn("w-auto", compact ? "h-9" : "h-10 md:h-12")} />
       ) : (
         <span className={cn("grid h-10 w-10 place-items-center rounded-full font-display text-xl italic", inverse ? "bg-on-inverse text-inverse" : "bg-primary text-on-primary")}>{brand.name.slice(0, 1)}</span>
       )}
       <span className="flex flex-col leading-none">
-        <span className="font-display text-[1.45rem] tracking-tight md:text-[1.7rem]">{brand.name}</span>
-        {brand.claim && <span className={cn("text-eyebrow mt-1.5 text-[0.62rem]", inverse ? "text-on-inverse/70" : "text-muted-fg")}>{brand.claim}</span>}
+        <span className={cn("font-display text-[1.45rem] md:text-[1.7rem]", brand.name === brand.name.toUpperCase() ? "tracking-[0.06em]" : "tracking-tight")}>{brand.name}</span>
+        {(sub ?? brand.claim) && <span className={cn("text-eyebrow mt-1.5 text-[0.62rem]", inverse ? "text-on-inverse/70" : "text-muted-fg")}>{sub ?? brand.claim}</span>}
       </span>
     </Link>
   );
@@ -43,8 +44,9 @@ const NAV: { to: string; key: MessageKey; end?: boolean }[] = [
 
 export function Header() {
   const { t, locale, locales } = useI18n();
-  const { brand, user, cartCount } = useRootData();
+  const { brand, user, cartCount, channel } = useRootData();
   const [open, setOpen] = useState(false);
+  const showPortal = channel.portalEnabled && (!user || user.role !== "customer" || channel.canUsePortal);
   const [search, setSearch] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -101,6 +103,11 @@ export function Header() {
               ))}
             </div>
           )}
+          {showPortal && (
+            <a href={`${channel.portalUrl}/portal`} className={buttonClass({ variant: "secondary", size: "sm" }, "mr-2 hidden md:inline-flex")}>
+              <Building2 size={15} strokeWidth={1.6} /> {t("portal.title")}
+            </a>
+          )}
           <button className={buttonClass({ variant: "ghost", size: "icon" })} onClick={() => setSearch((s) => !s)} aria-label={t("nav.search")}>
             <Search size={19} strokeWidth={1.5} />
           </button>
@@ -109,7 +116,7 @@ export function Header() {
           </Link>
           <Link to="/order-list" className={buttonClass({ variant: "ghost", size: "sm" }, "relative gap-2 pr-2.5")} aria-label={t("nav.orderList")}>
             <ShoppingBag size={19} strokeWidth={1.5} />
-            <span className="text-eyebrow hidden text-[11px] md:inline">{t("nav.orderList")}</span>
+            <span className="hidden md:inline">{t("nav.orderList")}</span>
             {cartCount > 0 && (
               <span key={cartCount} className="animate-fade-up grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[10px] font-semibold tabular-nums text-on-primary">{cartCount}</span>
             )}
@@ -140,6 +147,11 @@ export function Header() {
               {t(n.key)}
             </NavLink>
           ))}
+          {showPortal && (
+            <a href={`${channel.portalUrl}/portal`} className={buttonClass({ variant: "secondary" }, "mt-8")}>
+              <Building2 size={16} strokeWidth={1.6} /> {t("portal.title")}
+            </a>
+          )}
           <div className="mt-auto flex gap-4 pt-6 text-sm uppercase tracking-wider">
             {locales.map((l) => (
               <Form key={l} method="post" action="/set-locale">
@@ -276,9 +288,10 @@ export function ProductCard({ product, priority = false }: { product: Card; prio
   const { t } = useI18n();
   const v = product.variants[0];
   const label = product.category?.name ?? (product.color ? t(`color.${product.color}` as MessageKey) : "");
+  const to = usePath();
   return (
     <article className="group relative flex flex-col">
-      <Link to={`/product/${product.slug}`} className="relative block aspect-[4/5] overflow-hidden rounded-md bg-surface transition-shadow duration-300 group-hover:shadow-card" tabIndex={-1}>
+      <Link to={to(`/product/${product.slug}`)} className="relative block aspect-[4/5] overflow-hidden rounded-surface bg-surface transition-shadow duration-300 group-hover:shadow-card" tabIndex={-1}>
         <div className="absolute inset-[9%] transition-transform duration-500 ease-out group-hover:scale-[1.04]">
           <ProductImage product={product} className={priority ? "" : undefined} />
         </div>
@@ -291,7 +304,7 @@ export function ProductCard({ product, priority = false }: { product: Card; prio
       <div className="flex flex-1 flex-col pt-4">
         {label && <p className="text-eyebrow mb-1.5 text-[10px] text-muted-fg">{label}</p>}
         <h3 className="text-[15px] font-medium leading-snug">
-          <Link to={`/product/${product.slug}`} className="after:absolute after:inset-0">{product.name}</Link>
+          <Link to={to(`/product/${product.slug}`)} className="after:absolute after:inset-0">{product.name}</Link>
         </h3>
         <p className="mt-1 text-[13px] text-muted-fg">
           {[product.producer?.name, v?.vintage, v?.size].filter(Boolean).join(" · ")}
@@ -319,7 +332,7 @@ export function ProductGrid({ products, className }: { products: Card[]; classNa
 
 /* ── Add to order list ─────────────────────────────────────────────────── */
 
-export function AddToList({ variantId, packSize = 1, compact = false, disabled = false }: { variantId: number; packSize?: number; compact?: boolean; disabled?: boolean }) {
+export function AddToList({ variantId, packSize = 1, compact = false, iconOnly = false, disabled = false }: { variantId: number; packSize?: number; compact?: boolean; iconOnly?: boolean; disabled?: boolean }) {
   const { t } = useI18n();
   const fetcher = useFetcher<{ ok: boolean }>();
   const busy = fetcher.state !== "idle";
@@ -339,9 +352,15 @@ export function AddToList({ variantId, packSize = 1, compact = false, disabled =
       <input type="hidden" name="intent" value="add" />
       <input type="hidden" name="variantId" value={variantId} />
       <Stepper name="qty" defaultValue={packSize > 1 && !compact ? packSize : 1} step={1} size={compact ? "sm" : "md"} label={t("product.qty")} />
+      {iconOnly ? (
+        <Button type="submit" size="iconSm" disabled={busy || disabled} aria-label={t("product.add")} title={t("product.add")} className={cn(done && "bg-success!")}>
+          {done ? <Check size={16} /> : <ShoppingBag size={16} strokeWidth={1.6} />}
+        </Button>
+      ) : (
       <Button type="submit" size={compact ? "sm" : "md"} disabled={busy || disabled} className={cn(compact ? "" : "min-w-[13rem]", done && "bg-success!")}>
         {done ? <><Check size={16} /> {t("product.added")}</> : <>{!compact && <ShoppingBag size={16} strokeWidth={1.6} />} {t("product.add")}</>}
       </Button>
+      )}
     </fetcher.Form>
   );
 }

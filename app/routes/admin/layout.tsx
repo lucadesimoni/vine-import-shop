@@ -39,7 +39,7 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
     <div className="min-h-screen bg-bg lg:grid lg:grid-cols-[248px_1fr]">
       <aside className="flex flex-col gap-6 border-b border-border bg-surface px-4 py-5 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
         <div className="flex items-center gap-3 px-2">
-          {brand.logoUrl ? <img src={brand.logoUrl} alt="" className="h-8 w-auto" /> : <span className="grid h-8 w-8 place-items-center rounded-md bg-primary text-on-primary">{brand.name[0]}</span>}
+          {brand.logoUrl ? <img src={brand.logoUrl} alt="" className="h-8 w-auto" /> : <span className="grid h-8 w-8 place-items-center rounded-control bg-primary text-on-primary">{brand.name[0]}</span>}
           <div className="grid leading-tight">
             <span className="font-display text-lg">{brand.name}</span>
             <span className="text-eyebrow text-[9px] text-muted-fg">Admin</span>
@@ -54,7 +54,7 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
                 key={n.to}
                 to={n.to}
                 end={"end" in n}
-                className={({ isActive }) => cn("flex shrink-0 items-center gap-3 rounded-md px-3 py-2 text-[14px] transition-colors", isActive ? "bg-primary-soft font-medium text-primary" : "text-fg/75 hover:bg-muted hover:text-fg")}
+                className={({ isActive }) => cn("flex shrink-0 items-center gap-3 rounded-control px-3 py-2 text-[14px] transition-colors", isActive ? "bg-primary-soft font-medium text-primary" : "text-fg/75 hover:bg-muted hover:text-fg")}
               >
                 <n.icon size={17} strokeWidth={1.6} />
                 <span className="flex-1">{n.label}</span>
@@ -64,9 +64,9 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
           )}
         </nav>
         <div className="mt-auto hidden gap-1 border-t border-border pt-4 text-[13px] lg:grid">
-          <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-md px-3 py-2 text-fg/75 hover:bg-muted"><ExternalLink size={15} /> Shop ansehen</a>
+          <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-control px-3 py-2 text-fg/75 hover:bg-muted"><ExternalLink size={15} /> Shop ansehen</a>
           <Form method="post" action="/logout">
-            <button className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-fg/75 hover:bg-muted"><LogOut size={15} /> Abmelden</button>
+            <button className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-fg/75 hover:bg-muted"><LogOut size={15} /> Abmelden</button>
           </Form>
           <p className="truncate px-3 pt-2 text-[12px] text-muted-fg">{user.email}</p>
         </div>

@@ -16,7 +16,7 @@ export async function seedDeSimoniDemo(db: DB) {
   const D = "/demo/desimoni";
 
   const brand = parseSettings("brand", {
-    name: "De Simoni",
+    name: "DE SIMONI",
     legalName: "De Simoni AG",
     claim: "Dal 1917",
     tagline: { de: "Italienische Weine & Spezialitäten seit 1917", it: "Vini e specialità italiane dal 1917" },
@@ -31,6 +31,7 @@ export async function seedDeSimoniDemo(db: DB) {
     fonts: { display: "Bodoni Moda", body: "Montserrat", displayUppercaseEyebrows: true },
     radius: 2,
     buttonStyle: "square",
+    buttonCase: "upper",
     contact: {
       street: "Schweighofstrasse 16", zip: "6010", city: "Kriens", country: "Schweiz", phone: "+41 41 349 50 10", email: "info@desimoni.ch",
       uid: "",
@@ -46,7 +47,9 @@ export async function seedDeSimoniDemo(db: DB) {
   const shop = parseSettings("shop", {
     locales: ["de", "it"],
     defaultLocale: "de",
-    priceVisibility: "trade",
+    // Demo: B2C shop with public consumer prices + B2B portal with customer-specific prices after login.
+    channels: { mode: "separate" },
+    priceVisibility: "public",
     consumerCheckout: true,
     guestCheckout: true,
     stockDisplay: "levels",

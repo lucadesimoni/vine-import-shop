@@ -3,11 +3,13 @@ import type { Route } from "./+types/login";
 import { shopContext } from "~/.server/context";
 import { clearFailures, findUserByEmail, login, registerFailure, safeRedirect, throttle, verifyPassword } from "~/.server/auth";
 import { useI18n } from "~/lib/i18n";
+import { channelPath, usePath } from "~/lib/channel";
+import { Logo } from "~/components/shop";
 import { Button, ButtonLink, Card, Eyebrow, Field, Input, Notice } from "~/components/ui";
 
 export async function loader({ context }: Route.LoaderArgs) {
   const ctx = context.get(shopContext);
-  if (ctx.user) throw redirect(ctx.user.role === "customer" ? "/account" : "/admin");
+  if (ctx.user) throw redirect(ctx.user.role === "customer" ? (ctx.channel.portal ? "/portal" : "/account") : "/admin");
   return { demo: (process.env.DEMO_DATA ?? "true") !== "false" };
 }
 
@@ -24,7 +26,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     return data({ error: ctx.t("auth.failed") }, { status: 401 });
   }
   clearFailures(key);
-  return login(request, user.id, safeRedirect(form.get("next"), user.role === "customer" ? "/account" : "/admin"));
+  const home = user.role !== "customer" ? "/admin" : ctx.channel.portal ? "/portal" : channelPath("/account", false);
+  return login(request, user.id, safeRedirect(form.get("next"), home));
 }
 
 export const meta: Route.MetaFunction = () => [{ title: "Login" }, { name: "robots", content: "noindex" }];
@@ -33,12 +36,13 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
   const { t } = useI18n();
   const [params] = useSearchParams();
   const busy = useNavigation().state === "submitting";
-  return (
+  const to = usePath();
+  const page = (
     <div className="container-page grid gap-10 py-16 md:py-24 lg:grid-cols-[minmax(0,480px)_minmax(0,1fr)] lg:gap-20">
       <Card className="grid gap-8 p-8 md:p-10">
         <div className="grid gap-3">
-          <Eyebrow line>{t("auth.login")}</Eyebrow>
-          <h1 className="text-h1">{t("auth.loginTitle")}</h1>
+          <Eyebrow line>{to.portal ? t("portal.title") : t("auth.login")}</Eyebrow>
+          <h1 className={to.portal ? "text-h2" : "text-h1"}>{to.portal ? t("portal.loginTitle") : t("auth.loginTitle")}</h1>
         </div>
         {actionData?.error && <Notice tone="danger">{actionData.error}</Notice>}
         <Form method="post" className="grid gap-5">
@@ -47,23 +51,30 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
           <Field label={t("form.password")}>{(id) => <Input id={id} name="password" type="password" autoComplete="current-password" required />}</Field>
           <Button type="submit" size="lg" disabled={busy}>{t("auth.login")}</Button>
         </Form>
-        <p className="text-sm text-muted-fg">{t("auth.noAccount")} <Link to="/register" className="text-fg underline underline-offset-4">{t("auth.register")}</Link></p>
+        {!to.portal && <p className="text-sm text-muted-fg">{t("auth.noAccount")} <Link to="/register" className="text-fg underline underline-offset-4">{t("auth.register")}</Link></p>}
       </Card>
       <div className="grid content-center gap-8">
         <div className="grid gap-4">
           <h2 className="text-h2">{t("auth.tradeTitle")}</h2>
-          <p className="text-lead max-w-md text-muted-fg">{t("auth.tradeText")}</p>
+          <p className="text-lead max-w-md text-muted-fg">{to.portal ? t("portal.loginText") : t("auth.tradeText")}</p>
           <ButtonLink to="/trade#apply" variant="secondary" className="w-fit">{t("trade.apply")}</ButtonLink>
         </div>
         {loaderData.demo && (
-          <div className="grid gap-2 rounded-md border border-dashed border-border-strong p-5 text-sm">
+          <div className="grid gap-2 rounded-control border border-dashed border-border-strong p-5 text-sm">
             <p className="text-eyebrow text-[10px] text-muted-fg">Demo</p>
             <code>gastro@demo.ch · gastro-demo-1234</code>
-            <code>kunde@demo.ch · kunde-demo-1234</code>
-            <code>admin@example.com · admin-demo-1234</code>
+            {!to.portal && <code>kunde@demo.ch · kunde-demo-1234</code>}
+            {!to.portal && <code>admin@example.com · admin-demo-1234</code>}
           </div>
         )}
       </div>
+    </div>
+  );
+  if (!to.portal) return page;
+  return (
+    <div className="min-h-screen bg-bg">
+      <div className="border-b border-border bg-surface"><div className="container-page flex h-20 items-center"><Logo to="/portal" sub={t("portal.title")} /></div></div>
+      {page}
     </div>
   );
 }

@@ -75,14 +75,14 @@ export default function Trade({ loaderData, actionData }: Route.ComponentProps) 
               <ButtonLink to="/shop" size="lg" variant="secondary">{t("cart.toShop")}</ButtonLink>
             </div>
           </div>
-          {trade.imageUrl && <img src={trade.imageUrl} alt="" className="aspect-[4/3] w-full rounded-lg object-cover shadow-card" />}
+          {trade.imageUrl && <img src={trade.imageUrl} alt="" className="aspect-[4/3] w-full rounded-surface object-cover shadow-card" />}
         </div>
       </section>
 
       {trade.services.length > 0 && (
         <section className="container-page py-20 md:py-28">
           <h2 className="text-h1 mb-14">{L(trade.servicesTitle)}</h2>
-          <div className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-px overflow-hidden rounded-surface border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
             {trade.services.map((s, i) => (
               <div key={i} className="grid content-start gap-3 bg-surface p-8">
                 <span className="font-display text-sm text-primary tabular-nums">{String(i + 1).padStart(2, "0")}</span>

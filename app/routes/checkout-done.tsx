@@ -5,6 +5,7 @@ import { shopContext } from "~/.server/context";
 import { getOrder } from "~/.server/orders";
 import { useI18n } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
+import { usePath } from "~/lib/channel";
 import { ButtonLink, Card } from "~/components/ui";
 
 export async function loader({ params, request, context }: Route.LoaderArgs) {
@@ -20,6 +21,7 @@ export const meta: Route.MetaFunction = () => [{ name: "robots", content: "noind
 export default function Done({ loaderData }: Route.ComponentProps) {
   const { order, bank } = loaderData;
   const { t, locale } = useI18n();
+  const to = usePath();
   const m = (c: number) => formatMoney(c, order.currency, locale);
   const request = order.kind === "request";
   return (
@@ -29,7 +31,7 @@ export default function Done({ loaderData }: Route.ComponentProps) {
         <h1 className="text-h1">{t("done.title")}</h1>
         <p className="text-lead max-w-md text-muted-fg">{request ? t("done.requestText", { number: order.number }) : t("done.orderText", { number: order.number, email: order.email })}</p>
         {bank && bank.iban && (
-          <dl className="grid w-full gap-2 rounded-md bg-muted p-5 text-left text-sm sm:grid-cols-[140px_1fr]">
+          <dl className="grid w-full gap-2 rounded-control bg-muted p-5 text-left text-sm sm:grid-cols-[140px_1fr]">
             <dt className="text-muted-fg">{t("done.holder")}</dt><dd>{bank.holder}</dd>
             <dt className="text-muted-fg">IBAN</dt><dd className="font-mono">{bank.iban}</dd>
             <dt className="text-muted-fg">{t("done.reference")}</dt><dd className="font-mono">{order.number}</dd>
@@ -45,8 +47,8 @@ export default function Done({ loaderData }: Route.ComponentProps) {
           ))}
         </ul>
         <div className="flex flex-wrap justify-center gap-3">
-          <ButtonLink to="/shop">{t("cart.continue")}</ButtonLink>
-          {order.userId && <ButtonLink to="/account" variant="secondary">{t("account.title")}</ButtonLink>}
+          <ButtonLink to={to("/shop")}>{t("cart.continue")}</ButtonLink>
+          {order.userId && <ButtonLink to={to("/account")} variant="secondary">{t("account.title")}</ButtonLink>}
         </div>
         <Link to="/" className="sr-only">home</Link>
       </Card>

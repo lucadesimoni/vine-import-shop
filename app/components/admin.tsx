@@ -71,7 +71,7 @@ export function LocalizedInput({ name, value, locales, multiline = false, rows =
       <div className="flex items-center justify-between gap-3">
         {label && <span className="text-[12px] font-medium uppercase tracking-[0.1em] text-muted-fg">{label}</span>}
         {active.length > 1 && (
-          <div className="ml-auto flex rounded-sm bg-muted p-0.5" role="tablist" aria-label="Sprache">
+          <div className="ml-auto flex rounded-control bg-muted p-0.5" role="tablist" aria-label="Sprache">
             {active.map((l) => (
               <button
                 key={l}
@@ -79,7 +79,7 @@ export function LocalizedInput({ name, value, locales, multiline = false, rows =
                 role="tab"
                 aria-selected={current === l}
                 onClick={() => setCurrent(l)}
-                className={cn("relative rounded-[3px] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors", current === l ? "bg-surface text-fg shadow-sm" : "text-muted-fg hover:text-fg")}
+                className={cn("relative rounded-badge px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors", current === l ? "bg-surface text-fg shadow-sm" : "text-muted-fg hover:text-fg")}
               >
                 {l}
                 {!value?.[l] && l !== active[0] && <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-warning" title="leer" />}
@@ -90,9 +90,9 @@ export function LocalizedInput({ name, value, locales, multiline = false, rows =
       </div>
       {active.map((l) =>
         multiline ? (
-          <Textarea key={l} name={`${name}.${l}`} defaultValue={value?.[l] ?? ""} rows={rows} hidden={l !== current} lang={l} className="text-sm" />
+          <Textarea key={l} name={`${name}.${l}`} defaultValue={value?.[l] ?? ""} rows={rows} hidden={l !== current} lang={l} />
         ) : (
-          <Input key={l} name={`${name}.${l}`} defaultValue={value?.[l] ?? ""} hidden={l !== current} lang={l} className="h-10 text-sm" />
+          <Input key={l} name={`${name}.${l}`} defaultValue={value?.[l] ?? ""} hidden={l !== current} lang={l} />
         ),
       )}
     </div>

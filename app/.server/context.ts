@@ -5,6 +5,7 @@ import type { Locale } from "~/lib/localized";
 import { isLocale } from "~/lib/localized";
 import type { Brand, Shop } from "~/lib/settings";
 import { getT, type T } from "~/lib/i18n";
+import { isPortalPath, type ChannelMode } from "~/lib/channel";
 import { getSession, getUser, type SessionUser } from "./auth";
 import { getSettings } from "./settings";
 
@@ -18,6 +19,15 @@ export type ShopContext = {
   t: T;
   brand: Brand;
   shop: Shop;
+  channel: {
+    mode: ChannelMode;
+    /** this request is served by the B2B portal */
+    portal: boolean;
+    /** the portal exists in this configuration */
+    portalEnabled: boolean;
+    /** approved trade account that may use the portal */
+    canUsePortal: boolean;
+  };
 };
 
 export const shopContext = createContext<ShopContext>();
@@ -29,7 +39,12 @@ export async function buildShopContext(request: Request): Promise<ShopContext> {
   const candidates = [url.searchParams.get("lang"), session.get("locale"), ...acceptLanguages(request)];
   const locale = (candidates.find((c) => isLocale(c) && shop.locales.includes(c)) as Locale | undefined) ?? shop.defaultLocale;
 
-  const approvedTrade = !!user?.group?.isTrade && user.tradeStatus === "approved";
+  const mode = shop.channels.mode;
+  const portal = isPortalPath(url.pathname);
+  const portalEnabled = mode !== "shop-only";
+  const approved = !!user?.group?.isTrade && user.tradeStatus === "approved";
+  // "separate": the B2C storefront never applies trade conditions — those live in the portal.
+  const approvedTrade = approved && (mode !== "separate" || portal);
   const g = user?.group && (approvedTrade || !user.group.isTrade) ? user.group : null;
   const group: PriceGroup | null = g
     ? { id: g.id, isTrade: g.isTrade, showNet: g.showNet, discountPct: Number(g.discountPct), minOrderCents: g.minOrderCents }
@@ -39,11 +54,13 @@ export async function buildShopContext(request: Request): Promise<ShopContext> {
     user,
     group,
     isTrade: approvedTrade,
-    showPrices: canSeePrices(shop.priceVisibility, user, approvedTrade),
+    // The portal always shows the customer's own prices; the storefront follows the visibility setting.
+    showPrices: portal ? approvedTrade : canSeePrices(shop.priceVisibility, user, approvedTrade),
     locale,
     t: getT(locale),
     brand,
     shop,
+    channel: { mode, portal, portalEnabled, canUsePortal: portalEnabled && approved },
   };
 }
 

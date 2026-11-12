@@ -10,14 +10,15 @@ import { getDb, schema } from "~/.server/db";
 import { useI18n } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
 import { useRootData } from "~/lib/root-data";
-import { Button, Card, Eyebrow, Field, Notice, Textarea } from "~/components/ui";
+import { channelPath } from "~/lib/channel";
+import { Button, Card, Eyebrow, Field, Input, Notice, Textarea } from "~/components/ui";
 import { AccountNav } from "~/components/account-nav";
 import { StockLabel } from "~/components/shop";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const user = await requireUser(request);
   const ctx = context.get(shopContext);
-  if (!ctx.isTrade) throw redirect("/account");
+  if (!ctx.isTrade) throw redirect(channelPath("/account", ctx.channel.portal));
   const db = await getDb();
   const frequent = await db
     .select({ productId: schema.variants.productId, variantId: schema.orderItems.variantId, qty: sql<number>`sum(${schema.orderItems.qty})::int` })
@@ -62,7 +63,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     session.flash("toast", { kind: "success", text: ctx.t("quick.added", { n: adds.length }) });
     const headers = new Headers({ "Set-Cookie": await commit(session) });
     if (cart.setCookie) headers.append("Set-Cookie", cart.setCookie);
-    return redirect("/order-list", { headers });
+    return redirect(channelPath("/order-list", ctx.channel.portal), { headers });
   }
   return data({ added: adds.length, missing }, { headers: cart.setCookie ? { "Set-Cookie": cart.setCookie } : undefined });
 }
@@ -96,7 +97,7 @@ export default function QuickOrder({ loaderData, actionData }: Route.ComponentPr
                       <td className="px-5 py-3"><span className="font-medium">{card.name}</span><span className="block text-[12px] text-muted-fg">{[variant.vintage, variant.size].filter(Boolean).join(" · ")} · Σ {ordered}</span></td>
                       <td className="px-5 py-3"><StockLabel level={variant.stock} /></td>
                       <td className="px-5 py-3 text-right tabular-nums">{variant.price ? formatMoney(variant.price.display, shop.currency, locale) : ""}</td>
-                      <td className="px-5 py-3 text-right"><input name={`qty:${variant.id}`} type="number" min={0} defaultValue={0} aria-label={t("cart.qty")} className="h-9 w-20 rounded-md border border-border-strong/70 bg-surface px-2 text-right tabular-nums" /></td>
+                      <td className="px-5 py-3 text-right"><Input name={`qty:${variant.id}`} type="number" min={0} defaultValue={0} aria-label={t("cart.qty")} size="sm" className="ml-auto w-20 text-right tabular-nums" /></td>
                     </tr>
                   ))}
                 </tbody>

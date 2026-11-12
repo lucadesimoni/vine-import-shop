@@ -34,6 +34,8 @@ export const sessionStorage = createCookieSessionStorage<SessionData, FlashData>
     httpOnly: true,
     sameSite: "lax",
     path: "/",
+    // Optional: share the login across shop + portal subdomains, e.g. ".example.ch"
+    ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
     secure: process.env.NODE_ENV === "production",
     secrets: [secret ?? "dev-insecure-secret"],
     maxAge: 60 * 60 * 24 * 30,
@@ -64,7 +66,7 @@ export async function requireUser(request: Request) {
   const user = await getUser(request);
   if (!user) {
     const url = new URL(request.url);
-    throw redirect(`/login?next=${encodeURIComponent(url.pathname + url.search)}`);
+    throw redirect(`${url.pathname.startsWith("/portal") ? "/portal/login" : "/login"}?next=${encodeURIComponent(url.pathname + url.search)}`);
   }
   return user;
 }

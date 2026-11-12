@@ -3,15 +3,23 @@ import { data, Form, useActionData } from "react-router";
 import type { Route } from "./+types/settings";
 import { getDb, schema } from "~/.server/db";
 import { getSettings, saveSetting } from "~/.server/settings";
+import { listPriceSources } from "~/.server/price-sources";
 import { LOCALES, LOCALE_LABELS } from "~/lib/localized";
 import { parseMoneyInput } from "~/lib/money";
 import { Checkbox, Field, Input, Notice, Select, Textarea } from "~/components/ui";
 import { formToObject, PageHeader, Panel, SaveBar, Toggle } from "~/components/admin";
 
+const CHANNEL_HINTS: Record<string, string> = {
+  combined: "Alle kaufen im Shop; Geschäftskunden erhalten zusätzlich das Portal.",
+  separate: "Shop zeigt nur Privatkonditionen; Geschäftskunden bestellen im Portal.",
+  "portal-only": "Shop-Seiten führen ins Portal — reiner Grosshandel.",
+  "shop-only": "Kein Portal; Geschäftskunden nutzen Konto & Schnellbestellung im Shop.",
+};
+
 export async function loader() {
   const db = await getDb();
   const [{ shop }, groups] = await Promise.all([getSettings("shop"), db.select().from(schema.customerGroups).orderBy(asc(schema.customerGroups.id))]);
-  return { shop, groups, stripeKey: !!process.env.STRIPE_SECRET_KEY };
+  return { shop, groups, stripeKey: !!process.env.STRIPE_SECRET_KEY, priceSources: listPriceSources() };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -29,7 +37,13 @@ export async function action({ request }: Route.ActionArgs) {
     ...shop,
     locales: locales.length ? locales : [shop.defaultLocale],
     defaultLocale: locales.includes(o.defaultLocale) ? o.defaultLocale : locales[0] ?? shop.defaultLocale,
+    channels: {
+      mode: ["combined", "separate", "portal-only", "shop-only"].includes(o.channels?.mode) ? o.channels.mode : shop.channels.mode,
+      portalHost: cleanHost(o.channels?.portalHost),
+      shopHost: cleanHost(o.channels?.shopHost),
+    },
     priceVisibility: o.priceVisibility,
+    priceSource: listPriceSources().some((x) => x.id === o.priceSource) ? o.priceSource : shop.priceSource,
     consumerCheckout: form.has("consumerCheckout"),
     guestCheckout: form.has("guestCheckout"),
     stockDisplay: o.stockDisplay,
@@ -55,22 +69,55 @@ export async function action({ request }: Route.ActionArgs) {
   return { ok: true };
 }
 
+/** "https://B2B.example.ch/" → "b2b.example.ch" */
+function cleanHost(v: unknown) {
+  return String(v ?? "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "");
+}
+
 export default function Settings({ loaderData }: Route.ComponentProps) {
-  const { shop, groups, stripeKey } = loaderData;
+  const { shop, groups, stripeKey, priceSources } = loaderData;
   const result = useActionData<typeof action>();
   return (
     <Form method="post">
       <PageHeader title="Einstellungen" subtitle="Verkaufsmodell, Sprachen, Preise, Versand und Zahlung." />
       {result && "error" in result && <Notice tone="danger" className="mb-6">{result.error}</Notice>}
       <div className="grid gap-6 xl:grid-cols-2">
+        <Panel title="Kanäle & Domains" description="Ein gemeinsamer Shop, oder ein getrennter B2C-Shop (Direktvertrieb) und ein B2B-Portal — optional je auf eigener Domain." className="xl:col-span-2">
+          <div className="grid gap-5 lg:grid-cols-3">
+            <Field label="Kanalmodell" hint={CHANNEL_HINTS[shop.channels.mode]}>
+              {(id) => (
+                <Select id={id} name="channels.mode" defaultValue={shop.channels.mode}>
+                  <option value="combined">Kombiniert — ein Shop, B2B-Portal zusätzlich</option>
+                  <option value="separate">Getrennt — B2C-Shop + B2B-Portal</option>
+                  <option value="portal-only">Nur B2B-Portal</option>
+                  <option value="shop-only">Nur Shop (ohne Portal)</option>
+                </Select>
+              )}
+            </Field>
+            <Field label="Domain B2C-Shop" hint="z. B. shop.example.ch — leer = aktuelle Domain">
+              {(id) => <Input id={id} name="channels.shopHost" defaultValue={shop.channels.shopHost} placeholder="shop.example.ch" />}
+            </Field>
+            <Field label="Domain B2B-Portal" hint="z. B. b2b.example.ch — dort öffnet «/» direkt das Portal">
+              {(id) => <Input id={id} name="channels.portalHost" defaultValue={shop.channels.portalHost} placeholder="b2b.example.ch" />}
+            </Field>
+          </div>
+          <p className="mt-4 text-[13px] text-muted-fg">Beide Domains auf dieselbe Installation zeigen lassen. Für ein gemeinsames Login über Subdomains <code className="rounded-badge bg-muted px-1.5 py-0.5 text-[12px]">COOKIE_DOMAIN=.example.ch</code> setzen.</p>
+        </Panel>
         <Panel title="Verkaufsmodell" description="B2B-only, B2C oder beides — mit Preisanzeige je Kundengruppe.">
           <div className="grid gap-4">
-            <Field label="Preise sichtbar für">
+            <Field label="Preise im Shop sichtbar für" hint="Im B2B-Portal sehen Geschäftskunden nach dem Login immer ihre eigenen Preise.">
               {(id) => (
                 <Select id={id} name="priceVisibility" defaultValue={shop.priceVisibility}>
                   <option value="public">Alle Besucher</option>
                   <option value="login">Angemeldete Kunden</option>
                   <option value="trade">Nur freigegebene Geschäftskunden (sonst «Preis auf Anfrage»)</option>
+                </Select>
+              )}
+            </Field>
+            <Field label="Kunden- & Gruppenpreise aus" hint="Nicht verfügbare Preise fallen automatisch auf die Plattform-Preislisten zurück.">
+              {(id) => (
+                <Select id={id} name="priceSource" defaultValue={shop.priceSource}>
+                  {priceSources.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
                 </Select>
               )}
             </Field>
@@ -99,10 +146,10 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
             <div className="hidden grid-cols-[1.5fr_1fr_1fr_1fr_auto] gap-3 text-[11px] uppercase tracking-wider text-muted-fg md:grid"><span>Name</span><span>Rabatt %</span><span>Mindestbestellung CHF netto</span><span>vinX-Preisgruppe</span><span>Netto-Anzeige</span></div>
             {groups.map((g) => (
               <div key={g.id} className="grid grid-cols-2 items-center gap-3 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
-                <Input name={`group.${g.id}.name`} defaultValue={g.name} className="h-10 text-sm" aria-label="Name" />
-                <Input name={`group.${g.id}.discount`} defaultValue={g.discountPct} inputMode="decimal" className="h-10 text-sm" aria-label="Rabatt" />
-                <Input name={`group.${g.id}.minOrder`} defaultValue={(g.minOrderCents / 100).toFixed(2)} inputMode="decimal" className="h-10 text-sm" aria-label="Mindestbestellung" />
-                <Input name={`group.${g.id}.erpCode`} defaultValue={g.erpCode ?? ""} className="h-10 text-sm" aria-label="vinX-Code" />
+                <Input name={`group.${g.id}.name`} defaultValue={g.name} size="sm" aria-label="Name" />
+                <Input name={`group.${g.id}.discount`} defaultValue={g.discountPct} inputMode="decimal" size="sm" aria-label="Rabatt" />
+                <Input name={`group.${g.id}.minOrder`} defaultValue={(g.minOrderCents / 100).toFixed(2)} inputMode="decimal" size="sm" aria-label="Mindestbestellung" />
+                <Input name={`group.${g.id}.erpCode`} defaultValue={g.erpCode ?? ""} size="sm" aria-label="vinX-Code" />
                 <Checkbox name={`group.${g.id}.showNet`} defaultChecked={g.showNet} label={g.isTrade ? "B2B" : "B2C"} />
               </div>
             ))}

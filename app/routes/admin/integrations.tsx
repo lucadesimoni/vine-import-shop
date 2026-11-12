@@ -6,7 +6,7 @@ import { getDb, schema } from "~/.server/db";
 import { getSettings, saveSetting } from "~/.server/settings";
 import { decodeUpload } from "~/.server/vinx/csv";
 import { erpClient, lastSuccess, outboxCounts, processOutbox, retryOutbox, syncArticles, syncPrices, syncStock } from "~/.server/vinx/sync";
-import { Badge, Button, Field, Input, Notice, Select, Textarea } from "~/components/ui";
+import { Badge, Button, buttonClass, Field, Input, Notice, Select, Textarea } from "~/components/ui";
 import { DataTable, label, PageHeader, Panel, Stat, Toggle } from "~/components/admin";
 
 export async function loader() {
@@ -88,7 +88,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
       <PageHeader
         title="vinX ERP"
         subtitle={<>Anbindung nach der offiziellen vinX REST3-Spezifikation (Shop V 2.0) · Treiber <Badge tone={vinx.driver === "mock" ? "warning" : "success"}>{{ mock: "Demo", rest3: "REST3", csv: "CSV" }[vinx.driver]}</Badge></>}
-        actions={<a href="https://i-ag.atlassian.net/wiki/spaces/TD" target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-btn border border-border-strong px-3.5 text-[13px] hover:border-fg"><BookOpen size={14} /> API-Doku</a>}
+        actions={<a href="https://i-ag.atlassian.net/wiki/spaces/TD" target="_blank" rel="noreferrer" className={buttonClass({ variant: "secondary", size: "sm" })}><BookOpen size={14} /> API-Doku</a>}
       />
       {result?.message && <Notice tone={result.ok ? "success" : "danger"} className="mb-6">{result.message}</Notice>}
       {vinx.driver === "mock" && <Notice tone="warning" className="mb-6">Demo-Modus: Es ist kein echtes vinX verbunden. Für den Live-Betrieb Treiber «REST3», Basis-URL, Benutzer und VINX_PASSWORD setzen. Der vinX-Demo-Server (vinxapi.i-ag.ch) kann bei support@i-ag.ch angefragt werden.</Notice>}
@@ -164,7 +164,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
                     <Badge tone={o.status === "failed" ? "danger" : "warning"}>{label(o.status)}</Badge>
                     <span>{o.type} #{o.refId}</span>
                     <span className="text-muted-fg">{o.attempts}×</span>
-                    {o.lastError && <code className="max-w-full truncate rounded bg-muted px-2 py-0.5 text-[11px]">{o.lastError}</code>}
+                    {o.lastError && <code className="max-w-full truncate rounded-badge bg-muted px-2 py-0.5 text-[11px]">{o.lastError}</code>}
                     <Form method="post" className="ml-auto"><input type="hidden" name="intent" value="retry" /><input type="hidden" name="id" value={o.id} /><Button type="submit" size="sm" variant="ghost"><RotateCw size={13} /> Retry</Button></Form>
                   </li>
                 ))}

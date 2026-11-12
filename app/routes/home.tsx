@@ -70,7 +70,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {categories.map((c) => (
               <Link key={c.id} to={`/shop?category=${c.slug}`} className="group grid gap-3 text-center">
-                <div className="aspect-[3/4] overflow-hidden rounded-md bg-muted">
+                <div className="aspect-[3/4] overflow-hidden rounded-surface bg-muted">
                   {c.image && <img src={c.image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />}
                 </div>
                 <span className="font-display text-lg leading-tight">{c.name}</span>
@@ -110,7 +110,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {/* Spotlight */}
       {spotlight && (
         <section className="container-page py-20 md:py-28">
-          <div className="mx-auto grid max-w-5xl overflow-hidden rounded-lg border border-border bg-surface md:grid-cols-2">
+          <div className="mx-auto grid max-w-5xl overflow-hidden rounded-surface border border-border bg-surface md:grid-cols-2">
             <div className="relative min-h-96 bg-muted"><div className="absolute inset-[10%]"><ProductImage product={spotlight.card} /></div></div>
             <div className="grid content-center gap-5 p-8 md:p-12">
               <Eyebrow>{L(home.spotlight.eyebrow)}</Eyebrow>
@@ -136,7 +136,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {home.story.show && (
         <section className="border-t border-border bg-surface py-20 md:py-28">
           <div className="container-page grid items-center gap-12 md:grid-cols-2">
-            {home.story.imageUrl && <img src={home.story.imageUrl} alt="" loading="lazy" className="aspect-[4/3] w-full rounded-md object-cover" />}
+            {home.story.imageUrl && <img src={home.story.imageUrl} alt="" loading="lazy" className="aspect-[4/3] w-full rounded-surface object-cover" />}
             <div className="grid content-center gap-6">
               <Eyebrow>{L(home.story.eyebrow)}</Eyebrow>
               <h2 className="text-h1"><Lines text={L(home.story.title)} /></h2>

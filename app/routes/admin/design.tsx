@@ -91,7 +91,7 @@ export default function Design({ loaderData }: Route.ComponentProps) {
               {([["logo", "Logo (für hellen Grund)", brand.logoUrl, "bg-bg"], ["logoInverse", "Logo (für dunklen Grund)", brand.logoInverseUrl, "bg-inverse"], ["favicon", "Favicon", brand.faviconUrl, "bg-bg"]] as const).map(([k, label, url, bg]) => (
                 <div key={k} className="grid gap-2">
                   <span className="text-[12px] font-medium uppercase tracking-[0.1em] text-muted-fg">{label}</span>
-                  <div className={`grid h-24 place-items-center rounded-md border border-border ${bg}`}>{url ? <img src={url} alt="" className="max-h-16 max-w-[80%]" /> : <span className="text-[12px] text-muted-fg">—</span>}</div>
+                  <div className={`grid h-24 place-items-center rounded-control border border-border ${bg}`}>{url ? <img src={url} alt="" className="max-h-16 max-w-[80%]" /> : <span className="text-[12px] text-muted-fg">—</span>}</div>
                   <input type="hidden" name={`${k}Url`} value={url} />
                   <Input type="file" name={`${k}File`} accept="image/png,image/webp,image/jpeg" aria-label={`${label} hochladen`} className="h-auto py-1.5 text-[0px] file:mr-0 file:w-full" />
                 </div>
@@ -103,7 +103,7 @@ export default function Design({ loaderData }: Route.ComponentProps) {
             <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
               {COLOR_FIELDS.map(([key, label, hint]) => (
                 <label key={key} className="flex items-center gap-3">
-                  <input type="color" name={`colors.${key}`} defaultValue={brand.colors[key]} className="h-10 w-12 cursor-pointer rounded-md border border-border bg-surface p-1" />
+                  <input type="color" name={`colors.${key}`} defaultValue={brand.colors[key]} className="h-10 w-12 cursor-pointer rounded-control border border-border bg-surface p-1" />
                   <span className="grid">
                     <span className="text-sm font-medium">{label}</span>
                     <span className="text-[12px] text-muted-fg">{hint || brand.colors[key]}</span>
@@ -134,7 +134,7 @@ export default function Design({ loaderData }: Route.ComponentProps) {
               <Field label="E-Mail">{(id) => <Input id={id} name="contact.email" type="email" defaultValue={brand.contact.email} />}</Field>
               <Field label="UID / MWST-Nr.">{(id) => <Input id={id} name="contact.uid" defaultValue={brand.contact.uid} />}</Field>
               <Field label="Öffnungszeiten" hint="Eine Zeile pro Eintrag: Bezeichnung | Zeiten" className="sm:col-span-2">
-                {(id) => <textarea id={id} name="hoursText" rows={3} defaultValue={brand.contact.hours.map((h) => `${h.label.de ?? ""} | ${h.value}`).join("\n")} className="w-full rounded-md border border-border-strong/70 bg-surface px-3.5 py-3 text-sm outline-none focus:border-fg" />}
+                {(id) => <textarea id={id} name="hoursText" rows={3} defaultValue={brand.contact.hours.map((h) => `${h.label.de ?? ""} | ${h.value}`).join("\n")} className="w-full rounded-control border border-border-strong/70 bg-surface px-3.5 py-3 text-sm outline-none focus:border-fg" />}
               </Field>
             </div>
           </Panel>
@@ -143,7 +143,7 @@ export default function Design({ loaderData }: Route.ComponentProps) {
         {/* Live preview — the same components, scoped to the draft tokens */}
         <aside className="xl:sticky xl:top-8 xl:self-start">
           <p className="text-eyebrow mb-3 text-[10px] text-muted-fg">Live-Vorschau</p>
-          <div style={vars} className="overflow-hidden rounded-lg border border-border bg-bg text-fg font-sans shadow-card">
+          <div style={vars} className="overflow-hidden rounded-surface border border-border bg-bg text-fg font-sans shadow-card">
             <div className="bg-primary px-4 py-1.5 text-center text-[10px] text-on-primary">Ankündigungsleiste</div>
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <div className="flex items-center gap-2.5">
@@ -163,8 +163,8 @@ export default function Design({ loaderData }: Route.ComponentProps) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {["Rotwein", "Pasta"].map((x) => (
-                  <div key={x} className="rounded-md border border-border bg-surface p-3">
-                    <div className="mb-3 aspect-[4/3] rounded-sm bg-muted" />
+                  <div key={x} className="rounded-surface border border-border bg-surface p-3">
+                    <div className="mb-3 aspect-[4/3] rounded-control bg-muted" />
                     <p className="text-eyebrow text-[8px] text-muted-fg">{x}</p>
                     <p className="text-[13px] font-medium">Produktname</p>
                     <p className="mt-1 text-[12px] font-semibold">CHF 24.50</p>

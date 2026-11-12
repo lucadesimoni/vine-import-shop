@@ -59,5 +59,14 @@ const it: Partial<Messages> = {
   "newsletter.title": "Newsletter", "newsletter.text": "Novità, promozioni e degustazioni — circa una volta al mese.", "newsletter.cta": "Iscriviti", "newsletter.thanks": "Grazie per l'iscrizione!",
   "age.title": "Benvenuti", "age.text": "Questo shop contiene bevande alcoliche. Confermi di avere almeno {age} anni.", "age.confirm": "Ho {age} anni o più", "age.leave": "Esci",
   "footer.rights": "Tutti i diritti riservati", "footer.contact": "Contatto", "footer.hours": "Orari", "footer.legal": "Note legali",
+  "portal.title": "Portale B2B", "portal.dashboard": "Panoramica", "portal.catalog": "Assortimento", "portal.orders": "Ordini",
+  "portal.toShop": "Al negozio", "portal.toPortal": "Al portale B2B", "portal.welcome": "Bentornato, {name}",
+  "portal.kpi.ordersYear": "Ordini {year}", "portal.kpi.revenueYear": "Fatturato {year}", "portal.kpi.open": "In lavorazione", "portal.kpi.list": "Lista d'ordine",
+  "portal.minOrder": "Ordine minimo {amount} · Condizioni {group}", "portal.recent": "Ultimi ordini", "portal.frequent": "Ordinati spesso",
+  "portal.contact": "Il vostro contatto", "portal.downloads": "Download", "portal.allOrders": "Tutti gli ordini", "portal.addSelected": "Aggiungi selezionati",
+  "portal.results": "{n} articoli", "portal.noAccess": "Nessun accesso al portale B2B",
+  "portal.noAccessText": "Il portale è riservato ai clienti commerciali approvati. Richiedete un conto commerciale.",
+  "portal.pendingText": "Il vostro conto commerciale è in verifica.", "portal.loginTitle": "Accesso clienti commerciali",
+  "portal.loginText": "Ordinare alle vostre condizioni, ordine rapido, storico e listini.", "portal.stock": "Disponibilità", "portal.terms": "Le vostre condizioni", "portal.discount": "Sconto", "portal.minOrderShort": "Ordine minimo", "portal.unitPrice": "Prezzo", "portal.netHint": "Prezzi netti IVA esclusa",
 };
 export default it;

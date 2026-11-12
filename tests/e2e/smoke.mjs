@@ -15,25 +15,38 @@ for (const path of ["/", "/shop", "/producers", "/trade", "/story", "/contact", 
   ok(res?.status() === 200, `GET ${path}`);
 }
 await page.goto(B + "/shop");
-ok(await page.getByText(/Preis auf Anfrage|Price on request/).first().isVisible(), "guests see 'price on request'");
+ok(await page.locator("article").filter({ hasText: "CHF" }).first().isVisible(), "consumer shop shows prices");
 
-await page.goto(B + "/login");
+for (const path of ["/portal", "/portal/catalog"]) {
+  await page.goto(B + path);
+  ok(page.url().includes("/portal/login"), `${path} requires login`);
+}
 await page.fill("input[name=email]", "gastro@demo.ch");
 await page.fill("input[name=password]", "gastro-demo-1234");
-await Promise.all([page.waitForURL(/account/), page.click("form button[type=submit]")]);
-ok(true, "B2B login");
+await Promise.all([page.waitForURL(/\/portal\/catalog/), page.click("form button[type=submit]")]);
+ok(true, "B2B portal login");
 
-await page.goto(B + "/account/quick-order");
+await page.goto(B + "/portal/catalog");
+const qty = page.locator('input[name^="qty:"]:not([disabled])');
+await qty.nth(0).fill("12");
+await Promise.all([page.waitForURL(/portal\/order-list/), page.click("form button[type=submit] >> text=/Bestellliste|order list|lista/i")]);
+await page.locator("main li").first().waitFor({ timeout: 10_000 }).catch(() => {});
+ok((await page.locator("main li").count()) > 0, "portal catalog → order list");
+
+await page.goto(B + "/portal/quick-order");
 await page.fill("textarea[name=paste]", "10679\t24\n10658;12\n7739 60");
-await Promise.all([page.waitForURL(/order-list/), page.click("form button[type=submit] >> text=/Bestellliste|order list/i")]);
+await Promise.all([page.waitForURL(/portal\/order-list/), page.click("form button[type=submit] >> text=/Bestellliste|order list/i")]);
 await page.locator("li").filter({ hasText: "10679" }).first().waitFor({ timeout: 10_000 }).catch(() => {});
 ok((await page.locator("li").filter({ hasText: "10679" }).count()) > 0, "quick order → order list");
 
-await page.goto(B + "/checkout");
+await page.goto(B + "/portal/checkout");
 await page.check("input[name=terms]");
 if (await page.locator("input[name=age]").count()) await page.check("input[name=age]");
-await Promise.all([page.waitForURL(/checkout\/done/), page.click("aside button[type=submit]")]);
-ok(true, "checkout completed");
+await Promise.all([page.waitForURL(/portal\/checkout\/done/), page.click("aside button[type=submit]")]);
+ok(true, "portal checkout completed");
+
+await page.goto(B + "/account");
+ok(page.url().includes("/portal/orders"), "separate channels: trade account lives in the portal");
 
 await page.goto(B + "/logout").catch(() => {});
 await page.context().clearCookies();

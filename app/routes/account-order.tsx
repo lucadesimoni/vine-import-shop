@@ -7,6 +7,7 @@ import { addItem, getCart, updateCart } from "~/.server/cart";
 import { getOrder } from "~/.server/orders";
 import { useI18n, type MessageKey } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
+import { channelPath } from "~/lib/channel";
 import { Badge, Button, Card, Eyebrow } from "~/components/ui";
 import { AccountNav } from "~/components/account-nav";
 import { STATUS_TONE } from "~/components/status";
@@ -32,7 +33,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   session.flash("toast", { kind: "success", text: ctx.t("account.reordered", { n: lines.length }) });
   const headers = new Headers({ "Set-Cookie": await commit(session) });
   if (cart.setCookie) headers.append("Set-Cookie", cart.setCookie);
-  return redirect("/order-list", { headers });
+  return redirect(channelPath("/order-list", ctx.channel.portal), { headers });
 }
 
 export default function AccountOrder({ loaderData }: Route.ComponentProps) {

@@ -108,11 +108,11 @@ export default function AdminProduct({ loaderData }: Route.ComponentProps) {
                 </div>
                 {variants.map((v) => (
                   <div key={v.id} className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr]">
-                    <div className="flex h-10 items-center font-mono text-[13px]">{v.sku}{v.erpId && <Badge className="ml-2">vinX</Badge>}</div>
-                    <Input name={`variant.${v.id}.vintage`} defaultValue={v.vintage ?? ""} disabled={owned("vintage")} className="h-10 text-sm" aria-label="Jahrgang" />
-                    <Input name={`variant.${v.id}.size`} defaultValue={v.size ?? ""} disabled={owned("size")} className="h-10 text-sm" aria-label="Format" />
-                    <Input name={`variant.${v.id}.price`} defaultValue={(v.priceCents / 100).toFixed(2)} disabled={owned("price")} className="h-10 text-sm tabular-nums" aria-label="Preis" />
-                    <Input name={`variant.${v.id}.stock`} defaultValue={v.stock} disabled={owned("stock")} type="number" className="h-10 text-sm tabular-nums" aria-label="Lager" />
+                    <div className="flex h-9 items-center font-mono text-[13px]">{v.sku}{v.erpId && <Badge className="ml-2">vinX</Badge>}</div>
+                    <Input name={`variant.${v.id}.vintage`} defaultValue={v.vintage ?? ""} disabled={owned("vintage")} size="sm" aria-label="Jahrgang" />
+                    <Input name={`variant.${v.id}.size`} defaultValue={v.size ?? ""} disabled={owned("size")} size="sm" aria-label="Format" />
+                    <Input name={`variant.${v.id}.price`} defaultValue={(v.priceCents / 100).toFixed(2)} disabled={owned("price")} size="sm" className="tabular-nums" aria-label="Preis" />
+                    <Input name={`variant.${v.id}.stock`} defaultValue={v.stock} disabled={owned("stock")} type="number" size="sm" className="tabular-nums" aria-label="Lager" />
                   </div>
                 ))}
               </div>
@@ -133,10 +133,10 @@ export default function AdminProduct({ loaderData }: Route.ComponentProps) {
         </div>
         <div className="grid content-start gap-6">
           <Panel title="Bild">
-            <div className="relative mb-4 aspect-square rounded-md bg-muted"><div className="absolute inset-[8%]"><ProductImage product={{ image: p?.image ?? null, name: p?.name.de ?? "", kind: p?.kind ?? "wine", color: p?.color ?? null }} /></div></div>
+            <div className="relative mb-4 aspect-square rounded-surface bg-muted"><div className="absolute inset-[8%]"><ProductImage product={{ image: p?.image ?? null, name: p?.name.de ?? "", kind: p?.kind ?? "wine", color: p?.color ?? null }} /></div></div>
             <div className="grid gap-3">
               <Input type="file" name="imageFile" accept="image/jpeg,image/png,image/webp,image/avif" className="h-auto py-2 text-sm" />
-              <Input name="image" defaultValue={p?.image ?? ""} placeholder="oder Bild-URL" className="h-10 text-sm" />
+              <Input name="image" defaultValue={p?.image ?? ""} placeholder="oder Bild-URL" size="sm" />
             </div>
           </Panel>
           <Panel title="Zuordnung">

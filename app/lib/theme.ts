@@ -3,7 +3,11 @@ import type { Brand } from "./settings";
 /** Brand settings → CSS custom properties consumed by the token layer in app.css. */
 export function themeVars(brand: Brand): Record<string, string> {
   const c = brand.colors;
-  const btn = brand.buttonStyle === "pill" ? "999px" : brand.buttonStyle === "square" ? "0px" : `${brand.radius}px`;
+  const r = brand.radius;
+  // Shape roles (design language): surfaces > controls > badges; buttons & chips follow buttonStyle.
+  const btn = brand.buttonStyle === "pill" ? "999px" : brand.buttonStyle === "square" ? "0px" : `${r}px`;
+  const badge = brand.buttonStyle === "pill" ? "999px" : `${Math.round(r * 0.6)}px`;
+  const upper = brand.buttonCase === "upper";
   return {
     "--t-bg": c.background,
     "--t-fg": c.foreground,
@@ -18,8 +22,14 @@ export function themeVars(brand: Brand): Record<string, string> {
     "--t-on-inverse": c.inverseForeground,
     "--t-font-display": `"${brand.fonts.display}"`,
     "--t-font-body": `"${brand.fonts.body}"`,
-    "--t-radius": `${brand.radius}px`,
+    "--t-radius": `${r}px`,
+    "--t-radius-surface": `${Math.round(r * 1.5)}px`,
+    "--t-radius-control": `${r}px`,
+    "--t-radius-badge": badge,
     "--t-radius-btn": btn,
+    "--t-btn-case": upper ? "uppercase" : "none",
+    "--t-btn-tracking": upper ? "0.14em" : "0",
+    "--t-btn-scale": upper ? "0.86" : "1",
   };
 }
 

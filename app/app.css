@@ -30,10 +30,16 @@
   --font-display: var(--t-font-display), Georgia, "Times New Roman", serif;
   --font-sans: var(--t-font-body), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --radius-sm: calc(var(--t-radius) * 0.6);
-  --radius-md: var(--t-radius);
-  --radius-lg: calc(var(--t-radius) * 1.6);
+  /* Shape roles — the ONLY radii used in components:
+     surface  cards, panels, media, sheets
+     control  inputs, selects, steppers, option cards, list/nav items, notices
+     btn      buttons, chips, pagination, icon buttons, toasts (follows brand buttonStyle)
+     badge    badges, tags, inline code, tooltips, checkboxes, segmented items
+     full     indicators only (counts, dots, toggles, step numbers) */
+  --radius-surface: var(--t-radius-surface);
+  --radius-control: var(--t-radius-control);
   --radius-btn: var(--t-radius-btn);
+  --radius-badge: var(--t-radius-badge);
 
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -18px rgb(0 0 0 / 0.22);
   --shadow-pop: 0 24px 64px -24px rgb(0 0 0 / 0.35);
@@ -58,7 +64,13 @@
   --t-font-display: "Fraunces";
   --t-font-body: "Inter";
   --t-radius: 6px;
+  --t-radius-surface: 9px;
+  --t-radius-control: 6px;
+  --t-radius-badge: 4px;
   --t-radius-btn: 6px;
+  --t-btn-case: none;
+  --t-btn-tracking: 0;
+  --t-btn-scale: 1;
   --header-h: 72px;
 }
 
@@ -125,6 +137,16 @@
   font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
   line-height: 1.7;
 }
+
+/* Button & chip labels: one typographic rule for every size (brand-controlled case/tracking). */
+@utility btn-label {
+  text-transform: var(--t-btn-case);
+  letter-spacing: var(--t-btn-tracking);
+  font-weight: 500;
+}
+@utility btn-text-sm { font-size: calc(13px * var(--t-btn-scale)); }
+@utility btn-text-md { font-size: calc(14px * var(--t-btn-scale)); }
+@utility btn-text-lg { font-size: calc(15px * var(--t-btn-scale)); }
 
 @utility container-page {
   width: 100%;

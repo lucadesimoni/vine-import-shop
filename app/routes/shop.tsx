@@ -7,7 +7,7 @@ import { categoryTree, producerFacets, searchProducts } from "~/.server/catalog"
 import { useI18n } from "~/lib/i18n";
 import { cn } from "~/lib/cn";
 import { useRootData } from "~/lib/root-data";
-import { Button, EmptyState, Eyebrow, Input, Select } from "~/components/ui";
+import { Button, Chip, EmptyState, Eyebrow, Input, Select } from "~/components/ui";
 import { ProductGrid } from "~/components/shop";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -63,20 +63,20 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
         <p className="text-eyebrow mb-4 text-[11px] text-muted-fg">{t("shop.categories")}</p>
         <ul className="grid gap-0.5 text-[14px]">
           <li>
-            <Link to={link({ category: null })} className={cn("flex justify-between rounded-sm px-2 py-1.5 hover:bg-muted", !params.category && "font-semibold")}>
+            <Link to={link({ category: null })} className={cn("flex justify-between rounded-control px-2 py-1.5 hover:bg-muted", !params.category && "font-semibold")}>
               <span>{t("common.all")}</span><span className="text-muted-fg tabular-nums">{total}</span>
             </Link>
           </li>
           {roots.map((r) => (
             <li key={r.id}>
-              <Link to={link({ category: r.slug })} className={cn("flex justify-between rounded-sm px-2 py-1.5 hover:bg-muted", params.category === r.slug && "font-semibold")}>
+              <Link to={link({ category: r.slug })} className={cn("flex justify-between rounded-control px-2 py-1.5 hover:bg-muted", params.category === r.slug && "font-semibold")}>
                 <span>{r.name}</span><span className="text-muted-fg tabular-nums">{r.total}</span>
               </Link>
               {activeRoot?.id === r.id && (
                 <ul className="ml-3 mt-0.5 grid gap-0.5 border-l border-border pl-2">
                   {categories.filter((c) => c.parentId === r.id && c.total > 0).map((c) => (
                     <li key={c.id}>
-                      <Link to={link({ category: c.slug })} className={cn("flex justify-between rounded-sm px-2 py-1 text-[13px] hover:bg-muted", params.category === c.slug && "font-semibold text-primary")}>
+                      <Link to={link({ category: c.slug })} className={cn("flex justify-between rounded-control px-2 py-1 text-[13px] hover:bg-muted", params.category === c.slug && "font-semibold text-primary")}>
                         <span>{c.name}</span><span className="text-muted-fg tabular-nums">{c.total}</span>
                       </Link>
                     </li>
@@ -92,7 +92,7 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
         <ul className="grid gap-0.5 text-[14px]">
           {producers.map((p) => (
             <li key={p.slug}>
-              <Link to={link({ producer: params.producer === p.slug ? null : p.slug })} className={cn("flex justify-between gap-3 rounded-sm px-2 py-1.5 hover:bg-muted", params.producer === p.slug && "font-semibold text-primary")}>
+              <Link to={link({ producer: params.producer === p.slug ? null : p.slug })} className={cn("flex justify-between gap-3 rounded-control px-2 py-1.5 hover:bg-muted", params.producer === p.slug && "font-semibold text-primary")}>
                 <span className="truncate">{p.name}</span><span className="text-muted-fg tabular-nums">{p.count}</span>
               </Link>
             </li>
@@ -140,9 +140,9 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
 
           {(params.q || params.producer || params.promo) && (
             <div className="mb-6 flex flex-wrap gap-2">
-              {params.q && <Chip to={link({ q: null })}>«{params.q}»</Chip>}
-              {params.producer && <Chip to={link({ producer: null })}>{producers.find((p) => p.slug === params.producer)?.name ?? params.producer}</Chip>}
-              {params.promo && <Chip to={link({ promo: null })}>{t("shop.promo")}</Chip>}
+              {params.q && <Chip removable to={link({ q: null })}>«{params.q}»</Chip>}
+              {params.producer && <Chip removable to={link({ producer: null })}>{producers.find((p) => p.slug === params.producer)?.name ?? params.producer}</Chip>}
+              {params.promo && <Chip removable to={link({ promo: null })}>{t("shop.promo")}</Chip>}
             </div>
           )}
 
@@ -160,7 +160,7 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
                 const next = new URLSearchParams(searchParams);
                 next.set("page", String(n));
                 return (
-                  <Link key={n} to={`/shop?${next}`} aria-current={n === result.page ? "page" : undefined} className={cn("grid h-10 min-w-10 place-items-center rounded-btn text-sm tabular-nums", n === result.page ? "bg-fg text-bg" : "hover:bg-muted")}>{n}</Link>
+                  <Link key={n} to={`/shop?${next}`} aria-current={n === result.page ? "page" : undefined} className={cn("grid h-9 min-w-9 place-items-center rounded-btn text-sm tabular-nums", n === result.page ? "bg-fg text-bg" : "hover:bg-muted")}>{n}</Link>
                 );
               })}
             </nav>
@@ -172,7 +172,7 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
       {filtersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-fg/40" onClick={() => setFiltersOpen(false)} />
-          <div className="animate-fade-up absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-lg bg-bg p-6" onClick={(e) => (e.target as HTMLElement).closest("a") && setFiltersOpen(false)}>
+          <div className="animate-fade-up absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-surface bg-bg p-6" onClick={(e) => (e.target as HTMLElement).closest("a") && setFiltersOpen(false)}>
             <div className="mb-6 flex items-center justify-between">
               <p className="text-h3">{t("shop.filters")}</p>
               <Button variant="ghost" size="icon" onClick={() => setFiltersOpen(false)} aria-label={t("nav.close")}><X size={18} /></Button>
@@ -182,13 +182,5 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
         </div>
       )}
     </div>
-  );
-}
-
-function Chip({ to, children }: { to: string; children: React.ReactNode }) {
-  return (
-    <Link to={to} className="inline-flex items-center gap-1.5 rounded-btn border border-border-strong/60 bg-surface px-3 py-1.5 text-[13px] hover:border-fg">
-      {children} <X size={12} />
-    </Link>
   );
 }

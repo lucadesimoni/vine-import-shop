@@ -51,6 +51,8 @@ export const brandSchema = z.object({
     .prefault({}),
   radius: z.number().min(0).max(24).default(6),
   buttonStyle: z.enum(["square", "rounded", "pill"]).default("rounded"),
+  /** Button & chip label case — one rule for every size. */
+  buttonCase: z.enum(["normal", "upper"]).default("normal"),
   contact: z
     .object({
       street: z.string().default(""),
@@ -82,11 +84,23 @@ const shippingMethodSchema = z.object({
 });
 
 export const shopSchema = z.object({
+  /** Sales channels — see lib/channel.ts */
+  channels: z
+    .object({
+      mode: z.enum(["combined", "separate", "portal-only", "shop-only"]).default("combined"),
+      /** Optional dedicated hostname for the portal, e.g. b2b.example.ch — "/" there opens the portal. */
+      portalHost: z.string().default(""),
+      /** Optional hostname of the B2C shop, used for links from the portal in "separate" mode. */
+      shopHost: z.string().default(""),
+    })
+    .prefault({}),
   locales: z.array(z.enum(LOCALES)).min(1).default(["de"]),
   defaultLocale: z.enum(LOCALES).default("de"),
   currency: z.string().length(3).default("CHF"),
-  /** Who sees prices. Hidden prices turn checkout into a quote request. */
+  /** Who sees prices in the storefront (the portal always shows trade prices). Hidden prices turn checkout into a quote request. */
   priceVisibility: z.enum(["public", "login", "trade"]).default("public"),
+  /** Where customer / customer-group prices come from — see .server/price-sources.ts */
+  priceSource: z.string().default("platform"),
   consumerCheckout: z.boolean().default(true), // false = trade-only shop (order requests)
   guestCheckout: z.boolean().default(true),
   stockDisplay: z.enum(["levels", "exact", "hidden"]).default("levels"),

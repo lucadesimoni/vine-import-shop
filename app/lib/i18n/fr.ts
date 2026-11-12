@@ -56,5 +56,14 @@ const fr: Partial<Messages> = {
   "newsletter.title": "Newsletter", "newsletter.text": "Nouveautés, actions et dégustations — environ une fois par mois.", "newsletter.cta": "S'inscrire", "newsletter.thanks": "Merci pour votre inscription !",
   "age.title": "Bienvenue", "age.text": "Cette boutique propose des boissons alcoolisées. Veuillez confirmer avoir au moins {age} ans.", "age.confirm": "J'ai {age} ans ou plus", "age.leave": "Quitter",
   "footer.rights": "Tous droits réservés", "footer.contact": "Contact", "footer.hours": "Horaires", "footer.legal": "Mentions légales",
+  "portal.title": "Portail B2B", "portal.dashboard": "Aperçu", "portal.catalog": "Assortiment", "portal.orders": "Commandes",
+  "portal.toShop": "Vers la boutique", "portal.toPortal": "Vers le portail B2B", "portal.welcome": "Bon retour, {name}",
+  "portal.kpi.ordersYear": "Commandes {year}", "portal.kpi.revenueYear": "Chiffre d'affaires {year}", "portal.kpi.open": "En cours", "portal.kpi.list": "Liste de commande",
+  "portal.minOrder": "Commande minimale {amount} · Conditions {group}", "portal.recent": "Dernières commandes", "portal.frequent": "Souvent commandés",
+  "portal.contact": "Votre contact", "portal.downloads": "Téléchargements", "portal.allOrders": "Toutes les commandes", "portal.addSelected": "Ajouter la sélection",
+  "portal.results": "{n} articles", "portal.noAccess": "Pas d'accès au portail B2B",
+  "portal.noAccessText": "Le portail est réservé aux clients professionnels approuvés.",
+  "portal.pendingText": "Votre compte professionnel est en cours de vérification.", "portal.loginTitle": "Connexion clients professionnels",
+  "portal.loginText": "Commander à vos conditions, commande rapide, historique et listes de prix.", "portal.stock": "Stock", "portal.terms": "Vos conditions", "portal.discount": "Remise", "portal.minOrderShort": "Commande minimale", "portal.unitPrice": "Prix", "portal.netHint": "Prix nets hors TVA",
 };
 export default fr;

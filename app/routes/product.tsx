@@ -6,6 +6,7 @@ import { productDetail } from "~/.server/catalog";
 import { useI18n, type MessageKey } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
 import { useRootData } from "~/lib/root-data";
+import { usePath } from "~/lib/channel";
 import { Badge, Eyebrow, Notice, SectionHeading } from "~/components/ui";
 import { AddToList, PriceTag, ProductGrid, ProductImage, StockLabel } from "~/components/shop";
 
@@ -43,6 +44,7 @@ export const meta: Route.MetaFunction = ({ loaderData, matches }) => {
 export default function Product({ loaderData }: Route.ComponentProps) {
   const { product: p } = loaderData;
   const { t, locale } = useI18n();
+  const to = usePath();
   const { shop, showPrices, user } = useRootData();
   const c = p.card;
   const first = c.variants[0];
@@ -57,14 +59,14 @@ export default function Product({ loaderData }: Route.ComponentProps) {
   return (
     <div className="container-page pb-24 pt-8">
       <nav aria-label="Breadcrumb" className="mb-8 flex flex-wrap items-center gap-1.5 text-[13px] text-muted-fg">
-        <Link to="/shop" className="hover:text-fg">{t("nav.shop")}</Link>
-        {c.category && <><ChevronRight size={13} /><Link to={`/shop?category=${c.category.slug}`} className="hover:text-fg">{c.category.name}</Link></>}
+        <Link to={to("/shop")} className="hover:text-fg">{t("nav.shop")}</Link>
+        {c.category && <><ChevronRight size={13} /><Link to={to(`/shop?category=${c.category.slug}`)} className="hover:text-fg">{c.category.name}</Link></>}
         <ChevronRight size={13} /><span className="text-fg">{c.name}</span>
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16">
         <div className="relative lg:sticky lg:top-[calc(var(--header-h)+2rem)] lg:self-start">
-          <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-surface">
+          <div className="relative aspect-square overflow-hidden rounded-surface border border-border bg-surface">
             <div className="absolute inset-[8%]"><ProductImage product={c} /></div>
           </div>
           <div className="absolute left-4 top-4 flex flex-col gap-1.5">
@@ -78,7 +80,7 @@ export default function Product({ loaderData }: Route.ComponentProps) {
             <Eyebrow>{[c.color ? t(`color.${c.color}` as MessageKey) : c.category?.name, c.country].filter(Boolean).join(" · ")}</Eyebrow>
             <h1 className="text-h1">{c.name}</h1>
             {p.producer && (
-              <Link to={`/shop?producer=${p.producer.slug}`} className="w-fit text-lg text-muted-fg underline-offset-4 hover:text-fg hover:underline">{p.producer.name}</Link>
+              <Link to={to(`/shop?producer=${p.producer.slug}`)} className="w-fit text-lg text-muted-fg underline-offset-4 hover:text-fg hover:underline">{p.producer.name}</Link>
             )}
           </div>
 
@@ -87,14 +89,14 @@ export default function Product({ loaderData }: Route.ComponentProps) {
               <PriceTag price={first.price} size="lg" />
               {!showPrices && (
                 <p className="text-sm text-muted-fg">
-                  {user ? t("cart.requestNote") : <>{t("price.loginForPrices")} · <Link to="/login" className="text-fg underline underline-offset-4">{t("nav.login")}</Link></>}
+                  {user ? t("cart.requestNote") : <>{t("price.loginForPrices")} · <Link to={to("/login")} className="text-fg underline underline-offset-4">{t("nav.login")}</Link></>}
                 </p>
               )}
             </div>
           )}
 
           {/* Variant table */}
-          <div className="overflow-hidden rounded-lg border border-border bg-surface">
+          <div className="overflow-hidden rounded-surface border border-border bg-surface">
             <div className="hidden grid-cols-[1fr_0.8fr_1fr_auto] gap-4 border-b border-border px-5 py-3 sm:grid sm:grid-cols-[1.1fr_0.7fr_0.9fr_17.5rem]">
               {[t("product.vintage"), t("product.format"), t("product.art"), ""].map((h, i) => <span key={i} className="text-eyebrow text-[10px] text-muted-fg">{h}</span>)}
             </div>
@@ -115,11 +117,11 @@ export default function Product({ loaderData }: Route.ComponentProps) {
           </div>
 
           {first?.price && first.price.tiers.length > 1 && (
-            <div className="rounded-lg border border-border bg-surface p-5">
+            <div className="rounded-surface border border-border bg-surface p-5">
               <p className="text-eyebrow mb-3 text-[10px] text-muted-fg">{t("price.tiers")} · {first.price.displayMode === "net" ? t("price.exclVat") : t("price.inclVat")}</p>
               <dl className="grid grid-cols-3 gap-3">
                 {first.price.tiers.map((tier) => (
-                  <div key={tier.minQty} className="rounded-md bg-muted px-3 py-2.5">
+                  <div key={tier.minQty} className="rounded-control bg-muted px-3 py-2.5">
                     <dt className="text-[12px] text-muted-fg">{t("price.from", { qty: tier.minQty })}</dt>
                     <dd className="font-semibold tabular-nums">{formatMoney(first.price!.displayMode === "net" ? tier.netCents : Math.round(tier.netCents * (1 + first.price!.taxRate / 100)), shop.currency, locale)}</dd>
                   </div>
@@ -156,7 +158,7 @@ export default function Product({ loaderData }: Route.ComponentProps) {
 
       {p.moreFromProducer.length > 0 && p.producer && (
         <section className="mt-24">
-          <SectionHeading title={t("product.more", { name: p.producer.name })} action={<Link to={`/shop?producer=${p.producer.slug}`} className="text-sm underline underline-offset-4">{t("common.showAll")}</Link>} />
+          <SectionHeading title={t("product.more", { name: p.producer.name })} action={<Link to={to(`/shop?producer=${p.producer.slug}`)} className="text-sm underline underline-offset-4">{t("common.showAll")}</Link>} />
           <ProductGrid products={p.moreFromProducer} />
         </section>
       )}

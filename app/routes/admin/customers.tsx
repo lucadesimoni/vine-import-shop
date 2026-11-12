@@ -69,9 +69,9 @@ export default function Customers({ loaderData }: Route.ComponentProps) {
       <Form method="get" onChange={(e) => submit(e.currentTarget, { replace: true })} className="mb-5 flex flex-wrap gap-3">
         <div className="relative min-w-64 flex-1">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-fg" />
-          <Input name="q" defaultValue={params.get("q") ?? ""} placeholder="Name, Firma, E-Mail" className="h-10 pl-9 text-sm" />
+          <Input name="q" defaultValue={params.get("q") ?? ""} placeholder="Name, Firma, E-Mail" size="sm" className="pl-9" />
         </div>
-        <Select name="status" defaultValue={params.get("status") ?? ""} className="h-10 w-48 text-sm">
+        <Select name="status" defaultValue={params.get("status") ?? ""} size="sm" className="w-48">
           <option value="">Alle Kunden</option><option value="pending">B2B offen</option><option value="approved">B2B freigegeben</option><option value="rejected">B2B abgelehnt</option>
         </Select>
       </Form>
@@ -85,8 +85,8 @@ export default function Customers({ loaderData }: Route.ComponentProps) {
             <td colSpan={2}>
               <Form method="post" className="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="id" value={c.id} />
-                <Select name="groupId" defaultValue={c.groupId ?? ""} className="h-9 w-36 text-[13px]" aria-label="Gruppe">{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</Select>
-                <Input name="erpId" defaultValue={c.erpId ?? ""} placeholder="vinX-Nr." className="h-9 w-28 text-[13px]" aria-label="vinX-Adressnummer" />
+                <Select name="groupId" defaultValue={c.groupId ?? ""} size="sm" className="w-36" aria-label="Gruppe">{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</Select>
+                <Input name="erpId" defaultValue={c.erpId ?? ""} placeholder="vinX-Nr." size="sm" className="w-28" aria-label="vinX-Adressnummer" />
                 {c.tradeStatus === "pending" ? (
                   <>
                     <Button type="submit" name="intent" value="approve" size="sm"><Check size={13} /> Freigeben</Button>

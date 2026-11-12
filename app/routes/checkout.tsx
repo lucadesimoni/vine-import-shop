@@ -11,16 +11,17 @@ import { useI18n, type MessageKey } from "~/lib/i18n";
 import { tl } from "~/lib/localized";
 import { formatMoney } from "~/lib/money";
 import { useRootData } from "~/lib/root-data";
+import { channelPath, usePath } from "~/lib/channel";
 import { Button, Card, Checkbox, Eyebrow, Field, Input, Notice, RadioCard, Select, Textarea } from "~/components/ui";
 import { Totals } from "~/components/totals";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const ctx = context.get(shopContext);
   const url = new URL(request.url);
-  if (!ctx.user && (!ctx.shop.guestCheckout || (!ctx.shop.consumerCheckout && !ctx.isTrade))) throw redirect(`/login?next=/checkout`);
+  if (!ctx.user && (!ctx.shop.guestCheckout || (!ctx.shop.consumerCheckout && !ctx.isTrade))) throw redirect(channelPath("/login?next=" + channelPath("/checkout", ctx.channel.portal), ctx.channel.portal));
   const cart = await getCart(request, ctx);
   const summary = await cartSummary(ctx, cart.items, cart.couponCode, url.searchParams.get("shipping"));
-  if (!summary.lines.length) throw redirect("/order-list");
+  if (!summary.lines.length) throw redirect(channelPath("/order-list", ctx.channel.portal));
   return {
     summary,
     payments: summary.isRequest ? [] : availablePayments(ctx),
@@ -48,7 +49,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const pick = (p: string) => Object.fromEntries(Object.entries(form).filter(([k]) => k.startsWith(p)).map(([k, v]) => [k.slice(p.length), v]));
   const cart = await getCart(request, ctx);
   const summary = await cartSummary(ctx, cart.items, cart.couponCode, form.shipping);
-  if (!summary.lines.length) throw redirect("/order-list");
+  if (!summary.lines.length) throw redirect(channelPath("/order-list", ctx.channel.portal));
 
   const errors: Record<string, string> = {};
   const email = ctx.user?.email ?? form.email?.trim();
@@ -79,7 +80,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const origin = new URL(request.url).origin;
   const provider = getProvider(form.payment);
   const external = provider ? await provider.start(ctx, order, origin) : null;
-  return external ?? redirect(`/checkout/done/${order.number}?t=${order.token}`);
+  return external ?? redirect(channelPath(`/checkout/done/${order.number}?t=${order.token}`, ctx.channel.portal));
 }
 
 export const meta: Route.MetaFunction = () => [{ title: "Checkout" }, { name: "robots", content: "noindex" }];
@@ -110,7 +111,7 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
               <p className="text-sm text-muted-fg">{t("checkout.loggedInAs", { email })}</p>
             ) : (
               <>
-                <p className="text-sm text-muted-fg">{t("checkout.haveAccount")} <Link to="/login?next=/checkout" className="text-fg underline underline-offset-4">{t("nav.login")}</Link></p>
+                <p className="text-sm text-muted-fg">{t("checkout.haveAccount")} <Link to={`/login?next=/checkout`} className="text-fg underline underline-offset-4">{t("nav.login")}</Link></p>
                 <Field label={t("form.email")} required error={errors.email}>{(id) => <Input id={id} name="email" type="email" autoComplete="email" required aria-invalid={!!errors.email} />}</Field>
               </>
             )}

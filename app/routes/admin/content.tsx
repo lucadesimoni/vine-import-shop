@@ -98,10 +98,10 @@ export default function Content({ loaderData }: Route.ComponentProps) {
                 <LocalizedInput label="Text" name="hero.text" value={home.hero.text} locales={locales} multiline rows={3} />
                 <div className="grid content-start gap-4">
                   <LocalizedInput label="Button" name="hero.primary.label" value={home.hero.primary.label} locales={locales} />
-                  <Field label="Button-Link">{(id) => <Input id={id} name="hero.primary.href" defaultValue={home.hero.primary.href} className="h-10 text-sm" />}</Field>
+                  <Field label="Button-Link">{(id) => <Input id={id} name="hero.primary.href" defaultValue={home.hero.primary.href} size="sm" />}</Field>
                   <Field label="Hintergrundbild">{(id) => <Input id={id} name="heroFile" type="file" accept="image/jpeg,image/webp,image/png" className="h-auto py-1.5 text-[12px]" />}</Field>
                   <input type="hidden" name="hero.imageUrl" value={home.hero.imageUrl} />
-                  {home.hero.imageUrl && <img src={home.hero.imageUrl} alt="" className="aspect-[21/9] w-full rounded-md object-cover" />}
+                  {home.hero.imageUrl && <img src={home.hero.imageUrl} alt="" className="aspect-[21/9] w-full rounded-surface object-cover" />}
                 </div>
               </div>
             </Panel>
@@ -113,7 +113,7 @@ export default function Content({ loaderData }: Route.ComponentProps) {
                 <Toggle name="show.story" label="Geschichte" defaultChecked={home.story.show} />
                 <Toggle name="show.brands" label="Marken" defaultChecked={home.brands.show} />
               </div>
-              <Field label="Produkt im Fokus (Slug)" className="mt-4 max-w-md">{(id) => <Input id={id} name="spotlightSlug" defaultValue={home.spotlight.productSlug} className="h-10 text-sm" />}</Field>
+              <Field label="Produkt im Fokus (Slug)" className="mt-4 max-w-md">{(id) => <Input id={id} name="spotlightSlug" defaultValue={home.spotlight.productSlug} size="sm" />}</Field>
             </Panel>
             <SaveBar saved={!!result && "ok" in result} />
           </Form>
@@ -128,9 +128,9 @@ export default function Content({ loaderData }: Route.ComponentProps) {
           <Panel>
             <ul className="grid gap-1 text-sm">
               {pages.map((p) => (
-                <li key={p.id}><Link to={`?tab=pages&page=${p.id}`} className={cn("block rounded-md px-3 py-2 hover:bg-muted", editPage === String(p.id) && "bg-primary-soft font-medium text-primary")}>{p.title.de ?? p.slug}<span className="block text-[12px] font-normal text-muted-fg">/page/{p.slug}</span></Link></li>
+                <li key={p.id}><Link to={`?tab=pages&page=${p.id}`} className={cn("block rounded-control px-3 py-2 hover:bg-muted", editPage === String(p.id) && "bg-primary-soft font-medium text-primary")}>{p.title.de ?? p.slug}<span className="block text-[12px] font-normal text-muted-fg">/page/{p.slug}</span></Link></li>
               ))}
-              <li><Link to="?tab=pages&page=new" className="flex items-center gap-2 rounded-md px-3 py-2 text-primary hover:bg-muted"><Plus size={14} /> Neue Seite</Link></li>
+              <li><Link to="?tab=pages&page=new" className="flex items-center gap-2 rounded-control px-3 py-2 text-primary hover:bg-muted"><Plus size={14} /> Neue Seite</Link></li>
             </ul>
           </Panel>
           {editPage && (() => {
@@ -141,7 +141,7 @@ export default function Content({ loaderData }: Route.ComponentProps) {
                 <input type="hidden" name="id" value={page?.id ?? ""} />
                 <Panel title={page ? page.title.de ?? page.slug : "Neue Seite"} description="Markdown: ## Titel, **fett**, *kursiv*, - Liste, [Link](https://…)">
                   <div className="grid gap-5">
-                    {!page && <Field label="URL-Slug">{(id) => <Input id={id} name="slug" className="h-10 text-sm" />}</Field>}
+                    {!page && <Field label="URL-Slug">{(id) => <Input id={id} name="slug" size="sm" />}</Field>}
                     <LocalizedInput label="Titel" name="title" value={page?.title} locales={locales} />
                     <LocalizedInput label="Inhalt" name="body" value={page?.body} locales={locales} multiline rows={10} />
                     <Toggle name="showInFooter" label="Im Footer verlinken" defaultChecked={page?.showInFooter ?? true} />
@@ -159,7 +159,7 @@ export default function Content({ loaderData }: Route.ComponentProps) {
 
 function JsonEditor({ settingKey, value, open = false }: { settingKey: "home" | "trade" | "story"; value: unknown; open?: boolean }) {
   return (
-    <details open={open} className="group mt-6 rounded-lg border border-border bg-surface">
+    <details open={open} className="group mt-6 rounded-surface border border-border bg-surface">
       <summary className="cursor-pointer list-none px-6 py-4 text-[15px] font-semibold">
         Alle Texte & Listen bearbeiten <span className="text-[13px] font-normal text-muted-fg">— strukturiert (JSON), wird vor dem Speichern validiert</span>
       </summary>
