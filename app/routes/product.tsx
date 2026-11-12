@@ -7,6 +7,7 @@ import { useI18n, type MessageKey } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
 import { useRootData } from "~/lib/root-data";
 import { usePath } from "~/lib/channel";
+import { ProducerLogo } from "~/components/producer";
 import { Badge, Eyebrow, Notice, SectionHeading } from "~/components/ui";
 import { AddToList, PriceTag, ProductGrid, ProductImage, StockLabel } from "~/components/shop";
 
@@ -80,7 +81,10 @@ export default function Product({ loaderData }: Route.ComponentProps) {
             <Eyebrow>{[c.color ? t(`color.${c.color}` as MessageKey) : c.category?.name, c.country].filter(Boolean).join(" · ")}</Eyebrow>
             <h1 className="text-h1">{c.name}</h1>
             {p.producer && (
-              <Link to={to(`/shop?producer=${p.producer.slug}`)} className="w-fit text-lg text-muted-fg underline-offset-4 hover:text-fg hover:underline">{p.producer.name}</Link>
+              <Link to={to.portal || !shop.modules.producers ? to(`/shop?producer=${p.producer.slug}`) : `/producers/${p.producer.slug}`} className="group flex w-fit items-center gap-3 text-lg text-muted-fg hover:text-fg">
+                {p.producer.logo && <ProducerLogo name={p.producer.name} logo={p.producer.logo} size="sm" />}
+                <span className="underline-offset-4 group-hover:underline">{p.producer.name}</span>
+              </Link>
             )}
           </div>
 

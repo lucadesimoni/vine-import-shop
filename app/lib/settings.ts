@@ -301,6 +301,8 @@ export const vinxSchema = z.object({
   groupMap: z.record(z.string(), z.string()).default({ "1": "consumer", "2": "trade", "3": "gastro" }),
   pushOrders: z.boolean().default(true),
   pushCustomers: z.boolean().default(true),
+  /** Pull address changes made in vinX (BaseData/Address, changedOn) into linked shop customers. */
+  pullCustomers: z.boolean().default(true),
   maxAttempts: z.number().int().default(8),
 });
 

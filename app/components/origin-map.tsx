@@ -1,15 +1,15 @@
 import { Link } from "react-router";
 import { memo } from "react";
-import italy from "~/lib/maps/italy.json";
 import world from "~/lib/maps/world.json";
 import type { Locale } from "~/lib/localized";
-import { countryName, regionName } from "~/lib/maps/names";
-export { countryName, regionName };
+import { countryName } from "~/lib/maps/names";
+import { regionLabel, type RegionMapData } from "~/lib/maps/regions";
+export { countryName };
 import { cn } from "~/lib/cn";
 
 /**
  * Origin maps, drawn entirely from design tokens (works with any brand palette and dark mode).
- *  - RegionMap: country region map (Italy bundled; add more JSON maps in lib/maps)
+ *  - RegionMap: region map of one country (lib/maps/regions/<iso>.json, loaded by the route loader)
  *  - WorldDotMap: abstract dot-matrix world map for multi-country assortments
  * Shading encodes the number of products per area; every area is a real link (keyboard + SEO).
  */
@@ -23,16 +23,16 @@ function shade(count: number, max: number) {
 
 type Area = { id: string; count: number };
 
-export const RegionMap = memo(function RegionMap({ data, selected, href, locale, label, className }: { data: Area[]; selected?: string | null; href: (id: string) => string; locale: Locale; label: string; className?: string }) {
+export const RegionMap = memo(function RegionMap({ map, data, selected, href, locale, label, className, markers = true }: { map: RegionMapData; data: Area[]; selected?: string | null; href: (id: string) => string; locale: Locale; label: string; className?: string; markers?: boolean }) {
   const counts = new Map(data.map((d) => [d.id, d.count]));
   const max = Math.max(1, ...data.map((d) => d.count));
-  const ordered = [...italy.regions].sort((a, b) => Number(a.id === selected) - Number(b.id === selected));
+  const ordered = [...map.regions].sort((a, b) => Number(a.id === selected) - Number(b.id === selected));
   return (
-    <svg viewBox={italy.viewBox} className={cn("block select-none", className ?? "h-auto w-full")} role="group" aria-label={label}>
+    <svg viewBox={map.viewBox} className={cn("block select-none", className ?? "h-auto w-full")} role="group" aria-label={label}>
       {ordered.map((r) => {
         const n = counts.get(r.id) ?? 0;
         const active = r.id === selected;
-        const name = regionName(r.id, locale);
+        const name = regionLabel(r, locale);
         const shape = (
           <path
             d={r.d}
@@ -53,7 +53,7 @@ export const RegionMap = memo(function RegionMap({ data, selected, href, locale,
         );
       })}
       {/* count markers + labels on top of all shapes */}
-      {italy.regions.filter((r) => counts.get(r.id)).map((r) => {
+      {markers && map.regions.filter((r) => counts.get(r.id)).map((r) => {
         const n = counts.get(r.id)!;
         const active = r.id === selected;
         const rad = 22 + Math.min(14, Math.sqrt(n) * 4);
@@ -73,7 +73,7 @@ export const RegionMap = memo(function RegionMap({ data, selected, href, locale,
               paintOrder="stroke"
               className={cn("font-sans transition-opacity duration-200", active ? "opacity-100" : "opacity-0 group-hover:opacity-100")}
             >
-              {regionName(r.id, locale)}
+              {regionLabel(r, locale)}
             </text>
           </Link>
         );

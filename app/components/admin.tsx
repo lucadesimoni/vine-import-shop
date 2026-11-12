@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from "react";
-import { Form, useNavigation } from "react-router";
-import { Check } from "lucide-react";
+import { useRef, useState, type ReactNode } from "react";
+import { Form, Link, useNavigation, useSearchParams, useSubmit } from "react-router";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, ChevronUp, Search, X } from "lucide-react";
+import type { ListMeta } from "~/lib/list";
 import { cn } from "~/lib/cn";
 import { LOCALES, type Localized } from "~/lib/localized";
-import { Button, Card, Input, Textarea } from "./ui";
+import { Button, buttonClass, Card, Input, Textarea } from "./ui";
 
 /* Admin building blocks — same tokens & primitives as the storefront. */
 
@@ -46,19 +47,127 @@ export function Stat({ label, value, hint, tone }: { label: string; value: React
   );
 }
 
-export function DataTable({ head, children, empty }: { head: ReactNode[]; children: ReactNode; empty?: boolean }) {
+export type Column = ReactNode | { label: ReactNode; sort?: string; className?: string };
+type BulkAction = { value: string; label: string; tone?: "danger" };
+
+/**
+ * Admin table. Columns with `sort` become sortable header links (URL-driven, see .server/admin-list.ts).
+ * With `bulk`, rows render <RowCheck id/> and a sticky action bar appears once rows are selected.
+ */
+export function DataTable({ head, children, empty, meta, bulk }: { head: Column[]; children: ReactNode; empty?: boolean | ReactNode; meta?: ListMeta; bulk?: BulkAction[] }) {
+  const [selected, setSelected] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const boxes = () => [...(ref.current?.querySelectorAll<HTMLInputElement>('input[name="ids"]') ?? [])];
+  const recount = () => setSelected(boxes().filter((b) => b.checked).length);
+  const all = selected > 0 && selected === boxes().length;
   return (
-    <Card className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border text-left">
-            {head.map((h, i) => <th key={i} className="text-eyebrow whitespace-nowrap px-4 py-3 text-[10px] font-semibold text-muted-fg">{h}</th>)}
-          </tr>
-        </thead>
-        <tbody className="[&>tr]:border-b [&>tr]:border-border [&>tr:last-child]:border-0 [&_td]:px-4 [&_td]:py-3 [&>tr:hover]:bg-muted/40">{children}</tbody>
-      </table>
-      {empty && <p className="px-4 py-10 text-center text-sm text-muted-fg">—</p>}
-    </Card>
+    <div ref={ref} onChange={bulk ? recount : undefined}>
+      {bulk && <Form id="bulk" method="post" className="hidden"><input type="hidden" name="intent" value="bulk" /></Form>}
+      <Card className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border text-left">
+              {bulk && (
+                <th className="w-10 px-4 py-3">
+                  <input type="checkbox" aria-label="Alle auswählen" checked={all} onChange={(e) => { boxes().forEach((b) => (b.checked = e.target.checked)); recount(); }} className="h-4 w-4 accent-primary" />
+                </th>
+              )}
+              {head.map((h, i) => {
+                const c = h && typeof h === "object" && "label" in h ? h : { label: h as ReactNode };
+                return (
+                  <th key={i} aria-sort={meta && c.sort === meta.sort ? (meta.dir === "asc" ? "ascending" : "descending") : undefined} className={cn("text-eyebrow whitespace-nowrap px-4 py-3 text-[10px] font-semibold text-muted-fg", c.className)}>
+                    {c.sort && meta ? <SortLink sort={c.sort} meta={meta}>{c.label}</SortLink> : c.label}
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody className="[&>tr]:border-b [&>tr]:border-border [&>tr:last-child]:border-0 [&_td]:px-4 [&_td]:py-3 [&>tr:hover]:bg-muted/40 [&>tr:has(input[name=ids]:checked)]:bg-primary-soft/40">{children}</tbody>
+        </table>
+        {empty && <div className="px-4 py-12 text-center text-sm text-muted-fg">{empty === true ? "Keine Einträge gefunden." : empty}</div>}
+      </Card>
+      {meta && <Pager meta={meta} />}
+      {bulk && selected > 0 && (
+        <div className="sticky bottom-4 z-20 mx-auto mt-4 flex w-fit flex-wrap items-center gap-2 rounded-surface border border-border bg-fg px-4 py-2.5 text-bg shadow-card">
+          <span className="mr-2 text-sm tabular-nums">{selected} ausgewählt</span>
+          {bulk.map((a) => (
+            <button key={a.value} form="bulk" name="action" value={a.value} className={cn("btn-label btn-text-sm h-8 rounded-btn px-3 transition-colors hover:bg-bg/15", a.tone === "danger" && "text-danger-soft")}>
+              {a.label}
+            </button>
+          ))}
+          <button type="button" onClick={() => { boxes().forEach((b) => (b.checked = false)); recount(); }} className="ml-1 rounded-btn p-1.5 hover:bg-bg/15" aria-label="Auswahl aufheben"><X size={14} /></button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Row checkbox for bulk actions (belongs to the table's hidden bulk form). */
+export const RowCheck = ({ id, label }: { id: number; label?: string }) => (
+  <td className="w-10"><input type="checkbox" name="ids" value={id} form="bulk" aria-label={label ?? `Auswahl ${id}`} className="h-4 w-4 accent-primary" /></td>
+);
+
+function withParams(params: URLSearchParams, patch: Record<string, string | null>) {
+  const next = new URLSearchParams(params);
+  for (const [k, v] of Object.entries(patch)) v === null ? next.delete(k) : next.set(k, v);
+  return `?${next}`;
+}
+
+function SortLink({ sort, meta, children }: { sort: string; meta: ListMeta; children: ReactNode }) {
+  const [params] = useSearchParams();
+  const active = meta.sort === sort;
+  const dir = active && meta.dir === "asc" ? "desc" : "asc";
+  const Icon = !active ? ChevronsUpDown : meta.dir === "asc" ? ChevronUp : ChevronDown;
+  return (
+    <Link to={withParams(params, { sort, dir, page: null })} preventScrollReset className={cn("inline-flex items-center gap-1 transition-colors hover:text-fg", active && "text-fg")}>
+      {children} <Icon size={11} className={active ? "" : "opacity-40"} />
+    </Link>
+  );
+}
+
+export function Pager({ meta }: { meta: ListMeta }) {
+  const [params] = useSearchParams();
+  if (meta.pages <= 1) return null;
+  const from = (meta.page - 1) * meta.perPage + 1;
+  const to = Math.min(meta.total, meta.page * meta.perPage);
+  const link = (page: number) => withParams(params, { page: page === 1 ? null : String(page) });
+  return (
+    <nav className="mt-4 flex items-center justify-between gap-4 text-[13px] text-muted-fg" aria-label="Seiten">
+      <span className="tabular-nums">{from}–{to} von {meta.total}</span>
+      <span className="flex items-center gap-1">
+        <Link to={link(meta.page - 1)} preventScrollReset aria-disabled={meta.page <= 1} className={cn(buttonClass({ variant: "secondary", size: "sm" }), meta.page <= 1 && "pointer-events-none opacity-40")}><ChevronLeft size={14} /> Zurück</Link>
+        <span className="px-2 tabular-nums">{meta.page} / {meta.pages}</span>
+        <Link to={link(meta.page + 1)} preventScrollReset aria-disabled={meta.page >= meta.pages} className={cn(buttonClass({ variant: "secondary", size: "sm" }), meta.page >= meta.pages && "pointer-events-none opacity-40")}>Weiter <ChevronRight size={14} /></Link>
+      </span>
+    </nav>
+  );
+}
+
+/**
+ * Search + filter bar. Search submits while typing (debounced), filters on change;
+ * sort is kept, paging resets. Put <Select name="…"> filters in children.
+ */
+export function ListToolbar({ placeholder, children, meta, actions }: { placeholder: string; children?: ReactNode; meta?: ListMeta; actions?: ReactNode }) {
+  const [params] = useSearchParams();
+  const submit = useSubmit();
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const send = (form: HTMLFormElement, delay = 0) => {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => submit(form, { replace: true, preventScrollReset: true }), delay);
+  };
+  return (
+    <div className="mb-5 flex flex-wrap items-center gap-3">
+      <Form method="get" role="search" onChange={(e) => send(e.currentTarget, (e.target as HTMLElement).tagName === "INPUT" ? 250 : 0)} onSubmit={() => clearTimeout(timer.current)} className="flex flex-1 flex-wrap items-center gap-3">
+        <div className="relative min-w-60 max-w-md flex-1">
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-fg" />
+          <Input type="search" name="q" defaultValue={params.get("q") ?? ""} placeholder={placeholder} size="sm" className="pl-9" aria-label="Suchen" />
+        </div>
+        {children}
+        {["sort", "dir", "per"].map((k) => params.get(k) && <input key={k} type="hidden" name={k} value={params.get(k)!} />)}
+        {meta && <span className="text-[13px] text-muted-fg tabular-nums">{meta.total} {meta.total === 1 ? "Eintrag" : "Einträge"}</span>}
+      </Form>
+      {actions}
+    </div>
   );
 }
 
@@ -109,15 +218,15 @@ export function SaveBar({ saved, label = "Speichern" }: { saved?: boolean; label
   );
 }
 
-export function Toggle({ name, label, description, defaultChecked }: { name: string; label: string; description?: string; defaultChecked?: boolean }) {
+export function Toggle({ name, label, description, defaultChecked, disabled }: { name: string; label: string; description?: string; defaultChecked?: boolean; disabled?: boolean }) {
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-6 py-3">
+    <label className={cn("flex items-start justify-between gap-6 py-3", disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer")}>
       <span className="grid gap-0.5">
         <span className="text-sm font-medium">{label}</span>
         {description && <span className="text-[13px] text-muted-fg">{description}</span>}
       </span>
       <span className="relative mt-0.5 inline-flex shrink-0">
-        <input type="checkbox" name={name} defaultChecked={defaultChecked} className="peer sr-only" />
+        <input type="checkbox" name={name} defaultChecked={defaultChecked} disabled={disabled} className="peer sr-only" />
         <span className="h-6 w-11 rounded-full bg-border-strong/60 transition-colors peer-checked:bg-primary peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2" />
         <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-surface shadow-card transition-transform peer-checked:translate-x-5" />
       </span>

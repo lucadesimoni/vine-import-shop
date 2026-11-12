@@ -3,7 +3,7 @@ import type { Settings } from "~/lib/settings";
 import { slugify } from "~/lib/slug";
 import { getDb, schema } from "../db";
 import { getSetting } from "../settings";
-import type { CustomerPayload, ErpClient, OrderPayload } from "./client";
+import type { CustomerPayload, ErpClient, OrderPayload, Raw } from "./client";
 import { CsvClient } from "./csv";
 import { mapArticle, mapPrice, mapStock } from "./mapper";
 
@@ -76,8 +76,10 @@ export async function syncArticles(client: ErpClient, full = false) {
       if (a.producer) {
         producerId = producerCache.get(a.producer);
         if (!producerId) {
-          const found = await db.query.producers.findFirst({ where: eq(schema.producers.name, a.producer) });
-          producerId = found?.id ?? (await db.insert(schema.producers).values({ name: a.producer, slug: await uniqueSlug("producers", slugify(a.producer)), country: a.product.country, region: a.product.region }).returning())[0].id;
+          // match by ERP key first (survives renaming in the admin), then by name; logo, texts and website stay shop-owned
+          const found = (await db.query.producers.findFirst({ where: eq(schema.producers.erpId, a.producer) })) ?? (await db.query.producers.findFirst({ where: eq(schema.producers.name, a.producer) }));
+          producerId = found?.id ?? (await db.insert(schema.producers).values({ name: a.producer, erpId: a.producer, slug: await uniqueSlug("producers", slugify(a.producer)), country: a.product.country, region: a.product.region }).returning())[0].id;
+          if (found && !found.erpId) await db.update(schema.producers).set({ erpId: a.producer }).where(eq(schema.producers.id, found.id));
           // origin from supplier master data: fill producer region/country once known
           if (found && !found.region && a.product.region) await db.update(schema.producers).set({ region: a.product.region, country: found.country ?? a.product.country }).where(eq(schema.producers.id, found.id));
           producerCache.set(a.producer, producerId);
@@ -281,6 +283,49 @@ export async function orderPayload(orderId: number): Promise<OrderPayload> {
       name: i.name, qty: i.qty, unitNet: i.unitNet, unitGross: i.unitGross, taxRate: i.taxRate,
     }))),
   };
+}
+
+/**
+ * vinX → shop: address changes made in the ERP (BaseData/Address, incremental by changedOn) update the linked
+ * shop customer (users.erpId = vinX address id). If the shop record was changed more recently, the shop wins —
+ * its change is already queued for vinX (customer.updated → Online/OnlineAddress changeType "change").
+ */
+export async function syncCustomers(client: ErpClient) {
+  return job("customers", async () => {
+    const cfg = await getSetting("vinx");
+    if (!client.addresses || !cfg.pullCustomers) return { items: 0, message: "customer pull off / not supported by driver" };
+    const db = await getDb();
+    const since = await lastSuccess("customers");
+    const groups = await db.select().from(schema.customerGroups);
+    let updated = 0, skipped = 0;
+    for await (const a of client.addresses(since)) {
+      const id = String(a.id ?? a.addressNumber ?? "");
+      const u = id ? await db.query.users.findFirst({ where: eq(schema.users.erpId, id) }) : undefined;
+      if (!u) { skipped++; continue; }
+      const changed = a.changedOn ? new Date(String(a.changedOn)) : null;
+      if (changed && u.updatedAt > changed) { skipped++; continue; }
+      const str = (v: unknown) => (v == null || v === "" ? undefined : String(v));
+      const name = [str(a.firstName), str(a.name)].filter(Boolean).join(" ") || u.name;
+      const country = str((a.country as Raw | undefined)?.isoCode) ?? u.billing?.country ?? "CH";
+      const groupCode = a.priceGroupId != null ? cfg.groupMap[String(a.priceGroupId)] : undefined;
+      const group = groupCode ? groups.find((g) => g.code === groupCode) : undefined;
+      const language = str(a.language)?.toLowerCase();
+      const patch = {
+        name,
+        company: str(a.companyName) ?? u.company,
+        phone: str(a.phoneBusiness) ?? str(a.phoneDirect) ?? str(a.mobile) ?? u.phone,
+        billing: { ...(u.billing ?? {}), name, company: str(a.companyName) ?? u.billing?.company, street: str(a.street) ?? u.billing?.street ?? "", zip: str(a.zipCode) ?? u.billing?.zip ?? "", city: str(a.city) ?? u.billing?.city ?? "", country },
+        groupId: group?.id ?? u.groupId,
+        locale: language && ["de", "it", "fr", "en"].includes(language) ? language : u.locale,
+        updatedAt: changed ?? new Date(),
+      };
+      const before = JSON.stringify([u.name, u.company, u.phone, u.billing, u.groupId, u.locale]);
+      if (before === JSON.stringify([patch.name, patch.company, patch.phone, patch.billing, patch.groupId, patch.locale])) { skipped++; continue; }
+      await db.update(schema.users).set(patch).where(eq(schema.users.id, u.id));
+      updated++;
+    }
+    return { items: updated, message: `${updated} customers updated from vinX, ${skipped} unchanged/not linked` };
+  });
 }
 
 export async function customerPayload(userId: number): Promise<CustomerPayload | null> {

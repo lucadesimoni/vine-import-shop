@@ -11,12 +11,18 @@ const LOCAL_DIR = process.env.UPLOAD_DIR ?? (process.env.VERCEL ? "/tmp/uploads"
 const TYPES: Record<string, string> = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".avif": "image/avif", ".svg": "image/svg+xml", ".gif": "image/gif" };
 const MAX = 8 * 1024 * 1024;
 
-export async function saveUpload(file: File, folder = "media"): Promise<string> {
+/**
+ * SVG (logos) is accepted only with { svg: true }, only for local storage (served with a CSP sandbox, see
+ * routes/resources/uploads.ts) and only without scripts, event handlers, foreign objects or external references.
+ */
+export async function saveUpload(file: File, folder = "media", opts: { svg?: boolean } = {}): Promise<string> {
   const ext = extname(file.name).toLowerCase();
-  if (!TYPES[ext] || ext === ".svg") throw new Error("Unsupported file type");
+  if (!TYPES[ext]) throw new Error("Unsupported file type");
+  if (ext === ".svg" && (!opts.svg || process.env.STORAGE_DRIVER === "s3")) throw new Error("SVG is not supported here — please upload PNG or WebP");
   if (file.size > MAX) throw new Error("File too large (max 8 MB)");
   const key = `${folder}/${Date.now().toString(36)}-${randomBytes(4).toString("hex")}${ext}`;
   const body = new Uint8Array(await file.arrayBuffer());
+  if (ext === ".svg" && !isSafeSvg(new TextDecoder().decode(body))) throw new Error("SVG contains scripts or external references");
 
   if (process.env.STORAGE_DRIVER === "s3") {
     const { AwsClient } = await import("aws4fetch");
@@ -40,4 +46,9 @@ export async function readUpload(key: string): Promise<{ body: Uint8Array; type:
   } catch {
     return null;
   }
+}
+
+export function isSafeSvg(text: string) {
+  if (!/<svg[\s>]/i.test(text)) return false;
+  return !/<script|<foreignObject|<iframe|<embed|<object|\son\w+\s*=|javascript:|data:text\/html|<!ENTITY|xlink:href\s*=\s*["']\s*(https?:|\/\/)|href\s*=\s*["']\s*(https?:|\/\/)/i.test(text);
 }

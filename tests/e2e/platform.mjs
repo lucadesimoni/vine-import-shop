@@ -212,6 +212,68 @@ ok(!/\/producers/.test(await guest.locator("header").innerHTML()), "winery profi
 await applyProfile("importer");
 ok((await guest.goto(B + "/producers"))?.status() === 200, "importer profile restored");
 
+section("Producers, origin maps & admin lists");
+// storefront: views + drill-down + producer page
+await guest.goto(B + "/producers?view=world");
+ok((await guest.locator('svg[role=group] a[aria-label^="Italien"]').count()) === 1, "world map: Italy clickable");
+await guest.goto(B + "/producers?view=world&origin=IT");
+ok((await guest.locator("svg[role=group] path").count()) >= 20, "world map: drill-down into Italy's regions");
+await guest.goto(B + "/producers?region=sicilia");
+await Promise.all([guest.waitForURL(/\/producers\/[a-z0-9-]+$/), guest.locator('a[href^="/producers/"]').first().click()]);
+ok(await guest.locator("h1").isVisible() && (await guest.locator("article").count()) > 0, "producer page: portrait + products", guest.url());
+const productHref = await guest.locator('article a[href^="/product/"]').first().getAttribute("href");
+await guest.goto(B + productHref);
+ok((await guest.locator('main a[href^="/producers/"]').count()) >= 1, "product page links to the producer page");
+// admin: producer search / sort / logo upload (SVG guard)
+await admin.goto(B + "/admin/producers?q=buscema");
+ok((await admin.locator("tbody tr").count()) === 1, "admin producers: search");
+await admin.goto(B + "/admin/producers?sort=products&dir=desc");
+const counts = (await admin.locator("tbody tr td:nth-child(6)").allInnerTexts()).map(Number);
+ok(counts.length > 3 && counts.every((n, i) => i === 0 || counts[i - 1] >= n), "admin producers: sort by product count", counts.join(","));
+await admin.locator("tbody tr a").first().click();
+await admin.waitForURL(/\/admin\/producers\/\d+$/);
+const producerAdminUrl = admin.url();
+await admin.setInputFiles("input[name=logoFile]", { name: "evil.svg", mimeType: "image/svg+xml", buffer: Buffer.from('<svg onload="alert(1)"></svg>') });
+await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button:has-text('Speichern')")]);
+ok(await admin.getByText(/SVG contains scripts/).isVisible(), "admin producers: unsafe SVG logo rejected");
+await admin.goto(producerAdminUrl);
+await admin.setInputFiles("input[name=logoFile]", { name: "logo.svg", mimeType: "image/svg+xml", buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#7a1f2b"/></svg>') });
+await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button:has-text('Speichern')")]);
+await admin.goto(producerAdminUrl);
+const logoSrc = await admin.locator('main img[src^="/uploads/producers/"]').first().getAttribute("src");
+ok(!!logoSrc, "admin producers: SVG logo uploaded");
+const logoRes = await res(logoSrc);
+ok(/sandbox/.test(logoRes.headers.get("content-security-policy") ?? ""), "uploaded SVG served with CSP sandbox");
+// admin products: filters + bulk
+await admin.goto(B + "/admin/products?flag=promo");
+ok((await admin.locator("tbody tr").count()) >= 1 && (await admin.locator("tbody tr").filter({ hasNotText: "Aktion" }).count()) === 0, "admin products: filter by promotion");
+await admin.goto(B + "/admin/products?q=gin");
+const ginRows = await admin.locator("tbody tr").count();
+await admin.locator("thead input[type=checkbox]").check();
+await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button[form=bulk]:has-text('Empfehlen')")]);
+ok(await admin.getByText(`${ginRows} Produkt`).first().isVisible(), `admin products: bulk action on ${ginRows} rows`);
+ok((await admin.locator("button[form=bulk]:has-text('Deaktivieren')").count()) === 0, "admin products: ERP-owned 'active' not offered as bulk action");
+// admin orders: sort + CSV export
+await admin.goto(B + "/admin/orders?sort=total&dir=desc");
+ok((await admin.locator("tbody tr").count()) >= 2, "admin orders: sortable list");
+const csvRes = await admin.request.get(B + "/admin/orders.csv?type=trade");
+const csvText = await csvRes.text();
+ok(csvRes.ok() && /^\uFEFF"Nummer"/.test(csvText) && csvText.split("\r\n").length >= 2, "admin orders: CSV export (filtered)");
+// customers: edit → pushed to ERP (shop → vinX), address pull job (vinX → shop)
+await admin.goto(B + "/admin/customers?q=gastro");
+await admin.locator("tbody tr a").first().click();
+await admin.waitForURL(/\/admin\/customers\/\d+$/);
+await admin.fill("input[name=phone]", "+41 41 555 12 34");
+await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button:has-text('Speichern')")]);
+await admin.reload();
+ok((await admin.inputValue("input[name=phone]")) === "+41 41 555 12 34", "admin customer: edit saved");
+ok(/Gesendet|Ausstehend|Wiederholung/i.test(await admin.locator("main").innerText()), "admin customer: change queued/sent to vinX");
+const custJob = await res("/api/cron?jobs=customers", { headers: { Authorization: `Bearer ${CRON}` } });
+const custJson = await custJob.json().catch(() => ({}));
+ok(custJob.ok && custJson.customers?.ok, "vinX job: customer addresses pulled", JSON.stringify(custJson));
+await admin.reload();
+ok((await admin.inputValue("input[name=phone]")) === "+41 41 555 12 34", "customer pull keeps the newer shop change");
+
 // ─────────────────────────────────────────────────────────────────────────
 const errs = [guest, consumer, b2b, admin].flatMap((p) => p.errors);
 ok(errs.length === 0, "no browser errors", JSON.stringify(errs.slice(0, 3)));

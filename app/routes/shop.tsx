@@ -4,8 +4,8 @@ import { useState } from "react";
 import type { Route } from "./+types/shop";
 import { shopContext } from "~/.server/context";
 import { categoryTree, producerFacets, searchProducts } from "~/.server/catalog";
-import { originFacets } from "~/.server/origins";
-import { countryName, regionName } from "~/lib/maps/names";
+import { originFacets, regionCountry, regionNameOf } from "~/.server/origins";
+import { countryName } from "~/lib/maps/names";
 import type { MessageKey } from "~/lib/i18n";
 import { useI18n } from "~/lib/i18n";
 import { cn } from "~/lib/cn";
@@ -34,7 +34,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     producerFacets(ctx, 12),
     originFacets(ctx),
   ]);
-  return { result, categories, producers, params, origins: { regions: origins.regions.slice(0, 10).map((r) => ({ id: r.id, count: r.count })), countries: origins.countries.map((c) => ({ iso: c.iso, count: c.count })) }, mapEnabled: ctx.shop.originMap.mode !== "off" };
+  return { result, categories, producers, params, regionLabel: params.region ? regionNameOf(regionCountry(params.region) ?? "", params.region, ctx.locale) : "", origins: { regions: origins.regions.slice(0, 10).map((r) => ({ id: r.id, name: r.name, count: r.count })), countries: origins.countries.map((c) => ({ iso: c.iso, count: c.count })) }, mapEnabled: ctx.shop.originMap.mode !== "off" };
 }
 
 export const meta: Route.MetaFunction = ({ matches }) => {
@@ -43,7 +43,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export default function Shop({ loaderData }: Route.ComponentProps) {
-  const { result, categories, producers, params, origins, mapEnabled } = loaderData;
+  const { result, categories, producers, params, origins, mapEnabled, regionLabel } = loaderData;
   const { t, locale } = useI18n();
   const { showPrices, user } = useRootData();
   const [searchParams] = useSearchParams();
@@ -114,7 +114,7 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
             {origins.regions.map((r) => (
               <li key={r.id}>
                 <Link to={link({ region: params.region === r.id ? null : r.id, origin: null })} className={cn("flex justify-between gap-3 rounded-control px-2 py-1.5 hover:bg-muted", params.region === r.id && "font-semibold text-primary")}>
-                  <span className="truncate">{regionName(r.id, locale)}</span><span className="text-muted-fg tabular-nums">{r.count}</span>
+                  <span className="truncate">{r.name}</span><span className="text-muted-fg tabular-nums">{r.count}</span>
                 </Link>
               </li>
             ))}
@@ -129,7 +129,7 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
     <div className="container-page pb-24 pt-12 md:pt-16">
       <header className="mb-10 grid gap-3 md:mb-14">
         <Eyebrow line>{t("shop.eyebrow")}</Eyebrow>
-        <h1 className="text-h1">{activeCat?.name ?? (params.region ? regionName(params.region, locale) : params.origin ? countryName(params.origin, locale) : params.promo ? t("shop.promo") : t("shop.title"))}</h1>
+        <h1 className="text-h1">{activeCat?.name ?? (params.region ? regionLabel : params.origin ? countryName(params.origin, locale) : params.promo ? t("shop.promo") : t("shop.title"))}</h1>
         <p className="text-muted-fg">
           {t("shop.count", { count: result.total.toLocaleString("de-CH") })}
           {!showPrices && <> · {user ? t("price.onRequest") : t("price.loginForPrices")}</>}
@@ -166,7 +166,7 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
               {params.producer && <Chip removable to={link({ producer: null })}>{producers.find((p) => p.slug === params.producer)?.name ?? params.producer}</Chip>}
               {params.promo && <Chip removable to={link({ promo: null })}>{t("shop.promo")}</Chip>}
               {params.kind && <Chip removable to={link({ kind: null })}>{t(`kind.${params.kind}` as MessageKey)}</Chip>}
-              {params.region && <Chip removable to={link({ region: null })}>{regionName(params.region, locale)}</Chip>}
+              {params.region && <Chip removable to={link({ region: null })}>{regionLabel}</Chip>}
               {params.origin && <Chip removable to={link({ origin: null })}>{countryName(params.origin, locale)}</Chip>}
             </div>
           )}

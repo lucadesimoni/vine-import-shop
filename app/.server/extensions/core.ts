@@ -2,7 +2,7 @@ import { defineExtension } from "./index";
 import { CsvClient } from "../vinx/csv";
 import { MockClient } from "../vinx/mock";
 import { Rest3Client } from "../vinx/rest";
-import { erpClient, processOutbox, syncArticles, syncPrices, syncSpecialPrices, syncStock } from "../vinx/sync";
+import { erpClient, processOutbox, syncArticles, syncPrices, syncSpecialPrices, syncStock, syncCustomers } from "../vinx/sync";
 
 /** Built-in capabilities, registered through the same API extensions use. */
 const vinx = defineExtension({
@@ -18,6 +18,7 @@ const vinx = defineExtension({
     api.registerJob({ id: "prices", label: "Preislisten & Aktionen", scheduled: true, run: withClient(syncPrices) });
     api.registerJob({ id: "conditions", label: "Spezialpreise", scheduled: true, run: withClient(syncSpecialPrices) });
     api.registerJob({ id: "articles", label: "Artikel (Delta)", scheduled: true, run: withClient((c) => syncArticles(c)) });
+    api.registerJob({ id: "customers", label: "Kundenadressen aus vinX", scheduled: true, run: withClient(syncCustomers) });
     api.registerJob({ id: "articles:full", label: "Artikel (Vollabgleich)", run: withClient((c) => syncArticles(c, true)) });
   },
 });

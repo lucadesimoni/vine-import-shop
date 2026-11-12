@@ -1,5 +1,5 @@
 import { Form, Link, NavLink, Outlet, redirect } from "react-router";
-import { ExternalLink, Percent, ShieldCheck, FileText, LayoutDashboard, LogOut, Package, Palette, PlugZap, Settings, ShoppingCart, Users } from "lucide-react";
+import { ExternalLink, Grape, Percent, ShieldCheck, FileText, LayoutDashboard, LogOut, Package, Palette, PlugZap, Settings, ShoppingCart, Users } from "lucide-react";
 import { count, eq } from "drizzle-orm";
 import type { Route } from "./+types/layout";
 import { requireStaff, verifyPassword } from "~/.server/auth";
@@ -30,6 +30,7 @@ const NAV = [
   { to: "/admin", label: "Übersicht", icon: LayoutDashboard, end: true },
   { to: "/admin/orders", label: "Bestellungen", icon: ShoppingCart, badge: "orders" },
   { to: "/admin/products", label: "Produkte", icon: Package },
+  { to: "/admin/producers", label: "Produzenten", icon: Grape },
   { to: "/admin/customers", label: "Kunden", icon: Users, badge: "customers" },
   { to: "/admin/conditions", label: "Konditionen", icon: Percent },
   { section: "Shop" },

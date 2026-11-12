@@ -1,6 +1,8 @@
 import { and, eq, sql, type SQL } from "drizzle-orm";
 import world from "~/lib/maps/world.json";
-import italy from "~/lib/maps/italy.json";
+import type { RegionMapData } from "~/lib/maps/regions";
+import { regionLabel } from "~/lib/maps/regions";
+import type { Locale } from "~/lib/localized";
 import { slugify } from "~/lib/slug";
 import type { ShopContext } from "./context";
 import { getDb, schema } from "./db";
@@ -23,20 +25,48 @@ export function countryIso(name: string | null | undefined): string | null {
   return byName.get(n) ?? null;
 }
 
-/** Region maps available per country (ISO2) — add more by dropping a json into lib/maps. */
-const REGION_MAPS: Record<string, { regions: { id: string; name: string }[] }> = { IT: italy };
-const REGION_ALIASES: Record<string, string> = { "sudtirol": "trentino-alto-adige", "alto-adige": "trentino-alto-adige", "trentino": "trentino-alto-adige", "toskana": "toscana", "lombardei": "lombardia", "piemont": "piemonte", "venetien": "veneto", "friaul": "friuli-venezia-giulia", "sizilien": "sicilia", "sardinien": "sardegna", "apulien": "puglia", "kampanien": "campania", "kalabrien": "calabria", "abruzzen": "abruzzo", "aostatal": "valle-d-aosta", "ligurien": "liguria", "umbrien": "umbria", "latium": "lazio", "marken": "marche" };
+/** ASCII fold ("Südtirol" → sudtirol), the transliteration used in the generated map data. */
+const fold = (s: string) => s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
-export function regionId(iso: string | null, region: string | null | undefined): string | null {
-  if (!region) return null;
-  const s = slugify(region.split("/")[0]);
-  const id = REGION_ALIASES[s] ?? s;
-  const map = iso ? REGION_MAPS[iso] : undefined;
-  return map ? (map.regions.some((r) => r.id === id) ? id : null) : id;
+/** All region maps (server side, eager) → resolve free-text region names from ERP/supplier data to map areas. */
+const REGION_MAPS: Record<string, RegionMapData> = Object.fromEntries(
+  Object.values(import.meta.glob<RegionMapData>("../lib/maps/regions/*.json", { eager: true, import: "default" })).map((m) => [m.iso, m]),
+);
+const REGION_INDEX = new Map<string, Map<string, string>>(); // iso → (slug|alias → id)
+for (const m of Object.values(REGION_MAPS)) {
+  const idx = new Map<string, string>();
+  for (const r of m.regions) {
+    idx.set(r.id, r.id);
+    for (const a of [...r.aliases, ...Object.values(r.names).flatMap((n) => [slugify(n!), fold(n!)])]) if (!idx.has(a)) idx.set(a, r.id);
+  }
+  REGION_INDEX.set(m.iso, idx);
 }
 
+/** Map area id for a free-text region (e.g. "Südtirol" → trentino-alto-adige); null when the country has no map or no match. */
+export function regionId(iso: string | null, region: string | null | undefined): string | null {
+  if (!region || !iso) return null;
+  const idx = REGION_INDEX.get(iso);
+  if (!idx) return null;
+  for (const part of region.split(/[\/,]/)) {
+    // both transliterations: "Südtirol" → suedtirol (German) / sudtirol (ASCII fold, as in the map data)
+    for (const s of new Set([slugify(part.trim()), fold(part)])) {
+      const hit = idx.get(s) ?? idx.get(s.replace(/^(kanton|canton|region|regione|provincia)-/, ""));
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
+
+/** Localised name of a map area. */
+export function regionNameOf(iso: string, id: string, locale: Locale) {
+  const r = REGION_MAPS[iso]?.regions.find((x) => x.id === id);
+  return r ? regionLabel(r, locale) : id;
+}
+/** Find the country of a region id (ids are unique per country; first match wins). */
+export const regionCountry = (id: string) => Object.values(REGION_MAPS).find((m) => m.regions.some((r) => r.id === id))?.iso ?? null;
+
 export type OriginFacets = {
-  regions: { id: string; country: string; count: number; producers: { slug: string; name: string; count: number }[] }[];
+  regions: { id: string; country: string; name: string; count: number; producers: { slug: string; name: string; count: number }[] }[];
   countries: { iso: string; count: number; producers: { slug: string; name: string; count: number }[] }[];
   total: number;
 };
@@ -80,10 +110,11 @@ export async function originFacets(ctx: ShopContext, kind?: string | null): Prom
     }
     const id = regionId(iso, r.region);
     if (!id || !iso) continue;
-    const reg = regions.get(id) ?? { id, country: iso, count: 0, producers: [] };
+    const key = `${iso}:${id}`;
+    const reg = regions.get(key) ?? { id, country: iso, name: regionNameOf(iso, id, ctx.locale), count: 0, producers: [] };
     reg.count += r.count;
     if (r.slug && r.name) reg.producers.push({ slug: r.slug, name: r.name, count: r.count });
-    regions.set(id, reg);
+    regions.set(key, reg);
   }
   const byCount = (a: { count: number; name: string }, b: { count: number; name: string }) => b.count - a.count || a.name.localeCompare(b.name);
   for (const r of regions.values()) r.producers.sort(byCount);

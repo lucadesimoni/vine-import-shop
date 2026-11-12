@@ -5,6 +5,7 @@ import type { Route } from "./+types/product";
 import { getDb, schema } from "~/.server/db";
 import { getSettings } from "~/.server/settings";
 import { saveUpload } from "~/.server/storage";
+import { erpOwnedFields } from "~/.server/erp-ownership";
 import { slugify } from "~/lib/slug";
 import { parseMoneyInput } from "~/lib/money";
 import type { Localized } from "~/lib/localized";
@@ -17,13 +18,14 @@ export async function loader({ params }: Route.LoaderArgs) {
   const isNew = params.id === "new";
   const product = isNew ? null : await db.query.products.findFirst({ where: eq(schema.products.id, Number(params.id)) });
   if (!isNew && !product) throw data("Not found", { status: 404 });
-  const [variants, categories, producers, { shop, vinx }] = await Promise.all([
+  const [variants, categories, producers, { shop }, erpOwned] = await Promise.all([
     product ? db.select().from(schema.variants).where(eq(schema.variants.productId, product.id)).orderBy(asc(schema.variants.sort)) : [],
     db.select({ id: schema.categories.id, name: schema.categories.name, parentId: schema.categories.parentId }).from(schema.categories).orderBy(asc(schema.categories.sort)),
     db.select({ id: schema.producers.id, name: schema.producers.name }).from(schema.producers).orderBy(asc(schema.producers.name)),
-    getSettings("shop", "vinx"),
+    getSettings("shop"),
+    erpOwnedFields(),
   ]);
-  return { product, variants, categories, producers, locales: shop.locales, erpOwned: vinx.enabled && vinx.driver !== "mock" ? vinx.ownedFields : vinx.enabled ? vinx.ownedFields : [] };
+  return { product, variants, categories, producers, locales: shop.locales, erpOwned };
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -53,6 +55,9 @@ export async function action({ request, params }: Route.ActionArgs) {
     active: form.has("active"), featured: form.has("featured"), promo: form.has("promo"), isNew: form.has("isNew"), organic: form.has("organic"),
     tradeOnly: form.has("tradeOnly"), ageRestricted: form.has("ageRestricted"), image, updatedAt: new Date(),
   };
+  // fields mastered by the ERP are never written from the admin (they would be overwritten by the next sync)
+  const owned = await erpOwnedFields();
+  if (params.id !== "new") for (const f of ["active", "taxClass"] as const) if (owned.includes(f)) delete (values as Partial<typeof values>)[f];
   let id = Number(params.id);
   if (params.id === "new") {
     const [row] = await db.insert(schema.products).values({ ...values, slug: `${slugify(name.de ?? Object.values(name)[0] ?? "produkt")}-${Date.now().toString(36)}` }).returning();
@@ -127,7 +132,7 @@ export default function AdminProduct({ loaderData }: Route.ComponentProps) {
               <Field label="Appellation">{(id) => <Input id={id} name="appellation" defaultValue={p?.appellation ?? ""} />}</Field>
               <Field label="Traubensorten">{(id) => <Input id={id} name="grapes" defaultValue={p?.grapes ?? ""} />}</Field>
               <Field label="Alkohol % vol.">{(id) => <Input id={id} name="alcohol" defaultValue={p?.alcohol ?? ""} inputMode="decimal" />}</Field>
-              <Field label="MWST">{(id) => <Select id={id} name="taxClass" defaultValue={p?.taxClass ?? "standard"}><option value="standard">Normalsatz</option><option value="reduced">Reduziert (Lebensmittel)</option></Select>}</Field>
+              <Field label={p && owned("taxClass") ? "MWST · vinX" : "MWST"}>{(id) => <Select id={id} name="taxClass" disabled={!!p && owned("taxClass")} defaultValue={p?.taxClass ?? "standard"}><option value="standard">Normalsatz</option><option value="reduced">Reduziert (Lebensmittel)</option></Select>}</Field>
             </div>
           </Panel>
         </div>
@@ -147,7 +152,7 @@ export default function AdminProduct({ loaderData }: Route.ComponentProps) {
           </Panel>
           <Panel title="Sichtbarkeit">
             <div className="divide-y divide-border">
-              <Toggle name="active" label="Aktiv im Shop" defaultChecked={p?.active ?? true} />
+              <Toggle name="active" label="Aktiv im Shop" description={p && owned("active") ? "Wird von vinX gesteuert" : undefined} disabled={!!p && owned("active")} defaultChecked={p?.active ?? true} />
               <Toggle name="promo" label="Aktion" description="Erscheint im Aktions-Karussell" defaultChecked={p?.promo} />
               <Toggle name="featured" label="Empfohlen" defaultChecked={p?.featured} />
               <Toggle name="isNew" label="Neu" defaultChecked={p?.isNew} />

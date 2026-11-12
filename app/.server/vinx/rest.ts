@@ -134,6 +134,14 @@ export class Rest3Client implements ErpClient {
     return this.collection("Calculated/StockData");
   }
 
+  /** BaseData/Address (customers), incrementally by changedOn, with the country resolved to its ISO code. */
+  async *addresses(since?: Date | null) {
+    const countries = new Map((await this.all("BaseData/Country")).map((c) => [Number(c.id), c]));
+    for await (const a of this.collection("BaseData/Address", since ? `changedOn gt ${since.toISOString()}` : undefined)) {
+      yield { ...a, country: countries.get(Number(a.countryId)) };
+    }
+  }
+
   /** BaseData/SellingPrices: per price group, from-quantity tiers, optional promotion price with validity. */
   prices() {
     return this.collection("BaseData/SellingPrices");

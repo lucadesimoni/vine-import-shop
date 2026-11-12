@@ -1,0 +1,153 @@
+import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
+import { data, Form, Link, useActionData } from "react-router";
+import { ArrowLeft, ArrowUpRight, RefreshCw } from "lucide-react";
+import type { Route } from "./+types/customer";
+import { getDb, schema } from "~/.server/db";
+import { emit } from "~/.server/events";
+import { erpConnected } from "~/.server/erp-ownership";
+import { getSettings } from "~/.server/settings";
+import { LOCALE_LABELS, LOCALES } from "~/lib/localized";
+import { formatMoney } from "~/lib/money";
+import { Badge, Button, Field, Input, Notice, Select } from "~/components/ui";
+import { DataTable, label, PageHeader, Panel, SaveBar } from "~/components/admin";
+import { STATUS_TONE } from "~/components/status";
+
+const u = schema.users;
+
+export async function loader({ params }: Route.LoaderArgs) {
+  const db = await getDb();
+  const id = Number(params.id);
+  const customer = await db.query.users.findFirst({ where: and(eq(u.id, id), eq(u.role, "customer")) });
+  if (!customer) throw data("Not found", { status: 404 });
+  const [groups, orders, [stats], outbox, [conditions], erp, { shop }] = await Promise.all([
+    db.select().from(schema.customerGroups).orderBy(asc(schema.customerGroups.id)),
+    db.select().from(schema.orders).where(eq(schema.orders.userId, id)).orderBy(desc(schema.orders.createdAt)).limit(10),
+    db.select({ n: sql<number>`count(*)::int`, revenue: sql<number>`coalesce(sum(total_gross) filter (where status <> 'cancelled' and kind = 'order'), 0)::int`, last: sql<string | null>`max(created_at)` }).from(schema.orders).where(eq(schema.orders.userId, id)),
+    db.select().from(schema.erpOutbox).where(and(eq(schema.erpOutbox.type, "customer"), eq(schema.erpOutbox.refId, id))).orderBy(desc(schema.erpOutbox.id)).limit(1),
+    db.select({ n: sql<number>`count(*)::int` }).from(schema.conditions).where(eq(schema.conditions.customerId, id)),
+    erpConnected(),
+    getSettings("shop"),
+  ]);
+  const { passwordHash: _h, resetToken: _r, resetExpires: _e, ...c } = customer; // never send secrets to the browser
+  return { customer: c, groups, orders, stats, sync: outbox[0] ?? null, conditions: conditions.n, erp, currency: shop.currency, locales: shop.locales };
+}
+
+export async function action({ request, params }: Route.ActionArgs) {
+  const id = Number(params.id);
+  const form = await request.formData();
+  const db = await getDb();
+  if (form.get("intent") === "push") {
+    await emit("customer.updated", { userId: id });
+    return { ok: "An vinX übergeben — Status siehe „Abgleich“." };
+  }
+  const s = (k: string) => String(form.get(k) ?? "").trim();
+  const email = s("email").toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return data({ error: "Ungültige E-Mail-Adresse" }, { status: 400 });
+  const taken = await db.query.users.findFirst({ where: and(sql`lower(${u.email}) = ${email}`, ne(u.id, id)) });
+  if (taken) return data({ error: "Diese E-Mail-Adresse wird bereits verwendet" }, { status: 400 });
+  const status = s("tradeStatus");
+  const before = await db.query.users.findFirst({ where: eq(u.id, id) });
+  await db.update(u).set({
+    email, name: s("name"), company: s("company") || null, uidNumber: s("uidNumber") || null, phone: s("phone") || null,
+    locale: (LOCALES as readonly string[]).includes(s("locale")) ? s("locale") : "de",
+    groupId: Number(s("groupId")) || null,
+    tradeStatus: ["pending", "approved", "rejected"].includes(status) ? (status as "approved") : null,
+    erpId: s("erpId") || null,
+    billing: { name: s("name"), company: s("company") || undefined, street: s("street"), zip: s("zip"), city: s("city"), country: s("country").toUpperCase() || "CH" },
+    updatedAt: new Date(),
+  }).where(eq(u.id, id));
+  if (status === "approved" && before?.tradeStatus !== "approved") await emit("trade.approved", { userId: id });
+  else await emit("customer.updated", { userId: id });
+  return { ok: "Gespeichert." };
+}
+
+export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
+  const { customer: c, groups, orders, stats, sync, conditions, erp, currency, locales } = loaderData;
+  const result = useActionData<typeof action>();
+  const b = c.billing;
+  return (
+    <>
+      <Link to="/admin/customers" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-fg hover:text-fg"><ArrowLeft size={14} /> Kunden</Link>
+      <PageHeader
+        title={c.company || c.name || c.email}
+        subtitle={<span className="flex flex-wrap items-center gap-2">{c.email} · Kunde seit {new Date(c.createdAt).toLocaleDateString("de-CH")}{c.erpId && <Badge>vinX {c.erpId}</Badge>}</span>}
+      />
+      {result && "error" in result && <Notice tone="danger" className="mb-6">{result.error}</Notice>}
+      {result && "ok" in result && <Notice tone="success" className="mb-6">{result.ok}</Notice>}
+      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        <Form method="post" className="grid content-start gap-6" id="customer">
+          <Panel title="Kontakt">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Name">{(id) => <Input id={id} name="name" defaultValue={c.name} required />}</Field>
+              <Field label="E-Mail (Login)">{(id) => <Input id={id} name="email" type="email" defaultValue={c.email} required />}</Field>
+              <Field label="Firma">{(id) => <Input id={id} name="company" defaultValue={c.company ?? ""} />}</Field>
+              <Field label="UID / MWST-Nr.">{(id) => <Input id={id} name="uidNumber" defaultValue={c.uidNumber ?? ""} placeholder="CHE-123.456.789" />}</Field>
+              <Field label="Telefon">{(id) => <Input id={id} name="phone" type="tel" defaultValue={c.phone ?? ""} />}</Field>
+              <Field label="Sprache">{(id) => <Select id={id} name="locale" defaultValue={c.locale}>{LOCALES.filter((l) => locales.includes(l) || l === c.locale).map((l) => <option key={l} value={l}>{LOCALE_LABELS[l]}</option>)}</Select>}</Field>
+            </div>
+          </Panel>
+          <Panel title="Rechnungsadresse">
+            <div className="grid gap-4 sm:grid-cols-[1fr_120px_1fr_100px]">
+              <Field label="Strasse" className="sm:col-span-4">{(id) => <Input id={id} name="street" defaultValue={b?.street ?? ""} />}</Field>
+              <Field label="PLZ">{(id) => <Input id={id} name="zip" defaultValue={b?.zip ?? ""} />}</Field>
+              <Field label="Ort" className="sm:col-span-2">{(id) => <Input id={id} name="city" defaultValue={b?.city ?? ""} />}</Field>
+              <Field label="Land">{(id) => <Input id={id} name="country" defaultValue={b?.country ?? "CH"} maxLength={2} className="uppercase" />}</Field>
+            </div>
+          </Panel>
+          <Panel title="Konditionen" description="Gruppe bestimmt Preisliste & Rabatte; kundenspezifische Konditionen kommen dazu.">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field label="Kundengruppe">{(id) => <Select id={id} name="groupId" defaultValue={c.groupId ?? ""}><option value="">—</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</Select>}</Field>
+              <Field label="B2B-Status">{(id) => <Select id={id} name="tradeStatus" defaultValue={c.tradeStatus ?? ""}><option value="">Privatkunde</option><option value="pending">Offen</option><option value="approved">Freigegeben</option><option value="rejected">Abgelehnt</option></Select>}</Field>
+              <Field label="vinX-Adressnummer" hint={erp ? "Leer = wird beim nächsten Senden angelegt" : undefined}>{(id) => <Input id={id} name="erpId" defaultValue={c.erpId ?? ""} className="font-mono" />}</Field>
+            </div>
+            <p className="mt-4 text-[13px] text-muted-fg">
+              {conditions} kundenspezifische Kondition{conditions === 1 ? "" : "en"} · <Link to="/admin/conditions" className="underline underline-offset-4">Konditionen verwalten</Link>
+            </p>
+          </Panel>
+          <SaveBar saved={false} />
+        </Form>
+
+        <div className="grid content-start gap-6">
+          <Panel title="Kennzahlen">
+            <dl className="grid grid-cols-2 gap-4">
+              <div><dt className="text-[12px] text-muted-fg">Bestellungen</dt><dd className="font-display text-2xl tabular-nums">{stats.n}</dd></div>
+              <div><dt className="text-[12px] text-muted-fg">Umsatz</dt><dd className="font-display text-2xl tabular-nums">{formatMoney(stats.revenue, currency, "de")}</dd></div>
+              <div className="col-span-2"><dt className="text-[12px] text-muted-fg">Letzte Bestellung</dt><dd className="text-sm">{stats.last ? new Date(stats.last).toLocaleDateString("de-CH") : "—"}</dd></div>
+            </dl>
+          </Panel>
+          {erp && (
+            <Panel title="Abgleich mit vinX" description="Shop → vinX bei jeder Änderung (OnlineAddress). vinX → Shop: Adressänderungen per Job „Kundenadressen“.">
+              {sync ? (
+                <div className="grid gap-2 text-sm">
+                  <div className="flex items-center justify-between"><span className="text-muted-fg">Letzte Übertragung</span><Badge tone={sync.status === "sent" ? "success" : sync.status === "failed" ? "danger" : "warning"}>{label(sync.status)}</Badge></div>
+                  <div className="text-[12px] text-muted-fg tabular-nums">{new Date(sync.sentAt ?? sync.createdAt).toLocaleString("de-CH")} · {sync.attempts} Versuch{sync.attempts === 1 ? "" : "e"}</div>
+                  {sync.lastError && <p className="rounded-control bg-danger-soft p-2 text-[12px] text-danger">{sync.lastError}</p>}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-fg">Noch nicht übertragen.</p>
+              )}
+              <Form method="post" className="mt-4"><Button type="submit" name="intent" value="push" variant="secondary" size="sm"><RefreshCw size={13} /> Jetzt senden</Button></Form>
+            </Panel>
+          )}
+        </div>
+      </div>
+
+      {orders.length > 0 && (
+        <section className="mt-8 grid gap-3">
+          <h2 className="font-sans text-[15px] font-semibold">Letzte Bestellungen</h2>
+          <DataTable head={["Nummer", "Datum", "Status", "Total", ""]}>
+            {orders.map((o) => (
+              <tr key={o.id}>
+                <td className="font-medium">{o.number}</td>
+                <td className="tabular-nums text-muted-fg">{new Date(o.createdAt).toLocaleDateString("de-CH")}</td>
+                <td><Badge tone={STATUS_TONE[o.status]}>{label(o.status)}</Badge></td>
+                <td className="tabular-nums">{o.kind === "request" ? "Anfrage" : formatMoney(o.totalGross, o.currency, "de")}</td>
+                <td className="text-right"><Link to={`/admin/orders/${o.id}`} className="inline-flex items-center gap-1 text-[13px] text-muted-fg hover:text-fg">Öffnen <ArrowUpRight size={12} /></Link></td>
+              </tr>
+            ))}
+          </DataTable>
+        </section>
+      )}
+    </>
+  );
+}

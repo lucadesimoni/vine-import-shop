@@ -62,6 +62,7 @@ async function pushCustomer(userId: number) {
   }
 }
 on("customer.registered", ({ userId }) => pushCustomer(userId));
+on("customer.updated", ({ userId }) => pushCustomer(userId));
 on("trade.approved", async ({ userId }) => {
   await pushCustomer(userId);
   const db = await getDb();

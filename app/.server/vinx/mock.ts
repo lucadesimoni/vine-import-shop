@@ -100,7 +100,21 @@ export class MockClient implements ErpClient {
     return id;
   }
 
-  async pushCustomer(_payload: CustomerPayload) {
-    return `${Math.floor(40000 + Math.random() * 9000)}`;
+  async pushCustomer(payload: CustomerPayload) {
+    // "change" keeps the address number, "new" gets one assigned (like vinX)
+    return payload.erpId ?? `${Math.floor(40000 + Math.random() * 9000)}`;
+  }
+
+  /** BaseData/Address shape for every linked customer (unchanged data → the pull is a no-op, but runs end-to-end). */
+  async *addresses(): AsyncIterable<Raw> {
+    const db = await getDb();
+    for (const u of await db.select().from(schema.users).where(isNotNull(schema.users.erpId))) {
+      const [firstName, ...rest] = (u.billing?.name ?? u.name).split(" ");
+      yield {
+        id: Number(u.erpId), addressNumber: Number(u.erpId), firstName: rest.length ? firstName : null, name: rest.length ? rest.join(" ") : firstName,
+        companyName: u.company, street: u.billing?.street, zipCode: u.billing?.zip, city: u.billing?.city, country: { isoCode: u.billing?.country ?? "CH" },
+        eMail: u.email, phoneBusiness: u.phone, language: u.locale.toUpperCase(), changedOn: u.updatedAt.toISOString(), isActive: true,
+      };
+    }
   }
 }

@@ -9,6 +9,8 @@ export interface EventMap {
   "order.paid": { orderId: number };
   "order.status": { orderId: number; status: string };
   "customer.registered": { userId: number };
+  /** customer master data changed in the shop (admin or account) → pushed to the ERP */
+  "customer.updated": { userId: number };
   "trade.applied": { userId: number | null; email: string };
   "trade.approved": { userId: number };
 }

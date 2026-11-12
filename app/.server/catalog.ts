@@ -237,7 +237,7 @@ export async function productDetail(ctx: ShopContext, slug: string) {
     grapes: row.grapes,
     alcohol: row.alcohol,
     taxClass: row.taxClass,
-    producer: producer ? { name: producer.name, slug: producer.slug, region: producer.region, country: producer.country, description: tl(producer.description, ctx.locale) } : null,
+    producer: producer ? { name: producer.name, slug: producer.slug, logo: producer.logo, region: producer.region, country: producer.country, description: tl(producer.description, ctx.locale) } : null,
     moreFromProducer: await toCards(ctx, sameProducer.map((x) => x.id)),
     related: await toCards(ctx, sameCategory.map((x) => x.id)),
   };

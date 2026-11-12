@@ -1,48 +1,83 @@
-import { and, desc, eq, ilike, or, type SQL } from "drizzle-orm";
-import { Form, useSearchParams, useSubmit } from "react-router";
-import { Search } from "lucide-react";
+import { sql } from "drizzle-orm";
+import { useActionData, useSearchParams } from "react-router";
+import { Download } from "lucide-react";
 import type { Route } from "./+types/orders";
 import { getDb, schema } from "~/.server/db";
+import { markPaid, setOrderStatus } from "~/.server/orders";
+import { bulkIds, countAll, listParams } from "~/.server/admin-list";
+import { orderFilters } from "~/.server/admin-orders";
 import { ORDER_STATUSES } from "~/lib/orders";
 import { getSetting } from "~/.server/settings";
-import { Input, Select } from "~/components/ui";
-import { label, PageHeader } from "~/components/admin";
+import { ButtonLink, Input, Notice, Select } from "~/components/ui";
+import { label, ListToolbar, PageHeader } from "~/components/admin";
 import { OrdersTable } from "~/components/orders-table";
 
+const o = schema.orders;
+
 export async function loader({ request }: Route.LoaderArgs) {
-  const q = new URL(request.url).searchParams;
-  const where: SQL[] = [];
-  if (q.get("status")) where.push(eq(schema.orders.status, q.get("status") as "new"));
-  if (q.get("type") === "trade") where.push(eq(schema.orders.isTrade, true));
-  if (q.get("type") === "consumer") where.push(eq(schema.orders.isTrade, false));
-  if (q.get("q")) where.push(or(ilike(schema.orders.number, `%${q.get("q")}%`), ilike(schema.orders.email, `%${q.get("q")}%`))!);
+  const url = new URL(request.url).searchParams;
+  const list = listParams(request, {
+    sorts: { date: o.createdAt, number: o.number, total: o.totalGross, status: o.status, customer: sql`coalesce(nullif(${o.billing}->>'company', ''), ${o.billing}->>'name')` },
+    defaultSort: "date",
+    defaultDir: "desc",
+  });
+  const cond = orderFilters(url, list.like);
   const db = await getDb();
-  const orders = await db.select().from(schema.orders).where(where.length ? and(...where) : undefined).orderBy(desc(schema.orders.createdAt)).limit(200);
-  return { orders, currency: (await getSetting("shop")).currency, statuses: ORDER_STATUSES };
+  const [orders, [{ n }], [sum]] = await Promise.all([
+    db.select().from(o).where(cond).orderBy(...list.orderBy).limit(list.limit).offset(list.offset),
+    db.select({ n: countAll }).from(o).where(cond),
+    db.select({ total: sql<number>`coalesce(sum(${o.totalGross}) filter (where ${o.status} <> 'cancelled' and ${o.kind} <> 'request'), 0)::int` }).from(o).where(cond),
+  ]);
+  return { orders, list: list.meta(n), sum: sum.total, currency: (await getSetting("shop")).currency, statuses: ORDER_STATUSES };
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  const form = await request.formData();
+  const ids = bulkIds(form);
+  const op = String(form.get("action") ?? "");
+  if (!ids.length) return { message: "Nichts ausgewählt." };
+  if (op === "paid") for (const id of ids) await markPaid(id, "manual");
+  else if (op.startsWith("status:") && ORDER_STATUSES.includes(op.slice(7) as never)) for (const id of ids) await setOrderStatus(id, op.slice(7) as (typeof ORDER_STATUSES)[number]);
+  else return { message: "Unbekannte Aktion." };
+  return { message: `${ids.length} Bestellung${ids.length === 1 ? "" : "en"} aktualisiert.` };
 }
 
 export default function Orders({ loaderData }: Route.ComponentProps) {
+  const { orders, list, sum, currency, statuses } = loaderData;
+  const result = useActionData<typeof action>();
   const [params] = useSearchParams();
-  const submit = useSubmit();
+  const exportUrl = `/admin/orders.csv${params.size ? `?${params}` : ""}`;
   return (
     <>
-      <PageHeader title="Bestellungen" subtitle={`${loaderData.orders.length} Einträge`} />
-      <Form method="get" onChange={(e) => submit(e.currentTarget, { replace: true })} className="mb-5 flex flex-wrap gap-3">
-        <div className="relative min-w-64 flex-1">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-fg" />
-          <Input name="q" defaultValue={params.get("q") ?? ""} placeholder="Nummer oder E-Mail" size="sm" className="pl-9" />
-        </div>
-        <Select name="status" defaultValue={params.get("status") ?? ""} size="sm" className="w-44">
+      <PageHeader
+        title="Bestellungen"
+        subtitle={`${list.total} Einträge · Umsatz ${new Intl.NumberFormat("de-CH", { style: "currency", currency }).format(sum / 100)}`}
+        actions={<ButtonLink to={exportUrl} reloadDocument variant="secondary" size="sm"><Download size={14} /> CSV</ButtonLink>}
+      />
+      {result?.message && <Notice tone="success" className="mb-5">{result.message}</Notice>}
+      <ListToolbar placeholder="Nummer, E-Mail, Firma, Name oder Referenz" meta={list}>
+        <Select name="status" defaultValue={params.get("status") ?? ""} size="sm" className="w-40" aria-label="Status">
           <option value="">Alle Status</option>
-          {loaderData.statuses.map((s) => <option key={s} value={s}>{label(s)}</option>)}
+          {statuses.map((s) => <option key={s} value={s}>{label(s)}</option>)}
         </Select>
-        <Select name="type" defaultValue={params.get("type") ?? ""} size="sm" className="w-40">
-          <option value="">B2B + B2C</option>
-          <option value="trade">Nur B2B</option>
-          <option value="consumer">Nur B2C</option>
+        <Select name="type" defaultValue={params.get("type") ?? ""} size="sm" className="w-36" aria-label="Kanal">
+          <option value="">B2B + B2C</option><option value="trade">Nur B2B</option><option value="consumer">Nur B2C</option><option value="request">Anfragen</option>
         </Select>
-      </Form>
-      <OrdersTable orders={loaderData.orders} currency={loaderData.currency} />
+        <Select name="payment" defaultValue={params.get("payment") ?? ""} size="sm" className="w-36" aria-label="Zahlung">
+          <option value="">Zahlung: alle</option><option value="open">Offen</option><option value="paid">Bezahlt</option>
+        </Select>
+        <Select name="erp" defaultValue={params.get("erp") ?? ""} size="sm" className="w-36" aria-label="ERP">
+          <option value="">ERP: alle</option><option value="pending">Ausstehend</option><option value="failed">Fehler</option>
+        </Select>
+        <Input type="date" name="from" defaultValue={params.get("from") ?? ""} size="sm" className="w-40" aria-label="Von" />
+        <Input type="date" name="to" defaultValue={params.get("to") ?? ""} size="sm" className="w-40" aria-label="Bis" />
+      </ListToolbar>
+      <OrdersTable
+        orders={orders}
+        currency={currency}
+        meta={list}
+        bulk={[{ value: "status:confirmed", label: "Bestätigen" }, { value: "status:shipped", label: "Versandt" }, { value: "status:completed", label: "Abschliessen" }, { value: "paid", label: "Als bezahlt" }, { value: "status:cancelled", label: "Stornieren", tone: "danger" }]}
+      />
     </>
   );
 }
