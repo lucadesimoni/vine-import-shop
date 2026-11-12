@@ -12,7 +12,12 @@ import { customerPayload, enqueue, orderPayload, processOutbox } from "./vinx/sy
 /** Wiring between modules. Imported lazily by events.emit(). */
 
 let flushing = false;
-function flushSoon() {
+async function flushSoon() {
+  // Serverless (Vercel, Netlify, Lambda): work after the response may be frozen → deliver inline, bounded.
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY) {
+    await Promise.race([processOutbox(undefined, 5).catch(console.error), new Promise((r) => setTimeout(r, 8_000))]);
+    return;
+  }
   if (flushing) return;
   flushing = true;
   // Deliver to ERP right after the response; the scheduled job retries anything left.
@@ -26,7 +31,7 @@ on("order.placed", async ({ orderId }) => {
     // vinX Online/Basket knows only calculate | order → quote requests stay in the shop unless configured
     if (payload.order.kind === "request" && vinx.requestsToErp === "skip") return;
     await enqueue("order", orderId, payload);
-    flushSoon();
+    await flushSoon();
   }
 });
 
@@ -53,7 +58,7 @@ async function pushCustomer(userId: number) {
   const payload = await customerPayload(userId);
   if (payload) {
     await enqueue("customer", userId, payload);
-    flushSoon();
+    await flushSoon();
   }
 }
 on("customer.registered", ({ userId }) => pushCustomer(userId));

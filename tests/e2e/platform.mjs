@@ -22,8 +22,8 @@ const newPage = async () => {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   page.errors = [];
-  page.on("pageerror", (e) => page.errors.push(e.message));
-  page.on("console", (m) => m.type() === "error" && !/caret-color|Failed to load resource/.test(m.text()) && page.errors.push(m.text()));
+  page.on("pageerror", (e) => page.errors.push(`${e.message} @ ${page.url()}`));
+  page.on("console", (m) => m.type() === "error" && !/caret-color|Failed to load resource/.test(m.text()) && page.errors.push(`${m.text()} @ ${page.url()}`));
   return page;
 };
 const login = async (page, path, email, password, urlRe) => {

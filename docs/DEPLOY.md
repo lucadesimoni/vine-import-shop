@@ -27,6 +27,32 @@ npm ci && npm run setup && npm run build && npm start     # → http://localhost
 
 PHP-only shared hosting (for example classic web hosting without Node) is not supported. The platform needs server rendering, live ERP calls and background jobs.
 
+## One-click platforms
+
+### Elestio
+The button in the README opens Elestio's CI/CD deploy for this repository, configured by `elestio.yml`:
+- It uses the Docker Compose runtime with `docker-compose.elestio.yml` (app + Postgres 17, data in `./storage`).
+- HTTPS on 443 is mapped to `172.17.0.1:3000`.
+- `SESSION_SECRET`, `CRON_SECRET`, `POSTGRES_PASSWORD` and `ADMIN_PASSWORD` are generated (`random_password`). `ADMIN_EMAIL` is your Elestio account email.
+- Every push redeploys automatically.
+- Pick a Swiss/EU provider and region in the Elestio wizard if data residency matters.
+
+### Vercel
+- Uses the official `@vercel/react-router` preset (enabled automatically when `VERCEL=1`). `.npmrc` sets `legacy-peer-deps` because the preset still declares React Router 7 as its peer; it builds and runs with React Router 8.
+- **Database:** add Neon (Vercel Marketplace › Storage). It sets `DATABASE_URL`. Without it the app starts as an **ephemeral demo** (embedded DB in `/tmp`, reset on cold start).
+- **Migrations** are bundled into the build and run on first request.
+- **Uploads:** `STORAGE_DRIVER=s3` with Cloudflare R2, AWS S3, Exoscale SOS or another S3-compatible store.
+- **Jobs:** `vercel.json` schedules `/api/cron`. Vercel sends `Authorization: Bearer $CRON_SECRET`.
+  - Hobby plans run crons at most once a day; on Pro, set `*/10 * * * *`.
+  - Orders and new customers are pushed to the ERP **inline** on serverless, so they don't wait for the cron.
+- Long ERP syncs (full article import) are better run on a long-running Node host or via `npm run jobs`.
+
+### Render
+`render.yaml` creates the web service (Node, `npm start`, health check `/api/health`) and a Postgres database, and generates the secrets. Uploads persist only with `STORAGE_DRIVER=s3` or a Render disk.
+
+### Railway · Coolify · Dokploy · CapRover · Portainer
+Point them at the repository. They build the `Dockerfile` (`railway.json` sets the health check) or use `docker-compose.yml`. Add Postgres in the dashboard and set `DATABASE_URL`, or mount a volume at `/app/data` for the embedded DB.
+
 ## Typical setups
 
 | Setup | Command / files | Notes |

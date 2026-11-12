@@ -1,0 +1,43 @@
+# Deploy on Elestio (CI/CD from this repository): https://dash.elest.io/deploy?source=cicd&social=Github&url=<repo-url>
+ports:
+  - protocol: "HTTPS"
+    targetProtocol: "HTTP"
+    listeningPort: "443"
+    targetPort: "3000"
+    targetIP: "172.17.0.1"
+    public: true
+    path: "/"
+    isAuth: false
+    login: ""
+    password: ""
+environments:
+  - key: "SESSION_SECRET"
+    value: "random_password"
+  - key: "CRON_SECRET"
+    value: "random_password"
+  - key: "VINX_WEBHOOK_SECRET"
+    value: "random_password"
+  - key: "POSTGRES_PASSWORD"
+    value: "random_password"
+  - key: "ADMIN_EMAIL"
+    value: "[EMAIL]"
+  - key: "ADMIN_PASSWORD"
+    value: "random_password"
+  - key: "DEMO_DATA"
+    value: "true"
+  - key: "PUBLIC_URL"
+    value: "https://[CI_CD_DOMAIN]"
+config:
+  runTime: "dockerCompose"
+  version: ""
+  framework: ""
+  buildCommand: "docker-compose -f docker-compose.elestio.yml build"
+  buildDir: "/"
+  runCommand: "docker-compose -f docker-compose.elestio.yml up -d"
+  icon: ""
+  screenshot: "docs/screenshots/01-home.png"
+webUI:
+  - url: "https://[CI_CD_DOMAIN]"
+    label: "Shop"
+  - url: "https://[CI_CD_DOMAIN]/admin"
+    label: "Admin"

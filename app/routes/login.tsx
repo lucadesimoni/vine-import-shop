@@ -10,7 +10,7 @@ import { Button, ButtonLink, Card, Eyebrow, Field, Input, Notice } from "~/compo
 export async function loader({ context }: Route.LoaderArgs) {
   const ctx = context.get(shopContext);
   if (ctx.user) throw redirect(ctx.user.role === "customer" ? (ctx.channel.portal ? "/portal" : "/account") : "/admin");
-  return { demo: (process.env.DEMO_DATA ?? "true") !== "false" };
+  return { demo: (process.env.DEMO_DATA ?? "true") !== "false", demoAdmin: !process.env.ADMIN_EMAIL };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -64,7 +64,7 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
             <p className="text-eyebrow text-[10px] text-muted-fg">Demo</p>
             <code>gastro@demo.ch · gastro-demo-1234</code>
             {!to.portal && <code>kunde@demo.ch · kunde-demo-1234</code>}
-            {!to.portal && <code>admin@example.com · admin-demo-1234</code>}
+            {!to.portal && loaderData.demoAdmin && <code>admin@example.com · admin-demo-1234</code>}
           </div>
         )}
       </div>

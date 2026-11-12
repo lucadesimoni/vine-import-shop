@@ -2,7 +2,7 @@
 # VPS (Docker/Podman), Fly.io, Railway, Render, Google Cloud Run, Azure, AWS, Infomaniak, Exoscale …
 FROM node:22-alpine AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci
 
 FROM deps AS build

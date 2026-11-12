@@ -1,0 +1,25 @@
+# Elestio CI/CD stack (see elestio.yml). App + Postgres, data in ./storage on the Elestio VM.
+services:
+  app:
+    build: .
+    restart: always
+    env_file: ./.env
+    environment:
+      DATABASE_URL: postgres://shop:${POSTGRES_PASSWORD}@db:5432/shop
+      NODE_ENV: production
+    volumes:
+      - ./storage/uploads:/app/data
+    ports:
+      - "172.17.0.1:3000:3000"
+    depends_on:
+      db: { condition: service_healthy }
+  db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: shop
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: shop
+    volumes:
+      - ./storage/postgres:/var/lib/postgresql/data
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U shop"], interval: 5s, retries: 20 }

@@ -6,7 +6,8 @@ import { randomBytes } from "node:crypto";
  * Uploads: STORAGE_DRIVER=local (./data/uploads, served by /uploads/*) or
  * s3 (any S3-compatible bucket: AWS, Cloudflare R2, Exoscale SOS, Infomaniak …).
  */
-const LOCAL_DIR = process.env.UPLOAD_DIR ?? join(process.cwd(), "data/uploads");
+// Serverless filesystems are read-only except /tmp → use STORAGE_DRIVER=s3 for persistent uploads there.
+const LOCAL_DIR = process.env.UPLOAD_DIR ?? (process.env.VERCEL ? "/tmp/uploads" : join(process.cwd(), "data/uploads"));
 const TYPES: Record<string, string> = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".avif": "image/avif", ".svg": "image/svg+xml", ".gif": "image/gif" };
 const MAX = 8 * 1024 * 1024;
 

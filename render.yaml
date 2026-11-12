@@ -1,0 +1,26 @@
+# Render Blueprint — one click: https://render.com/deploy?repo=<repo-url>
+services:
+  - type: web
+    name: shop
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: CRON_SECRET
+        generateValue: true
+      - key: VINX_WEBHOOK_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase: { name: shop-db, property: connectionString }
+      - key: ADMIN_EMAIL
+        sync: false
+databases:
+  - name: shop-db
+    plan: basic-256mb
+    databaseName: shop

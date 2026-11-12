@@ -1,0 +1,1029 @@
+{
+  "buildManifest": {
+    "serverBundles": {
+      "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0": {
+        "id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+        "file": "build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    },
+    "routeIdToServerBundleId": {
+      "root": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/home": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/shop": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/product": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/producers": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/trade": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/story": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/contact": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/order-list": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/checkout": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/checkout-done": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/login": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/register": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/account": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/account-order": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/quick-order": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "portal-login": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/portal/dashboard": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/portal/catalog": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "portal-product": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "portal-quick-order": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "portal-order-list": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "portal-checkout": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "portal-checkout-done": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "portal-orders": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "portal-order": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/resources/cart": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/resources/logout": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/resources/set-locale": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/resources/price-list": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/resources/sitemap": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/resources/robots": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/resources/uploads": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api/cron": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api/vinx-webhook": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api/vinx-import": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api/payments": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api/products": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/api/health": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/dashboard": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/orders": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/order": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/products": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/product": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/customers": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/conditions": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/design": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/content": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/settings": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/admin/integrations": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "app/root.tsx",
+        "path": "",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/shop-layout": {
+        "id": "routes/shop-layout",
+        "parentId": "root",
+        "file": "app/routes/shop-layout.tsx",
+        "config": {}
+      },
+      "routes/home": {
+        "id": "routes/home",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/home.tsx",
+        "index": true,
+        "config": {}
+      },
+      "routes/shop": {
+        "id": "routes/shop",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/shop.tsx",
+        "path": "shop",
+        "config": {}
+      },
+      "routes/product": {
+        "id": "routes/product",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/product.tsx",
+        "path": "product/:slug",
+        "config": {}
+      },
+      "routes/producers": {
+        "id": "routes/producers",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/producers.tsx",
+        "path": "producers",
+        "config": {}
+      },
+      "routes/trade": {
+        "id": "routes/trade",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/trade.tsx",
+        "path": "trade",
+        "config": {}
+      },
+      "routes/story": {
+        "id": "routes/story",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/story.tsx",
+        "path": "story",
+        "config": {}
+      },
+      "routes/contact": {
+        "id": "routes/contact",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/contact.tsx",
+        "path": "contact",
+        "config": {}
+      },
+      "routes/page": {
+        "id": "routes/page",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/page.tsx",
+        "path": "page/:slug",
+        "config": {}
+      },
+      "routes/order-list": {
+        "id": "routes/order-list",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/order-list.tsx",
+        "path": "order-list",
+        "config": {}
+      },
+      "routes/checkout": {
+        "id": "routes/checkout",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/checkout.tsx",
+        "path": "checkout",
+        "config": {}
+      },
+      "routes/checkout-done": {
+        "id": "routes/checkout-done",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/checkout-done.tsx",
+        "path": "checkout/done/:number",
+        "config": {}
+      },
+      "routes/login": {
+        "id": "routes/login",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/login.tsx",
+        "path": "login",
+        "config": {}
+      },
+      "routes/register": {
+        "id": "routes/register",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/register.tsx",
+        "path": "register",
+        "config": {}
+      },
+      "routes/account": {
+        "id": "routes/account",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/account.tsx",
+        "path": "account",
+        "config": {}
+      },
+      "routes/account-order": {
+        "id": "routes/account-order",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/account-order.tsx",
+        "path": "account/orders/:number",
+        "config": {}
+      },
+      "routes/quick-order": {
+        "id": "routes/quick-order",
+        "parentId": "routes/shop-layout",
+        "file": "app/routes/quick-order.tsx",
+        "path": "account/quick-order",
+        "config": {}
+      },
+      "portal-login": {
+        "id": "portal-login",
+        "parentId": "root",
+        "file": "app/routes/login.tsx",
+        "path": "portal/login",
+        "config": {}
+      },
+      "routes/portal/layout": {
+        "id": "routes/portal/layout",
+        "parentId": "root",
+        "file": "app/routes/portal/layout.tsx",
+        "path": "portal",
+        "config": {}
+      },
+      "routes/portal/dashboard": {
+        "id": "routes/portal/dashboard",
+        "parentId": "routes/portal/layout",
+        "file": "app/routes/portal/dashboard.tsx",
+        "index": true,
+        "config": {}
+      },
+      "routes/portal/catalog": {
+        "id": "routes/portal/catalog",
+        "parentId": "routes/portal/layout",
+        "file": "app/routes/portal/catalog.tsx",
+        "path": "catalog",
+        "config": {}
+      },
+      "portal-product": {
+        "id": "portal-product",
+        "parentId": "routes/portal/layout",
+        "file": "app/routes/product.tsx",
+        "path": "product/:slug",
+        "config": {}
+      },
+      "portal-quick-order": {
+        "id": "portal-quick-order",
+        "parentId": "routes/portal/layout",
+        "file": "app/routes/quick-order.tsx",
+        "path": "quick-order",
+        "config": {}
+      },
+      "portal-order-list": {
+        "id": "portal-order-list",
+        "parentId": "routes/portal/layout",
+        "file": "app/routes/order-list.tsx",
+        "path": "order-list",
+        "config": {}
+      },
+      "portal-checkout": {
+        "id": "portal-checkout",
+        "parentId": "routes/portal/layout",
+        "file": "app/routes/checkout.tsx",
+        "path": "checkout",
+        "config": {}
+      },
+      "portal-checkout-done": {
+        "id": "portal-checkout-done",
+        "parentId": "routes/portal/layout",
+        "file": "app/routes/checkout-done.tsx",
+        "path": "checkout/done/:number",
+        "config": {}
+      },
+      "portal-orders": {
+        "id": "portal-orders",
+        "parentId": "routes/portal/layout",
+        "file": "app/routes/account.tsx",
+        "path": "orders",
+        "config": {}
+      },
+      "portal-order": {
+        "id": "portal-order",
+        "parentId": "routes/portal/layout",
+        "file": "app/routes/account-order.tsx",
+        "path": "orders/:number",
+        "config": {}
+      },
+      "routes/resources/cart": {
+        "id": "routes/resources/cart",
+        "parentId": "root",
+        "file": "app/routes/resources/cart.ts",
+        "path": "cart",
+        "config": {}
+      },
+      "routes/resources/logout": {
+        "id": "routes/resources/logout",
+        "parentId": "root",
+        "file": "app/routes/resources/logout.ts",
+        "path": "logout",
+        "config": {}
+      },
+      "routes/resources/set-locale": {
+        "id": "routes/resources/set-locale",
+        "parentId": "root",
+        "file": "app/routes/resources/set-locale.ts",
+        "path": "set-locale",
+        "config": {}
+      },
+      "routes/resources/price-list": {
+        "id": "routes/resources/price-list",
+        "parentId": "root",
+        "file": "app/routes/resources/price-list.ts",
+        "path": "account/price-list.csv",
+        "config": {}
+      },
+      "routes/resources/sitemap": {
+        "id": "routes/resources/sitemap",
+        "parentId": "root",
+        "file": "app/routes/resources/sitemap.ts",
+        "path": "sitemap.xml",
+        "config": {}
+      },
+      "routes/resources/robots": {
+        "id": "routes/resources/robots",
+        "parentId": "root",
+        "file": "app/routes/resources/robots.ts",
+        "path": "robots.txt",
+        "config": {}
+      },
+      "routes/resources/uploads": {
+        "id": "routes/resources/uploads",
+        "parentId": "root",
+        "file": "app/routes/resources/uploads.ts",
+        "path": "uploads/*",
+        "config": {}
+      },
+      "routes/api/cron": {
+        "id": "routes/api/cron",
+        "parentId": "root",
+        "file": "app/routes/api/cron.ts",
+        "path": "api/cron",
+        "config": {}
+      },
+      "routes/api/vinx-webhook": {
+        "id": "routes/api/vinx-webhook",
+        "parentId": "root",
+        "file": "app/routes/api/vinx-webhook.ts",
+        "path": "api/vinx/webhook",
+        "config": {}
+      },
+      "routes/api/vinx-import": {
+        "id": "routes/api/vinx-import",
+        "parentId": "root",
+        "file": "app/routes/api/vinx-import.ts",
+        "path": "api/vinx/import",
+        "config": {}
+      },
+      "routes/api/payments": {
+        "id": "routes/api/payments",
+        "parentId": "root",
+        "file": "app/routes/api/payments.ts",
+        "path": "api/payments/:provider",
+        "config": {}
+      },
+      "routes/api/products": {
+        "id": "routes/api/products",
+        "parentId": "root",
+        "file": "app/routes/api/products.ts",
+        "path": "api/v1/products",
+        "config": {}
+      },
+      "routes/api/health": {
+        "id": "routes/api/health",
+        "parentId": "root",
+        "file": "app/routes/api/health.ts",
+        "path": "api/health",
+        "config": {}
+      },
+      "routes/admin/layout": {
+        "id": "routes/admin/layout",
+        "parentId": "root",
+        "file": "app/routes/admin/layout.tsx",
+        "path": "admin",
+        "config": {}
+      },
+      "routes/admin/dashboard": {
+        "id": "routes/admin/dashboard",
+        "parentId": "routes/admin/layout",
+        "file": "app/routes/admin/dashboard.tsx",
+        "index": true,
+        "config": {}
+      },
+      "routes/admin/orders": {
+        "id": "routes/admin/orders",
+        "parentId": "routes/admin/layout",
+        "file": "app/routes/admin/orders.tsx",
+        "path": "orders",
+        "config": {}
+      },
+      "routes/admin/order": {
+        "id": "routes/admin/order",
+        "parentId": "routes/admin/layout",
+        "file": "app/routes/admin/order.tsx",
+        "path": "orders/:id",
+        "config": {}
+      },
+      "routes/admin/products": {
+        "id": "routes/admin/products",
+        "parentId": "routes/admin/layout",
+        "file": "app/routes/admin/products.tsx",
+        "path": "products",
+        "config": {}
+      },
+      "routes/admin/product": {
+        "id": "routes/admin/product",
+        "parentId": "routes/admin/layout",
+        "file": "app/routes/admin/product.tsx",
+        "path": "products/:id",
+        "config": {}
+      },
+      "routes/admin/customers": {
+        "id": "routes/admin/customers",
+        "parentId": "routes/admin/layout",
+        "file": "app/routes/admin/customers.tsx",
+        "path": "customers",
+        "config": {}
+      },
+      "routes/admin/conditions": {
+        "id": "routes/admin/conditions",
+        "parentId": "routes/admin/layout",
+        "file": "app/routes/admin/conditions.tsx",
+        "path": "conditions",
+        "config": {}
+      },
+      "routes/admin/design": {
+        "id": "routes/admin/design",
+        "parentId": "routes/admin/layout",
+        "file": "app/routes/admin/design.tsx",
+        "path": "design",
+        "config": {}
+      },
+      "routes/admin/content": {
+        "id": "routes/admin/content",
+        "parentId": "routes/admin/layout",
+        "file": "app/routes/admin/content.tsx",
+        "path": "content",
+        "config": {}
+      },
+      "routes/admin/settings": {
+        "id": "routes/admin/settings",
+        "parentId": "routes/admin/layout",
+        "file": "app/routes/admin/settings.tsx",
+        "path": "settings",
+        "config": {}
+      },
+      "routes/admin/integrations": {
+        "id": "routes/admin/integrations",
+        "parentId": "routes/admin/layout",
+        "file": "app/routes/admin/integrations.tsx",
+        "path": "integrations",
+        "config": {}
+      }
+    }
+  },
+  "reactRouterConfig": {
+    "appDirectory": "/home/user/vine-import-shop/app",
+    "basename": "/",
+    "buildDirectory": "/home/user/vine-import-shop/build",
+    "future": {
+      "unstable_customRouteDiscovery": false,
+      "unstable_enableNodeReadableStream": false,
+      "unstable_optimizeDeps": false
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "root.tsx",
+        "path": ""
+      },
+      "routes/shop-layout": {
+        "id": "routes/shop-layout",
+        "parentId": "root",
+        "file": "routes/shop-layout.tsx"
+      },
+      "routes/home": {
+        "id": "routes/home",
+        "parentId": "routes/shop-layout",
+        "file": "routes/home.tsx",
+        "index": true
+      },
+      "routes/shop": {
+        "id": "routes/shop",
+        "parentId": "routes/shop-layout",
+        "file": "routes/shop.tsx",
+        "path": "shop"
+      },
+      "routes/product": {
+        "id": "routes/product",
+        "parentId": "routes/shop-layout",
+        "file": "routes/product.tsx",
+        "path": "product/:slug"
+      },
+      "routes/producers": {
+        "id": "routes/producers",
+        "parentId": "routes/shop-layout",
+        "file": "routes/producers.tsx",
+        "path": "producers"
+      },
+      "routes/trade": {
+        "id": "routes/trade",
+        "parentId": "routes/shop-layout",
+        "file": "routes/trade.tsx",
+        "path": "trade"
+      },
+      "routes/story": {
+        "id": "routes/story",
+        "parentId": "routes/shop-layout",
+        "file": "routes/story.tsx",
+        "path": "story"
+      },
+      "routes/contact": {
+        "id": "routes/contact",
+        "parentId": "routes/shop-layout",
+        "file": "routes/contact.tsx",
+        "path": "contact"
+      },
+      "routes/page": {
+        "id": "routes/page",
+        "parentId": "routes/shop-layout",
+        "file": "routes/page.tsx",
+        "path": "page/:slug"
+      },
+      "routes/order-list": {
+        "id": "routes/order-list",
+        "parentId": "routes/shop-layout",
+        "file": "routes/order-list.tsx",
+        "path": "order-list"
+      },
+      "routes/checkout": {
+        "id": "routes/checkout",
+        "parentId": "routes/shop-layout",
+        "file": "routes/checkout.tsx",
+        "path": "checkout"
+      },
+      "routes/checkout-done": {
+        "id": "routes/checkout-done",
+        "parentId": "routes/shop-layout",
+        "file": "routes/checkout-done.tsx",
+        "path": "checkout/done/:number"
+      },
+      "routes/login": {
+        "id": "routes/login",
+        "parentId": "routes/shop-layout",
+        "file": "routes/login.tsx",
+        "path": "login"
+      },
+      "routes/register": {
+        "id": "routes/register",
+        "parentId": "routes/shop-layout",
+        "file": "routes/register.tsx",
+        "path": "register"
+      },
+      "routes/account": {
+        "id": "routes/account",
+        "parentId": "routes/shop-layout",
+        "file": "routes/account.tsx",
+        "path": "account"
+      },
+      "routes/account-order": {
+        "id": "routes/account-order",
+        "parentId": "routes/shop-layout",
+        "file": "routes/account-order.tsx",
+        "path": "account/orders/:number"
+      },
+      "routes/quick-order": {
+        "id": "routes/quick-order",
+        "parentId": "routes/shop-layout",
+        "file": "routes/quick-order.tsx",
+        "path": "account/quick-order"
+      },
+      "portal-login": {
+        "id": "portal-login",
+        "parentId": "root",
+        "file": "routes/login.tsx",
+        "path": "portal/login"
+      },
+      "routes/portal/layout": {
+        "id": "routes/portal/layout",
+        "parentId": "root",
+        "file": "routes/portal/layout.tsx",
+        "path": "portal"
+      },
+      "routes/portal/dashboard": {
+        "id": "routes/portal/dashboard",
+        "parentId": "routes/portal/layout",
+        "file": "routes/portal/dashboard.tsx",
+        "index": true
+      },
+      "routes/portal/catalog": {
+        "id": "routes/portal/catalog",
+        "parentId": "routes/portal/layout",
+        "file": "routes/portal/catalog.tsx",
+        "path": "catalog"
+      },
+      "portal-product": {
+        "id": "portal-product",
+        "parentId": "routes/portal/layout",
+        "file": "routes/product.tsx",
+        "path": "product/:slug"
+      },
+      "portal-quick-order": {
+        "id": "portal-quick-order",
+        "parentId": "routes/portal/layout",
+        "file": "routes/quick-order.tsx",
+        "path": "quick-order"
+      },
+      "portal-order-list": {
+        "id": "portal-order-list",
+        "parentId": "routes/portal/layout",
+        "file": "routes/order-list.tsx",
+        "path": "order-list"
+      },
+      "portal-checkout": {
+        "id": "portal-checkout",
+        "parentId": "routes/portal/layout",
+        "file": "routes/checkout.tsx",
+        "path": "checkout"
+      },
+      "portal-checkout-done": {
+        "id": "portal-checkout-done",
+        "parentId": "routes/portal/layout",
+        "file": "routes/checkout-done.tsx",
+        "path": "checkout/done/:number"
+      },
+      "portal-orders": {
+        "id": "portal-orders",
+        "parentId": "routes/portal/layout",
+        "file": "routes/account.tsx",
+        "path": "orders"
+      },
+      "portal-order": {
+        "id": "portal-order",
+        "parentId": "routes/portal/layout",
+        "file": "routes/account-order.tsx",
+        "path": "orders/:number"
+      },
+      "routes/resources/cart": {
+        "id": "routes/resources/cart",
+        "parentId": "root",
+        "file": "routes/resources/cart.ts",
+        "path": "cart"
+      },
+      "routes/resources/logout": {
+        "id": "routes/resources/logout",
+        "parentId": "root",
+        "file": "routes/resources/logout.ts",
+        "path": "logout"
+      },
+      "routes/resources/set-locale": {
+        "id": "routes/resources/set-locale",
+        "parentId": "root",
+        "file": "routes/resources/set-locale.ts",
+        "path": "set-locale"
+      },
+      "routes/resources/price-list": {
+        "id": "routes/resources/price-list",
+        "parentId": "root",
+        "file": "routes/resources/price-list.ts",
+        "path": "account/price-list.csv"
+      },
+      "routes/resources/sitemap": {
+        "id": "routes/resources/sitemap",
+        "parentId": "root",
+        "file": "routes/resources/sitemap.ts",
+        "path": "sitemap.xml"
+      },
+      "routes/resources/robots": {
+        "id": "routes/resources/robots",
+        "parentId": "root",
+        "file": "routes/resources/robots.ts",
+        "path": "robots.txt"
+      },
+      "routes/resources/uploads": {
+        "id": "routes/resources/uploads",
+        "parentId": "root",
+        "file": "routes/resources/uploads.ts",
+        "path": "uploads/*"
+      },
+      "routes/api/cron": {
+        "id": "routes/api/cron",
+        "parentId": "root",
+        "file": "routes/api/cron.ts",
+        "path": "api/cron"
+      },
+      "routes/api/vinx-webhook": {
+        "id": "routes/api/vinx-webhook",
+        "parentId": "root",
+        "file": "routes/api/vinx-webhook.ts",
+        "path": "api/vinx/webhook"
+      },
+      "routes/api/vinx-import": {
+        "id": "routes/api/vinx-import",
+        "parentId": "root",
+        "file": "routes/api/vinx-import.ts",
+        "path": "api/vinx/import"
+      },
+      "routes/api/payments": {
+        "id": "routes/api/payments",
+        "parentId": "root",
+        "file": "routes/api/payments.ts",
+        "path": "api/payments/:provider"
+      },
+      "routes/api/products": {
+        "id": "routes/api/products",
+        "parentId": "root",
+        "file": "routes/api/products.ts",
+        "path": "api/v1/products"
+      },
+      "routes/api/health": {
+        "id": "routes/api/health",
+        "parentId": "root",
+        "file": "routes/api/health.ts",
+        "path": "api/health"
+      },
+      "routes/admin/layout": {
+        "id": "routes/admin/layout",
+        "parentId": "root",
+        "file": "routes/admin/layout.tsx",
+        "path": "admin"
+      },
+      "routes/admin/dashboard": {
+        "id": "routes/admin/dashboard",
+        "parentId": "routes/admin/layout",
+        "file": "routes/admin/dashboard.tsx",
+        "index": true
+      },
+      "routes/admin/orders": {
+        "id": "routes/admin/orders",
+        "parentId": "routes/admin/layout",
+        "file": "routes/admin/orders.tsx",
+        "path": "orders"
+      },
+      "routes/admin/order": {
+        "id": "routes/admin/order",
+        "parentId": "routes/admin/layout",
+        "file": "routes/admin/order.tsx",
+        "path": "orders/:id"
+      },
+      "routes/admin/products": {
+        "id": "routes/admin/products",
+        "parentId": "routes/admin/layout",
+        "file": "routes/admin/products.tsx",
+        "path": "products"
+      },
+      "routes/admin/product": {
+        "id": "routes/admin/product",
+        "parentId": "routes/admin/layout",
+        "file": "routes/admin/product.tsx",
+        "path": "products/:id"
+      },
+      "routes/admin/customers": {
+        "id": "routes/admin/customers",
+        "parentId": "routes/admin/layout",
+        "file": "routes/admin/customers.tsx",
+        "path": "customers"
+      },
+      "routes/admin/conditions": {
+        "id": "routes/admin/conditions",
+        "parentId": "routes/admin/layout",
+        "file": "routes/admin/conditions.tsx",
+        "path": "conditions"
+      },
+      "routes/admin/design": {
+        "id": "routes/admin/design",
+        "parentId": "routes/admin/layout",
+        "file": "routes/admin/design.tsx",
+        "path": "design"
+      },
+      "routes/admin/content": {
+        "id": "routes/admin/content",
+        "parentId": "routes/admin/layout",
+        "file": "routes/admin/content.tsx",
+        "path": "content"
+      },
+      "routes/admin/settings": {
+        "id": "routes/admin/settings",
+        "parentId": "routes/admin/layout",
+        "file": "routes/admin/settings.tsx",
+        "path": "settings"
+      },
+      "routes/admin/integrations": {
+        "id": "routes/admin/integrations",
+        "parentId": "routes/admin/layout",
+        "file": "routes/admin/integrations.tsx",
+        "path": "integrations"
+      }
+    },
+    "routeDiscovery": {
+      "mode": "lazy",
+      "manifestPath": "/__manifest"
+    },
+    "serverBuildFile": "index.js",
+    "serverModuleFormat": "esm",
+    "ssr": true,
+    "splitRouteModules": true,
+    "subResourceIntegrity": false,
+    "allowedActionOrigins": false,
+    "unstable_routeConfig": [
+      {
+        "id": "root",
+        "path": "",
+        "file": "root.tsx",
+        "children": [
+          {
+            "file": "routes/shop-layout.tsx",
+            "children": [
+              {
+                "file": "routes/home.tsx",
+                "index": true
+              },
+              {
+                "file": "routes/shop.tsx",
+                "path": "shop"
+              },
+              {
+                "file": "routes/product.tsx",
+                "path": "product/:slug"
+              },
+              {
+                "file": "routes/producers.tsx",
+                "path": "producers"
+              },
+              {
+                "file": "routes/trade.tsx",
+                "path": "trade"
+              },
+              {
+                "file": "routes/story.tsx",
+                "path": "story"
+              },
+              {
+                "file": "routes/contact.tsx",
+                "path": "contact"
+              },
+              {
+                "file": "routes/page.tsx",
+                "path": "page/:slug"
+              },
+              {
+                "file": "routes/order-list.tsx",
+                "path": "order-list"
+              },
+              {
+                "file": "routes/checkout.tsx",
+                "path": "checkout"
+              },
+              {
+                "file": "routes/checkout-done.tsx",
+                "path": "checkout/done/:number"
+              },
+              {
+                "file": "routes/login.tsx",
+                "path": "login"
+              },
+              {
+                "file": "routes/register.tsx",
+                "path": "register"
+              },
+              {
+                "file": "routes/account.tsx",
+                "path": "account"
+              },
+              {
+                "file": "routes/account-order.tsx",
+                "path": "account/orders/:number"
+              },
+              {
+                "file": "routes/quick-order.tsx",
+                "path": "account/quick-order"
+              }
+            ]
+          },
+          {
+            "file": "routes/login.tsx",
+            "path": "portal/login",
+            "id": "portal-login"
+          },
+          {
+            "file": "routes/portal/layout.tsx",
+            "children": [
+              {
+                "file": "routes/portal/dashboard.tsx",
+                "index": true
+              },
+              {
+                "file": "routes/portal/catalog.tsx",
+                "path": "catalog"
+              },
+              {
+                "file": "routes/product.tsx",
+                "path": "product/:slug",
+                "id": "portal-product"
+              },
+              {
+                "file": "routes/quick-order.tsx",
+                "path": "quick-order",
+                "id": "portal-quick-order"
+              },
+              {
+                "file": "routes/order-list.tsx",
+                "path": "order-list",
+                "id": "portal-order-list"
+              },
+              {
+                "file": "routes/checkout.tsx",
+                "path": "checkout",
+                "id": "portal-checkout"
+              },
+              {
+                "file": "routes/checkout-done.tsx",
+                "path": "checkout/done/:number",
+                "id": "portal-checkout-done"
+              },
+              {
+                "file": "routes/account.tsx",
+                "path": "orders",
+                "id": "portal-orders"
+              },
+              {
+                "file": "routes/account-order.tsx",
+                "path": "orders/:number",
+                "id": "portal-order"
+              }
+            ],
+            "path": "portal"
+          },
+          {
+            "file": "routes/resources/cart.ts",
+            "path": "cart"
+          },
+          {
+            "file": "routes/resources/logout.ts",
+            "path": "logout"
+          },
+          {
+            "file": "routes/resources/set-locale.ts",
+            "path": "set-locale"
+          },
+          {
+            "file": "routes/resources/price-list.ts",
+            "path": "account/price-list.csv"
+          },
+          {
+            "file": "routes/resources/sitemap.ts",
+            "path": "sitemap.xml"
+          },
+          {
+            "file": "routes/resources/robots.ts",
+            "path": "robots.txt"
+          },
+          {
+            "file": "routes/resources/uploads.ts",
+            "path": "uploads/*"
+          },
+          {
+            "file": "routes/api/cron.ts",
+            "path": "api/cron"
+          },
+          {
+            "file": "routes/api/vinx-webhook.ts",
+            "path": "api/vinx/webhook"
+          },
+          {
+            "file": "routes/api/vinx-import.ts",
+            "path": "api/vinx/import"
+          },
+          {
+            "file": "routes/api/payments.ts",
+            "path": "api/payments/:provider"
+          },
+          {
+            "file": "routes/api/products.ts",
+            "path": "api/v1/products"
+          },
+          {
+            "file": "routes/api/health.ts",
+            "path": "api/health"
+          },
+          {
+            "file": "routes/admin/layout.tsx",
+            "children": [
+              {
+                "file": "routes/admin/dashboard.tsx",
+                "index": true
+              },
+              {
+                "file": "routes/admin/orders.tsx",
+                "path": "orders"
+              },
+              {
+                "file": "routes/admin/order.tsx",
+                "path": "orders/:id"
+              },
+              {
+                "file": "routes/admin/products.tsx",
+                "path": "products"
+              },
+              {
+                "file": "routes/admin/product.tsx",
+                "path": "products/:id"
+              },
+              {
+                "file": "routes/admin/customers.tsx",
+                "path": "customers"
+              },
+              {
+                "file": "routes/admin/conditions.tsx",
+                "path": "conditions"
+              },
+              {
+                "file": "routes/admin/design.tsx",
+                "path": "design"
+              },
+              {
+                "file": "routes/admin/content.tsx",
+                "path": "content"
+              },
+              {
+                "file": "routes/admin/settings.tsx",
+                "path": "settings"
+              },
+              {
+                "file": "routes/admin/integrations.tsx",
+                "path": "integrations"
+              }
+            ],
+            "path": "admin"
+          }
+        ]
+      }
+    ]
+  },
+  "viteConfig": {
+    "build": {
+      "assetsDir": "assets"
+    }
+  }
+}
