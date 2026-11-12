@@ -12,6 +12,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { Block } from "~/lib/blocks";
 import type { Localized } from "~/lib/localized";
 
 /**
@@ -300,6 +301,8 @@ export const pages = pgTable("pages", {
   slug: text("slug").notNull().unique(),
   title: jsonb("title").$type<Localized>().notNull(),
   body: jsonb("body").$type<Localized>().notNull(),
+  /** page builder blocks (lib/blocks.ts); when set, they replace the markdown body */
+  blocks: jsonb("blocks").$type<Block[]>(),
   showInFooter: boolean("show_in_footer").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

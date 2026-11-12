@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { slugify } from "~/lib/slug";
 import { parseSettings } from "~/lib/settings";
+import { homeBlocks } from "../blocks";
 import { hashPassword } from "../auth";
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -260,6 +261,15 @@ export async function seedDeSimoniDemo(db: DB) {
     }
   }
   home.spotlight.productSlug = spotlightSlug;
+  // Page builder: the classic sections as blocks + origin map and a B2B call-to-action
+  const base = homeBlocks(home);
+  const at = base.findIndex((b) => b.id === "brands");
+  home.blocks = [
+    ...base.slice(0, at),
+    { id: "origin", type: "origin", enabled: true, data: { eyebrow: { de: "Herkunft", it: "Provenienza" }, title: { de: "Aus 9 Regionen Italiens", it: "Da 9 regioni d'Italia" }, text: { de: "Von Südtirol bis Sizilien — wählen Sie eine Region und entdecken Sie ihre Produzenten.", it: "Dall'Alto Adige alla Sicilia — scegliete una regione e scoprite i suoi produttori." }, buttonLabel: { de: "Zur Karte", it: "Alla mappa" } } },
+    ...base.slice(at),
+    { id: "cta-trade", type: "cta", enabled: true, data: { eyebrow: { de: "Gastronomie", it: "Ristorazione" }, title: { de: "Ihre Konditionen, Ihr Portal.", it: "Le vostre condizioni, il vostro portale." }, text: { de: "Kundenpreise, Schnellbestellung und Bestellhistorie — für Restaurants, Hotels und Fachhandel.", it: "Prezzi cliente, ordine rapido e storico ordini — per ristoranti, hotel e rivenditori." }, buttonLabel: { de: "B2B-Konto eröffnen", it: "Aprire un conto B2B" }, buttonHref: "/trade#apply", tone: "primary" } },
+  ];
 
   for (const [key, value] of Object.entries({ brand, shop, home, trade, story })) {
     await db.insert(schema.settings).values({ key, value }).onConflictDoNothing();
@@ -296,6 +306,21 @@ export async function seedDeSimoniDemo(db: DB) {
     { type: "promotion_discount", targetType: "category", target: String(catIds.get("olivenoel")), calc: "percent", value: "10", validTo: in60, onNetPrices: true, label: { de: "Aktion Olivenöl −10 %", it: "Promozione olio −10 %" } },
   ]);
   await seedLegalStubs(db, brand.legalName);
+
+  // A page built from blocks (Admin › Inhalte › Seiten)
+  await db.insert(schema.pages).values({
+    slug: "fragen", title: { de: "Häufige Fragen", it: "Domande frequenti" }, body: {}, showInFooter: true,
+    blocks: [
+      { id: "faq-hero", type: "hero", enabled: true, data: { eyebrow: { de: "Service", it: "Servizio" }, title: { de: "Häufige Fragen", it: "Domande frequenti" }, text: { de: "Lieferung, Bestellung und Konditionen — kurz erklärt.", it: "Consegna, ordini e condizioni — in breve." }, image: `${D}/macchine.png`, primaryLabel: {}, primaryHref: "", secondaryLabel: {}, secondaryHref: "", height: "compact", stats: [] } },
+      { id: "faq-list", type: "faq", enabled: true, data: { title: {}, items: [
+        { q: { de: "Wann wird geliefert?", it: "Quando consegnate?" }, a: { de: "Gastronomie-Kunden beliefern wir wöchentlich mit unserer eigenen Tour in der ganzen Deutschschweiz. Privatkunden erhalten ihre Bestellung per Post in 1–3 Werktagen.", it: "Ai clienti della ristorazione consegniamo settimanalmente con il nostro giro in tutta la Svizzera tedesca. I privati ricevono l'ordine per posta in 1–3 giorni lavorativi." } },
+        { q: { de: "Gibt es einen Mindestbestellwert?", it: "C'è un ordine minimo?" }, a: { de: "Für Geschäftskunden gilt ein Mindestbestellwert von **CHF 250 netto**. Privatkunden bestellen ohne Mindestwert.", it: "Per i clienti commerciali vale un ordine minimo di **CHF 250 netti**. I privati ordinano senza minimo." } },
+        { q: { de: "Wie erhalte ich meine Kundenpreise?", it: "Come ottengo i miei prezzi cliente?" }, a: { de: "Eröffnen Sie ein [B2B-Konto](/trade#apply). Nach der Freigabe sehen Sie im Portal Ihre Preise, Rabatte und Aktionen.", it: "Aprite un [conto B2B](/trade#apply). Dopo l'approvazione vedete nel portale i vostri prezzi, sconti e promozioni." } },
+        { q: { de: "Kann ich per Excel bestellen?", it: "Posso ordinare con Excel?" }, a: { de: "Ja — in der **Schnellbestellung** Artikelnummern und Mengen direkt aus Excel einfügen.", it: "Sì — nell'**ordine rapido** incollate numeri d'articolo e quantità direttamente da Excel." } },
+      ] } },
+      { id: "faq-cta", type: "cta", enabled: true, data: { eyebrow: {}, title: { de: "Noch Fragen?", it: "Altre domande?" }, text: { de: "Wir sind persönlich für Sie da.", it: "Siamo a vostra disposizione." }, buttonLabel: { de: "Kontakt", it: "Contatto" }, buttonHref: "/contact", tone: "muted" } },
+    ],
+  }).onConflictDoNothing();
 }
 
 type DemoProduct = {

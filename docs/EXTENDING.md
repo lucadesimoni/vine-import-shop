@@ -7,6 +7,7 @@ The core stays small and stable. Everything business-specific plugs in through f
 | **1. Settings & profiles** | Switching features per business type (wine merchant, importer, winery, spirits, deli, beverages), wording, channels, prices and payments | Admin › Einstellungen (*Geschäftsmodell*, *Module & Begriffe*). Schemas in `app/lib/settings.ts` |
 | **2. Design tokens** | The full look and feel per brand (colours incl. a derived dark mode, fonts, radius, button style, material tones) | Admin › Design. Tokens in `app/lib/theme.ts` → `app/app.css` |
 | **3. Extensions** | ERP or accounting connectors, payment providers, price sources, event handlers, scheduled jobs, admin links | A folder in `app/extensions/` listed in `app/extensions.config.ts` |
+| **3b. Page blocks** | New sections for the page builder (home, content pages, extras on trade/story) | `custom/blocks/<name>/index.tsx` with `defineBlock({...})` — fields generate the editor, `Component` renders. Core blocks: `app/lib/blocks.ts` (definitions), `app/components/blocks.tsx` (renderers), `app/.server/blocks.ts` (data, sanitising) |
 | **4. Routes** | New pages (storefront, portal or admin) | A route module plus one line in `app/routes.ts` |
 
 ## Extension API

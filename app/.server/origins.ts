@@ -1,3 +1,5 @@
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { and, eq, sql, type SQL } from "drizzle-orm";
 import world from "~/lib/maps/world.json";
 import type { RegionMapData } from "~/lib/maps/regions";
@@ -30,8 +32,16 @@ const fold = (s: string) => s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").
 
 /** All region maps (server side, eager) → resolve free-text region names from ERP/supplier data to map areas. */
 const REGION_MAPS: Record<string, RegionMapData> = Object.fromEntries(
-  Object.values(import.meta.glob<RegionMapData>("../lib/maps/regions/*.json", { eager: true, import: "default" })).map((m) => [m.iso, m]),
+  (import.meta.env
+    ? Object.values(import.meta.glob<RegionMapData>("../lib/maps/regions/*.json", { eager: true, import: "default" }))
+    : readMapsFromDisk()
+  ).map((m) => [m.iso, m]),
 );
+/** Plain Node scripts (tsx, no Vite): read the same JSON files from disk. */
+function readMapsFromDisk(): RegionMapData[] {
+  const dir = join(process.cwd(), "app/lib/maps/regions");
+  return existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(".json")).map((f) => JSON.parse(readFileSync(join(dir, f), "utf8"))) : [];
+}
 const REGION_INDEX = new Map<string, Map<string, string>>(); // iso → (slug|alias → id)
 for (const m of Object.values(REGION_MAPS)) {
   const idx = new Map<string, string>();

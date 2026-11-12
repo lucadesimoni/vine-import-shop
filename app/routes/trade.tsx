@@ -8,6 +8,8 @@ import { findUserByEmail, hashPassword, login } from "~/.server/auth";
 import { getDb, schema } from "~/.server/db";
 import { emit } from "~/.server/events";
 import { getSetting } from "~/.server/settings";
+import { resolveBlocks } from "~/.server/blocks";
+import { Blocks } from "~/components/blocks";
 import { tl } from "~/lib/localized";
 import { useI18n } from "~/lib/i18n";
 import { useRootData } from "~/lib/root-data";
@@ -15,7 +17,8 @@ import { Button, ButtonLink, Card, Eyebrow, Field, Input, Lines, Notice, Textare
 
 export async function loader({ context }: Route.LoaderArgs) {
   if (!context.get(shopContext).shop.modules.trade) throw new Response("Not found", { status: 404 });
-  return { trade: await getSetting("trade") };
+  const trade = await getSetting("trade");
+  return { trade, blocks: await resolveBlocks(context.get(shopContext), trade.blocks) };
 }
 
 const applySchema = z.object({
@@ -139,6 +142,7 @@ export default function Trade({ loaderData, actionData }: Route.ComponentProps) 
           )}
         </Card>
       </section>
+      <Blocks blocks={loaderData.blocks} />
     </>
   );
 }

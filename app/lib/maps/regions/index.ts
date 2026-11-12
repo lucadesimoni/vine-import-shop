@@ -8,7 +8,8 @@ import type { Locale } from "~/lib/localized";
 export type RegionShape = { id: string; name: string; names: Partial<Record<Locale, string>>; aliases: string[]; cx: number; cy: number; d: string };
 export type RegionMapData = { iso: string; viewBox: string; regions: RegionShape[] };
 
-const files = import.meta.glob<RegionMapData>("./*.json", { import: "default" });
+// Vite inlines the glob; plain Node scripts (tsx) have no region maps loaded on demand
+const files: Record<string, () => Promise<RegionMapData>> = import.meta.env ? import.meta.glob<RegionMapData>("./*.json", { import: "default" }) : {};
 const byIso = Object.fromEntries(Object.entries(files).map(([path, load]) => [path.slice(2, 4).toUpperCase(), load]));
 
 /** Countries with a region map, e.g. ["AR", "AT", "AU", "CH", …]. */

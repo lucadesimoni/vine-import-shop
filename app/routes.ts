@@ -74,5 +74,6 @@ export default [
     route("system", "routes/admin/system.tsx"),
     route("system/backups/:name", "routes/admin/backup-download.ts"),
     route("password", "routes/admin/password.tsx"),
+    route("upload", "routes/admin/upload.ts"),
   ]),
 ] satisfies RouteConfig;

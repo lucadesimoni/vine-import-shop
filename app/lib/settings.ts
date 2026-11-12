@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { blocksSchema } from "./blocks";
 import { LOCALES } from "./localized";
 
 void LOCALES;
@@ -202,6 +203,8 @@ export const homeSchema = z.object({
     .prefault({}),
   brands: z.object({ show: z.boolean().default(true), title: loc.default({}) }).prefault({}),
   values: z.object({ title: loc.default({}), items: z.array(z.object({ icon: z.string().default("sparkles"), title: loc, text: loc })).default([]) }).prefault({}),
+  /** Page builder: when set, the home page is exactly these blocks (the classic fields above are the fallback / initial content). */
+  blocks: blocksSchema.optional(),
 });
 
 export const tradeSchema = z.object({
@@ -216,6 +219,8 @@ export const tradeSchema = z.object({
   formTitle: loc.default({}),
   formText: loc.default({}),
   promises: z.array(loc).default([]),
+  /** extra building blocks shown below the page */
+  blocks: blocksSchema.default([]),
 });
 
 export const storySchema = z.object({
@@ -225,6 +230,8 @@ export const storySchema = z.object({
   timeline: z.array(z.object({ year: z.string(), title: loc, text: loc })).default([]),
   quote: loc.default({}),
   imageUrl: url,
+  /** extra building blocks shown below the page */
+  blocks: blocksSchema.default([]),
 });
 
 export const vinxSchema = z.object({

@@ -13,6 +13,13 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 ## [Unreleased]
 
 ### Added
+- **Page builder.** The home page, content pages and extras on the trade and story pages are built from blocks.
+  - Admin › Inhalte: drag & drop (arrows on phones), show / hide, duplicate, delete, add from the block library, edit inline in every language, image upload.
+  - Blocks: hero, categories, products (promotions, recommended, new, a category or a producer; carousel or grid), product spotlight, image & text, text (Markdown), call-to-action, producers / brands, origin map, values, quote, image, FAQ.
+  - New pages can be built from blocks or written as simple text (legal pages). Existing home pages are converted automatically. *Reset to default* is available.
+  - Every field is sanitised on save: links only to internal paths, `https:`, `mailto:` and `tel:`; images only uploads or `https:`.
+  - Own blocks: `custom/blocks/<name>/index.tsx` with `defineBlock({...})`.
+  - Demo: origin-map and call-to-action blocks on the home page, an FAQ page built from blocks.
 - **Safe updates.**
   - A consistent backup is taken automatically before every database migration.
   - A daily backup runs, the newest 14 are kept, and pre-update backups are kept for 30 days.
@@ -53,6 +60,7 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 - Language switch in the footer, so it is also reachable on phones. `npm run i18n:check` in CI keeps DE / IT / FR / EN complete.
 
 ### Fixed
+- `npm run jobs` and other Node scripts failed to start, because the region maps used a Vite-only import. They now fall back to reading from disk.
 - **Phones.**
   - The menu drawer was clipped to the header height and showed the page through it. It now renders outside the header.
   - B2B portal: app-style bottom tab bar (overview, range, quick order, order list, orders) and a compact "more" menu (price list, shop, language, theme, logout).

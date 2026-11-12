@@ -1,5 +1,7 @@
 import type { Route } from "./+types/story";
 import { getSetting } from "~/.server/settings";
+import { resolveBlocks } from "~/.server/blocks";
+import { Blocks } from "~/components/blocks";
 import { shopContext } from "~/.server/context";
 import { tl } from "~/lib/localized";
 import { useI18n } from "~/lib/i18n";
@@ -7,7 +9,8 @@ import { Eyebrow, Lines } from "~/components/ui";
 
 export async function loader({ context }: Route.LoaderArgs) {
   if (!context.get(shopContext).shop.modules.story) throw new Response("Not found", { status: 404 });
-  return { story: await getSetting("story") };
+  const story = await getSetting("story");
+  return { story, blocks: await resolveBlocks(context.get(shopContext), story.blocks) };
 }
 
 export default function Story({ loaderData }: Route.ComponentProps) {
@@ -41,6 +44,7 @@ export default function Story({ loaderData }: Route.ComponentProps) {
           <blockquote className="container-page max-w-4xl text-center font-display text-3xl italic leading-snug md:text-4xl">«{L(story.quote)}»</blockquote>
         </section>
       )}
+      <Blocks blocks={loaderData.blocks} />
     </>
   );
 }
