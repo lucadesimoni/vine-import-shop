@@ -106,10 +106,10 @@ export default function PortalDashboard({ loaderData }: Route.ComponentProps) {
                   <tbody>
                     {recent.map((o) => (
                       <tr key={o.id} className="border-b border-border last:border-0">
-                        <td className="px-5 py-3.5"><Link to={`/portal/orders/${o.number}`} className="font-medium hover:underline">{o.number}</Link></td>
-                        <td className="px-5 py-3.5 text-muted-fg tabular-nums">{new Date(o.createdAt).toLocaleDateString(`${locale}-CH`)}</td>
+                        <td className="whitespace-nowrap px-5 py-3.5"><Link to={`/portal/orders/${o.number}`} className="font-medium hover:underline">{o.number}</Link></td>
+                        <td className="hidden px-5 py-3.5 text-muted-fg tabular-nums sm:table-cell">{new Date(o.createdAt).toLocaleDateString(`${locale}-CH`)}</td>
                         <td className="px-5 py-3.5"><Badge tone={STATUS_TONE[o.status]}>{t(`status.${o.status}` as MessageKey)}</Badge></td>
-                        <td className="px-5 py-3.5 text-right tabular-nums">{o.kind === "request" ? t("account.request") : m(o.totalGross)}</td>
+                        <td className="hidden whitespace-nowrap px-5 py-3.5 text-right tabular-nums md:table-cell">{o.kind === "request" ? t("account.request") : m(o.totalGross)}</td>
                         <td className="w-0 px-3 py-2 text-right">
                           <Form method="post" action={`/portal/orders/${o.number}`}>
                             <input type="hidden" name="intent" value="reorder" />
@@ -180,9 +180,9 @@ export default function PortalDashboard({ loaderData }: Route.ComponentProps) {
 
 function Kpi({ label, value, hint, to }: { label: string; value: string; hint?: string; to?: string }) {
   const body = (
-    <Card className="grid h-full gap-2 p-5 transition-shadow hover:shadow-card">
+    <Card className="grid h-full min-w-0 gap-2 p-4 transition-shadow hover:shadow-card sm:p-5">
       <span className="text-eyebrow text-[10px] text-muted-fg">{label}</span>
-      <span className="text-[1.6rem] font-medium leading-none tracking-tight tabular-nums">{value}</span>
+      <span className="truncate text-[1.3rem] font-medium leading-none tracking-tight tabular-nums sm:text-[1.6rem]">{value}</span>
       {hint && <span className="text-[12px] text-muted-fg">{hint}</span>}
     </Card>
   );
