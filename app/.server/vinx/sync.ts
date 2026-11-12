@@ -6,14 +6,14 @@ import { getSetting } from "../settings";
 import type { CustomerPayload, ErpClient, OrderPayload } from "./client";
 import { CsvClient } from "./csv";
 import { mapArticle, mapPrice, mapStock } from "./mapper";
-import { MockClient } from "./mock";
-import { Rest3Client } from "./rest";
 
+/** ERP client for the configured driver — drivers come from the extension registry (core: mock · rest3 · csv). */
 export async function erpClient(cfg?: Settings["vinx"], files?: ConstructorParameters<typeof CsvClient>[0]): Promise<ErpClient> {
   cfg ??= await getSetting("vinx");
-  if (files || cfg.driver === "csv") return new CsvClient(files);
-  if (cfg.driver === "rest3") return new Rest3Client(cfg);
-  return new MockClient();
+  const { bootExtensions, erpDrivers } = await import("../extensions");
+  await bootExtensions();
+  if (files) return erpDrivers.get("csv")!.create(cfg, files);
+  return (erpDrivers.get(cfg.driver) ?? erpDrivers.get("mock")!).create(cfg);
 }
 
 async function job<T extends { items: number; message: string }>(name: string, fn: () => Promise<T>) {
@@ -333,20 +333,18 @@ export async function retryOutbox(id: number) {
 }
 
 /** Scheduled run: called by /api/cron, `npm run jobs`, or a platform cron. */
-export async function runScheduled(jobs: string[] = ["outbox", "stock", "prices", "conditions", "articles"]) {
+/** Runs registered jobs (core vinX jobs + extension jobs). Default: every job flagged `scheduled`. */
+export async function runScheduled(only?: string[]) {
   const cfg = await getSetting("vinx");
-  if (!cfg.enabled) return { skipped: "vinx disabled" };
-  const client = await erpClient(cfg);
+  const { bootExtensions, jobs } = await import("../extensions");
+  await bootExtensions();
+  const ids = only ?? [...jobs.values()].filter((j) => j.scheduled).map((j) => j.id);
   const out: Record<string, unknown> = {};
-  for (const j of jobs) {
-    out[j] =
-      j === "outbox" ? await processOutbox(client)
-      : j === "stock" ? await syncStock(client)
-      : j === "prices" ? await syncPrices(client)
-      : j === "conditions" ? await syncSpecialPrices(client)
-      : j === "articles" ? await syncArticles(client)
-      : j === "articles:full" ? await syncArticles(client, true)
-      : { ok: false, message: "unknown job" };
+  for (const id of ids) {
+    const j = jobs.get(id);
+    if (!j) { out[id] = { ok: false, message: "unknown job" }; continue; }
+    if (!cfg.enabled && !id.includes(":") && ["outbox", "stock", "prices", "conditions", "articles"].includes(id)) { out[id] = { ok: true, message: "vinx disabled" }; continue; }
+    try { out[id] = await j.run(); } catch (e) { out[id] = { ok: false, message: (e as Error).message }; }
   }
   return out;
 }

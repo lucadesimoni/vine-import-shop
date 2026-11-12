@@ -24,7 +24,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   } else if (intent === "remove") {
     const variantId = Number(form.get("variantId"));
     await updateCart(id, (items) => items.filter((i) => i.variantId !== variantId));
-  } else if (intent === "coupon") {
+  } else if (intent === "coupon" && ctx.shop.modules.coupons) {
     const code = String(form.get("code") ?? "").trim();
     const coupon = code ? await findCoupon(code) : null;
     await setCoupon(id, coupon ? coupon.code : null);

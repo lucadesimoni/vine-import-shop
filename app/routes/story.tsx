@@ -1,10 +1,12 @@
 import type { Route } from "./+types/story";
 import { getSetting } from "~/.server/settings";
+import { shopContext } from "~/.server/context";
 import { tl } from "~/lib/localized";
 import { useI18n } from "~/lib/i18n";
 import { Eyebrow, Lines } from "~/components/ui";
 
-export async function loader() {
+export async function loader({ context }: Route.LoaderArgs) {
+  if (!context.get(shopContext).shop.modules.story) throw new Response("Not found", { status: 404 });
   return { story: await getSetting("story") };
 }
 

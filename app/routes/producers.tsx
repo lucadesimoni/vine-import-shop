@@ -8,6 +8,7 @@ import { originFacets } from "~/.server/origins";
 import { getDb, schema } from "~/.server/db";
 import { useI18n, type MessageKey } from "~/lib/i18n";
 import { cn } from "~/lib/cn";
+import { useRootData } from "~/lib/root-data";
 import { ButtonLink, Chip, Eyebrow } from "~/components/ui";
 import { ProductGrid } from "~/components/shop";
 import { RegionMap, WorldDotMap, countryName, regionName } from "~/components/origin-map";
@@ -16,6 +17,7 @@ const KINDS = ["wine", "food", "spirit", "beverage"] as const;
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const ctx = context.get(shopContext);
+  if (!ctx.shop.modules.producers) throw new Response("Not found", { status: 404 });
   const q = new URL(request.url).searchParams;
   const kind = KINDS.find((k) => k === q.get("kind")) ?? null;
   const region = q.get("region");
@@ -55,6 +57,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export default function Producers({ loaderData }: Route.ComponentProps) {
   const { view, mode, kind, kinds, facets, selected, products, producers, homeCountry } = loaderData;
   const { t, locale } = useI18n();
+  const { shop } = useRootData();
   const [params] = useSearchParams();
   const link = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
@@ -72,7 +75,7 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
       <header className="mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-border pb-8">
         <div className="grid gap-3">
           <Eyebrow line>{t("origin.eyebrow")}</Eyebrow>
-          <h1 className="text-h1">{t("nav.producers")}</h1>
+          <h1 className="text-h1">{t(`term.producers.${shop.terms.producers}` as MessageKey)}</h1>
           <p className="max-w-2xl text-muted-fg">{t("origin.intro", { producers: producers.length, areas: mapAreas.length })}</p>
         </div>
         {mode !== "off" && (

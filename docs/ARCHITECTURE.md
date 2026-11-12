@@ -10,7 +10,9 @@ app/
   components/admin.tsx   admin components (PageHeader, Panel, DataTable, LocalizedInput, Toggle …)
   app.css                design tokens → Tailwind theme, type scale
   lib/                   isomorphic & pure: pricing, money, settings schemas, i18n, theme, markdown
-  .server/               server-only: db, auth, context, catalog, cart, orders, payments, mail, storage, vinx/
+  .server/               server-only: db, auth, context, catalog, cart, orders, payments, conditions, price-sources, origins, mail, storage, vinx/
+  .server/extensions/    extension API + registries (ERP drivers, jobs, admin links); core.ts registers the built-ins
+  extensions/            optional extensions (enabled in extensions.config.ts) — see docs/EXTENDING.md
 drizzle/                 SQL migrations (generated)
 public/demo/desimoni     demo assets
 ```
@@ -29,12 +31,24 @@ public/demo/desimoni     demo assets
 
 `root middleware` builds `ShopContext` once: user, customer group, trade status, price visibility, locale, brand and shop settings. Every loader and action reads it with `context.get(shopContext)`.
 
+## Extensibility
+
+Built-in capabilities register through the same API as third-party extensions: ERP drivers, payment providers, price sources, jobs and event listeners. Business types are configured in data, using profiles, modules, terms and channels. The look is configured through tokens. See **[EXTENDING.md](EXTENDING.md)**.
+
 ## Scaling
 
-The app is stateless apart from Postgres and uploads (local disk or S3), so you can run any number of instances behind a load balancer. For more than one instance:
+**Today.** The app is stateless apart from Postgres and uploads (local disk or S3), so you can run any number of instances behind a load balancer.
+- Use managed Postgres (`DATABASE_URL`) and set `STORAGE_DRIVER=s3`.
+- Static assets are content-hashed and cached for a year, so a CDN can sit in front of everything.
+- Scheduled work runs via `POST /api/cron`. Integrations go through a persistent outbox, so a slow ERP never blocks checkout.
 
-- use managed Postgres (`DATABASE_URL`);
-- set `STORAGE_DRIVER=s3`;
-- move the in-memory login throttle and settings cache to Redis if needed.
+**Roadmap for very large catalogues and many tenants.** These are prepared seams, not yet built:
 
-Static assets are content-hashed and cached for a year, so a CDN can sit in front of everything.
+| Concern | Seam today | Next step |
+|---|---|---|
+| Settings and price caches | In-process (30 s) | Redis adapter behind `getSettings` / `customerTiers` |
+| Jobs | Cron calls `runScheduled()` (job registry) | Queue worker (pg-boss or BullMQ) using the same `Job` contract |
+| Search | Postgres `ILIKE` in `searchProducts()` | Search adapter (Meilisearch or Typesense) behind the same function |
+| Multi-brand / multi-tenant | One deployment per brand (white-label by data) | Add `tenant_id` to the tables and resolve the tenant by host in the root middleware (channels already resolve by host) |
+| Images | Local or S3 | Image CDN with on-the-fly resizing |
+| Login throttle and sessions | Memory and signed cookies | Redis for the throttle (cookies already scale) |

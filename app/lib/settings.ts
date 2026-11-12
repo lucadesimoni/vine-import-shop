@@ -87,7 +87,28 @@ const shippingMethodSchema = z.object({
   minUnits: z.number().int().min(0).default(0),
 });
 
+/** Feature modules — switch the blueprint between business types (wine merchant, importer, winery, spirits, deli, brewery …). */
+export const modulesSchema = z
+  .object({
+    producers: z.boolean().default(true), // producers / brands page incl. origin map
+    story: z.boolean().default(true),
+    trade: z.boolean().default(true), // B2B landing + application
+    wineDetails: z.boolean().default(true), // vintage, grapes, appellation
+    conditions: z.boolean().default(true), // B2B conditions engine
+    coupons: z.boolean().default(true),
+  })
+  .prefault({});
+export const PRODUCER_TERMS = ["producers", "winemakers", "brands", "makers", "suppliers"] as const;
+export const TRADE_TERMS = ["gastronomy", "business", "resellers"] as const;
+export const BUSINESS_PRESETS = ["importer", "merchant", "winery", "spirits", "deli", "beverages"] as const;
+
 export const shopSchema = z.object({
+  /** Business profile the modules were last set from (informational). */
+  profile: z.enum(BUSINESS_PRESETS).default("importer"),
+  modules: modulesSchema,
+  terms: z
+    .object({ producers: z.enum(PRODUCER_TERMS).default("producers"), trade: z.enum(TRADE_TERMS).default("gastronomy") })
+    .prefault({}),
   /** Sales channels — see lib/channel.ts */
   channels: z
     .object({
@@ -209,7 +230,8 @@ export const storySchema = z.object({
 export const vinxSchema = z.object({
   enabled: z.boolean().default(true),
   /** rest3 = official vinX REST3 "Shop V2.0" API · csv = file exchange · mock = demo */
-  driver: z.enum(["mock", "rest3", "csv"]).default("mock"),
+  /** ERP driver id from the extension registry (core: mock · rest3 · csv) */
+  driver: z.string().default("mock"),
   baseUrl: url, // e.g. https://vinx.example.ch  (demo: https://vinxapi.i-ag.ch)
   apiVersion: z.enum(["v1.0", "v2.0"]).default("v2.0"),
   username: z.string().default(""), // password: env VINX_PASSWORD
@@ -300,3 +322,13 @@ export function parseSettings<K extends SettingsKey>(key: K, value: unknown): Se
   const r = SETTINGS[key].safeParse(value ?? {});
   return (r.success ? r.data : SETTINGS[key].parse({})) as Settings[K];
 }
+
+/** One-click business profiles: sensible module + wording + channel defaults (everything stays editable). */
+export const PRESETS: Record<(typeof BUSINESS_PRESETS)[number], { label: string; description: string; patch: Partial<Shop> }> = {
+  importer: { label: "Wein- & Spezialitäten-Import (B2B + B2C)", description: "Gastronomie-Portal, Konditionen, Herkunftskarte, Privatkunden-Shop.", patch: { modules: { producers: true, story: true, trade: true, wineDetails: true, conditions: true, coupons: true }, terms: { producers: "producers", trade: "gastronomy" }, ageGate: true } },
+  merchant: { label: "Weinhandlung (B2C-Fokus)", description: "Shop mit Winzern & Karte; Firmenkunden optional.", patch: { modules: { producers: true, story: true, trade: true, wineDetails: true, conditions: true, coupons: true }, terms: { producers: "winemakers", trade: "business" }, ageGate: true } },
+  winery: { label: "Weingut (eigene Produktion)", description: "Keine Produzenten-Seite, Fokus auf Geschichte & Jahrgänge.", patch: { modules: { producers: false, story: true, trade: true, wineDetails: true, conditions: true, coupons: true }, terms: { producers: "winemakers", trade: "resellers" }, ageGate: true } },
+  spirits: { label: "Spirituosen", description: "Marken statt Winzer, ohne Jahrgangsangaben, Weltkarte der Herkunft.", patch: { modules: { producers: true, story: true, trade: true, wineDetails: false, conditions: true, coupons: true }, terms: { producers: "brands", trade: "gastronomy" }, ageGate: true } },
+  deli: { label: "Feinkost & Delikatessen", description: "Manufakturen, keine Alterskontrolle, keine Weinangaben.", patch: { modules: { producers: true, story: true, trade: true, wineDetails: false, conditions: true, coupons: true }, terms: { producers: "makers", trade: "resellers" }, ageGate: false } },
+  beverages: { label: "Getränkehandel / Brauerei", description: "Marken, Gastronomie-Konditionen, ohne Weinangaben.", patch: { modules: { producers: true, story: false, trade: true, wineDetails: false, conditions: true, coupons: false }, terms: { producers: "brands", trade: "gastronomy" }, ageGate: true } },
+};

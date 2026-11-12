@@ -13,7 +13,8 @@ import { useI18n } from "~/lib/i18n";
 import { useRootData } from "~/lib/root-data";
 import { Button, ButtonLink, Card, Eyebrow, Field, Input, Lines, Notice, Textarea } from "~/components/ui";
 
-export async function loader() {
+export async function loader({ context }: Route.LoaderArgs) {
+  if (!context.get(shopContext).shop.modules.trade) throw new Response("Not found", { status: 404 });
   return { trade: await getSetting("trade") };
 }
 

@@ -21,6 +21,6 @@ jobs:
         run: |
           pkill -f "node server.js" || true
           rm -rf data
-          SESSION_SECRET=ci-secret-ci-secret-ci-secret-1234 CRON_SECRET=e2e-cron VINX_WEBHOOK_SECRET=e2e-hook STRIPE_WEBHOOK_SECRET=whsec_e2e npm start &
+          SESSION_SECRET=ci-secret-ci-secret-ci-secret-1234 CRON_SECRET=e2e-cron VINX_WEBHOOK_SECRET=e2e-hook STRIPE_WEBHOOK_SECRET=whsec_e2e ORDER_WEBHOOK_URL=http://127.0.0.1:4555/hook ORDER_WEBHOOK_SECRET=e2e npm start &
           npx wait-on http://localhost:3000/api/health
           npm run e2e:platform

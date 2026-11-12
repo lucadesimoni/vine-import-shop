@@ -48,11 +48,11 @@ export default function Product({ loaderData }: Route.ComponentProps) {
   const { shop, showPrices, user } = useRootData();
   const c = p.card;
   const first = c.variants[0];
+  const isVintage = shop.modules.wineDetails && c.variants.some((v) => v.vintage);
   const facts = [
     [t("product.producer"), p.producer?.name],
     [t("product.origin"), [c.region, c.country].filter(Boolean).join(", ")],
-    [t("product.appellation"), p.appellation],
-    [t("product.grapes"), p.grapes],
+    ...(shop.modules.wineDetails ? [[t("product.appellation"), p.appellation], [t("product.grapes"), p.grapes]] : []),
     [t("product.alcohol"), p.alcohol ? `${p.alcohol} % vol.` : null],
   ].filter(([, v]) => v) as [string, string][];
 
@@ -98,12 +98,12 @@ export default function Product({ loaderData }: Route.ComponentProps) {
           {/* Variant table */}
           <div className="overflow-hidden rounded-surface border border-border bg-surface">
             <div className="hidden grid-cols-[1fr_0.8fr_1fr_auto] gap-4 border-b border-border px-5 py-3 sm:grid sm:grid-cols-[1.1fr_0.7fr_0.9fr_17.5rem]">
-              {[t("product.vintage"), t("product.format"), t("product.art"), ""].map((h, i) => <span key={i} className="text-eyebrow text-[10px] text-muted-fg">{h}</span>)}
+              {[isVintage ? t("product.vintage") : t("product.variant"), t("product.format"), t("product.art"), ""].map((h, i) => <span key={i} className="text-eyebrow text-[10px] text-muted-fg">{h}</span>)}
             </div>
             {c.variants.map((v) => (
               <div key={v.id} className="grid gap-4 border-b border-border px-5 py-5 last:border-0 sm:grid-cols-[1.1fr_0.7fr_0.9fr_17.5rem] sm:items-center">
                 <div className="grid gap-1">
-                  <span className="font-medium tabular-nums">{v.vintage ?? "—"}</span>
+                  <span className="font-medium tabular-nums">{isVintage ? (v.vintage ?? "—") : (v.size ?? c.name)}</span>
                   <StockLabel level={v.stock} qty={v.stockQty} />
                 </div>
                 <span className="text-sm">{v.size ?? "—"}</span>

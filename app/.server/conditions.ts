@@ -12,6 +12,7 @@ import { getDb, schema } from "./db";
 const perRequest = new WeakMap<ShopContext, Promise<ConditionRule[]>>();
 
 export function rulesFor(ctx: ShopContext): Promise<ConditionRule[]> {
+  if (!ctx.shop.modules.conditions) return Promise.resolve([]);
   let p = perRequest.get(ctx);
   if (!p) {
     p = load(ctx);

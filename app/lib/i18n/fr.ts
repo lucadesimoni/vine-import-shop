@@ -69,5 +69,6 @@ const fr: Partial<Messages> = {
   "nav.theme": "Clair/Sombre",
   "cond.special_price": "Prix spécial", "cond.promotion_price": "Prix promotionnel", "cond.customer_discount": "Remise client", "cond.quantity_discount": "Remise quantité", "cond.promotion_discount": "Remise promotionnelle", "cond.free_goods": "Marchandise gratuite", "cond.free": "{n} gratuit(s)", "cond.yourPrice": "Votre prix",
   "payment.mollie": "TWINT / Carte (Mollie)", "payment.mollieText": "TWINT, carte de crédit, PostFinance – sécurisé par Mollie", "payment.datatrans": "TWINT / Carte (Datatrans)", "payment.datatransText": "TWINT, Visa, Mastercard, PostFinance – paiement suisse", "payment.payrexx": "TWINT / PostFinance", "payment.payrexxText": "TWINT, PostFinance Pay, carte de crédit – paiement suisse",
+  "term.producers.producers": "Producteurs", "term.producers.winemakers": "Vignerons", "term.producers.brands": "Marques", "term.producers.makers": "Artisans", "term.producers.suppliers": "Fournisseurs", "term.trade.gastronomy": "Gastronomie", "term.trade.business": "Entreprises", "term.trade.resellers": "Revendeurs", "product.variant": "Variante",
 };
 export default fr;

@@ -39,18 +39,25 @@ export function Logo({ inverse = false, compact = false, to = "/", sub }: { inve
 
 /* ── Header ────────────────────────────────────────────────────────────── */
 
-const NAV: { to: string; key: MessageKey; end?: boolean }[] = [
-  { to: "/", key: "nav.home", end: true },
-  { to: "/shop", key: "nav.shop" },
-  { to: "/producers", key: "nav.producers" },
-  { to: "/trade", key: "nav.trade" },
-  { to: "/story", key: "nav.story" },
-  { to: "/contact", key: "nav.contact" },
-];
+/** Main navigation, filtered by the enabled modules and labelled with the configured terms. */
+export function useNav() {
+  const { t } = useI18n();
+  const { shop } = useRootData();
+  const m = shop.modules;
+  return [
+    { to: "/", label: t("nav.home"), end: true },
+    { to: "/shop", label: t("nav.shop") },
+    m.producers && { to: "/producers", label: t(`term.producers.${shop.terms.producers}` as MessageKey) },
+    m.trade && { to: "/trade", label: t(`term.trade.${shop.terms.trade}` as MessageKey) },
+    m.story && { to: "/story", label: t("nav.story") },
+    { to: "/contact", label: t("nav.contact") },
+  ].filter((x): x is { to: string; label: string; end?: boolean } => !!x);
+}
 
 export function Header() {
   const { t, locale, locales } = useI18n();
   const { brand, user, cartCount, channel } = useRootData();
+  const nav = useNav();
   const [open, setOpen] = useState(false);
   const showPortal = channel.portalEnabled && (!user || user.role !== "customer" || channel.canUsePortal);
   const [search, setSearch] = useState(false);
@@ -77,7 +84,7 @@ export function Header() {
         </button>
         <Logo />
         <nav className="mx-auto hidden items-center gap-1 lg:flex" aria-label="Main">
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <NavLink
               key={n.to}
               to={n.to}
@@ -90,7 +97,7 @@ export function Header() {
                 )
               }
             >
-              {t(n.key)}
+              {n.label}
             </NavLink>
           ))}
         </nav>
@@ -149,9 +156,9 @@ export function Header() {
             <Logo compact />
             <Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label={t("nav.close")}><X size={20} /></Button>
           </div>
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => cn("border-b border-border py-4 font-display text-2xl", isActive && "text-primary")}>
-              {t(n.key)}
+              {n.label}
             </NavLink>
           ))}
           {showPortal && (

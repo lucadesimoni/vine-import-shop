@@ -3,6 +3,7 @@ import { data, redirect, isRouteErrorResponse, Links, Meta, Outlet, Scripts, Scr
 import type { Route } from "./+types/root";
 import "./app.css";
 import { buildShopContext, shopContext } from "./.server/context";
+import { bootExtensions } from "./.server/extensions";
 import { getSession, commit } from "./.server/auth";
 import { getCart } from "./.server/cart";
 import { getDb, schema } from "./.server/db";
@@ -66,6 +67,7 @@ export const middleware: Route.MiddlewareFunction[] = [
         throw new Response("Cross-site request blocked", { status: 403 });
       }
     }
+    await bootExtensions();
     const ctx = await buildShopContext(request);
     context.set(shopContext, ctx);
     if (request.method === "GET") channelRedirect(request, ctx);
@@ -92,6 +94,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         priceVisibility: ctx.shop.priceVisibility,
         ageGate: ctx.shop.ageGate,
         minAge: ctx.shop.minAge,
+        modules: ctx.shop.modules,
+        terms: ctx.shop.terms,
+        originMap: ctx.shop.originMap.mode !== "off",
       },
       locale: ctx.locale,
       messages: messagesFor(ctx.locale),

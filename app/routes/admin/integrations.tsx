@@ -18,7 +18,15 @@ export async function loader() {
     outboxCounts(),
     Promise.all(["articles", "stock", "prices", "conditions", "outbox"].map(lastSuccess)),
   ]);
-  return { vinx, logs, outbox, counts, last, secrets: { password: !!process.env.VINX_PASSWORD, cron: !!process.env.CRON_SECRET, webhook: !!process.env.VINX_WEBHOOK_SECRET } };
+  const ext = await import("~/.server/extensions");
+  await ext.bootExtensions();
+  return {
+    vinx, logs, outbox, counts, last,
+    secrets: { password: !!process.env.VINX_PASSWORD, cron: !!process.env.CRON_SECRET, webhook: !!process.env.VINX_WEBHOOK_SECRET },
+    drivers: [...ext.erpDrivers.values()].map((d) => ({ id: d.id, label: d.label })),
+    extraJobs: [...ext.jobs.values()].filter((j) => !["outbox", "stock", "prices", "conditions", "articles", "articles:full"].includes(j.id)).map((j) => ({ id: j.id, label: j.label })),
+    extensions: ext.loaded,
+  };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -69,11 +77,19 @@ export async function action({ request }: Route.ActionArgs) {
       : intent === "prices" ? await syncPrices(client)
       : intent === "conditions" ? await syncSpecialPrices(client)
       : intent === "outbox" ? await processOutbox(client)
+      : intent.startsWith("job:") ? await runJob(intent.slice(4))
       : { ok: false, message: "unknown" };
     return { ok: r.ok, message: r.message };
   } catch (e) {
     return { ok: false, message: (e as Error).message };
   }
+}
+
+async function runJob(id: string) {
+  const { bootExtensions, jobs } = await import("~/.server/extensions");
+  await bootExtensions();
+  const j = jobs.get(id);
+  return j ? await j.run() : { ok: false, message: "unknown job" };
 }
 
 /** "post=1, pickup=4" → { post: 1, pickup: 4 } */
@@ -92,7 +108,7 @@ const JOBS = [
 ] as const;
 
 export default function Integrations({ loaderData }: Route.ComponentProps) {
-  const { vinx, logs, outbox, counts, last, secrets } = loaderData;
+  const { vinx, logs, outbox, counts, last, secrets, drivers, extraJobs, extensions } = loaderData;
   const result = useActionData<typeof action>();
   const nav = useNavigation();
   const running = nav.state === "submitting" ? nav.formData?.get("intent") : null;
@@ -102,7 +118,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
     <>
       <PageHeader
         title="vinX ERP"
-        subtitle={<>Anbindung nach der offiziellen vinX REST3-Spezifikation (Shop V 2.0) · Treiber <Badge tone={vinx.driver === "mock" ? "warning" : "success"}>{{ mock: "Demo", rest3: "REST3", csv: "CSV" }[vinx.driver]}</Badge></>}
+        subtitle={<>Anbindung nach der offiziellen vinX REST3-Spezifikation (Shop V 2.0) · Treiber <Badge tone={vinx.driver === "mock" ? "warning" : "success"}>{drivers.find((d) => d.id === vinx.driver)?.label ?? vinx.driver}</Badge></>}
         actions={<a href="https://i-ag.atlassian.net/wiki/spaces/TD" target="_blank" rel="noreferrer" className={buttonClass({ variant: "secondary", size: "sm" })}><BookOpen size={14} /> API-Doku</a>}
       />
       {result?.message && <Notice tone={result.ok ? "success" : "danger"} className="mb-6">{result.message}</Notice>}
@@ -123,6 +139,9 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
               <Button type="submit" variant="secondary" size="sm" disabled={!!running}><Icon size={13} className={running === intent ? "animate-pulse" : ""} /> {label}</Button>
             </Form>
           ))}
+          {extraJobs.map((j) => (
+            <Form method="post" key={j.id}><input type="hidden" name="intent" value={`job:${j.id}`} /><Button type="submit" variant="secondary" size="sm" disabled={!!running}><Play size={13} /> {j.label}</Button></Form>
+          ))}
           <Form method="post"><input type="hidden" name="intent" value="articles" /><input type="hidden" name="full" value="1" /><Button type="submit" variant="secondary" size="sm" disabled={!!running}><RotateCw size={13} /> Artikel (Vollabgleich)</Button></Form>
         </div>
       </Panel>
@@ -141,7 +160,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
                 <Toggle name="syncConditions" label="Aktions- & Spezialpreise als Konditionen übernehmen" description="SellingPrices.promotionPrice, SpecialPrices → Admin › Konditionen (Quelle vinX)" defaultChecked={vinx.syncConditions} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Treiber">{(id) => <Select id={id} name="driver" defaultValue={vinx.driver}><option value="mock">Demo (Mock)</option><option value="rest3">vinX REST3</option><option value="csv">CSV-Dateiaustausch</option></Select>}</Field>
+                <Field label="Treiber" hint="Weitere ERP-Treiber über Erweiterungen">{(id) => <Select id={id} name="driver" defaultValue={vinx.driver}>{drivers.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}</Select>}</Field>
                 <Field label="API-Version">{(id) => <Select id={id} name="apiVersion" defaultValue={vinx.apiVersion}><option value="v2.0">Shop V 2.0</option><option value="v1.0">Shop V 1.0</option></Select>}</Field>
                 <Field label="Basis-URL" className="sm:col-span-2">{(id) => <Input id={id} name="baseUrl" defaultValue={vinx.baseUrl} placeholder="https://vinx.ihre-firma.ch" />}</Field>
                 <Field label="Benutzer">{(id) => <Input id={id} name="username" defaultValue={vinx.username} autoComplete="off" />}</Field>
@@ -163,6 +182,16 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
         </Form>
 
         <div className="grid content-start gap-6">
+          <Panel title="Erweiterungen" description="Geladen über app/extensions.config.ts — ERP-Treiber, Zahlarten, Preisquellen, Jobs & Events.">
+            <ul className="divide-y divide-border text-sm">
+              {extensions.map((e) => (
+                <li key={e.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <span>{e.name}<span className="block font-mono text-[12px] text-muted-fg">{e.id}</span></span>
+                  {e.version && <Badge>{e.version}</Badge>}
+                </li>
+              ))}
+            </ul>
+          </Panel>
           <Panel title="Dateiaustausch (CSV)" description="vinX-Exporte hochladen — UTF-8 oder Windows-1252, Trennzeichen automatisch.">
             <Form method="post" encType="multipart/form-data" className="grid gap-3">
               <input type="hidden" name="intent" value="csv" />

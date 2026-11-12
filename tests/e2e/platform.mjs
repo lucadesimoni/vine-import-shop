@@ -2,7 +2,12 @@
 //   CRON_SECRET=e2e-cron VINX_WEBHOOK_SECRET=e2e-hook STRIPE_WEBHOOK_SECRET=whsec_e2e npm start   (fresh ./data)
 //   BASE_URL=http://localhost:3000 node tests/e2e/platform.mjs
 import { createHmac } from "node:crypto";
+import { createServer } from "node:http";
 import { chromium } from "playwright";
+
+// receiver for the order-webhook extension (server started with ORDER_WEBHOOK_URL=http://127.0.0.1:4555/hook)
+const hooks = [];
+const receiver = createServer((req, res) => { let b = ""; req.on("data", (c) => (b += c)); req.on("end", () => { hooks.push({ sig: req.headers["x-signature"], body: JSON.parse(b || "{}") }); res.end("ok"); }); }).listen(4555);
 
 const B = process.env.BASE_URL ?? "http://localhost:3000";
 const CRON = process.env.CRON_SECRET ?? "e2e-cron";
@@ -187,9 +192,30 @@ ok(stripe.status >= 400, "stripe webhook rejects invalid signature", stripe.stat
 await guest.goto(B + "/shop?q=10679");
 ok(/77|Gut an Lager|An Lager/.test(await guest.locator("article").first().innerText()), "CSV stock import reflected in shop");
 
+section("Extensions & business profiles");
+ok(/order-webhook/.test(await (await admin.goto(B + "/admin/integrations"), admin.locator("main").innerText())), "extension listed in admin");
+ok(hooks.filter((h) => h.body.event === "order.placed").length >= 2 && hooks.every((h) => /^[0-9a-f]{64}$/.test(h.sig ?? "")), "order-webhook extension delivered signed events", JSON.stringify(hooks.map((h) => h.body.event)));
+const applyProfile = async (key) => {
+  await admin.goto(B + "/admin/settings");
+  await admin.check(`input[name=profile][value=${key}]`);
+  await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button:has-text('Profil anwenden')")]);
+  await admin.waitForLoadState("networkidle");
+};
+await applyProfile("deli");
+await guest.goto(B + "/");
+const navDeli = await guest.locator("header nav").first().innerText();
+ok(/Manufakturen/.test(navDeli) && !/Produzenten/.test(navDeli), "deli profile: producers called 'Manufakturen'", navDeli.replace(/\s+/g, " "));
+await applyProfile("winery");
+ok((await guest.goto(B + "/producers"))?.status() === 404, "winery profile: producers module off → 404");
+await guest.goto(B + "/");
+ok(!/\/producers/.test(await guest.locator("header").innerHTML()), "winery profile: hidden from navigation");
+await applyProfile("importer");
+ok((await guest.goto(B + "/producers"))?.status() === 200, "importer profile restored");
+
 // ─────────────────────────────────────────────────────────────────────────
 const errs = [guest, consumer, b2b, admin].flatMap((p) => p.errors);
 ok(errs.length === 0, "no browser errors", JSON.stringify(errs.slice(0, 3)));
 await browser.close();
+receiver.close();
 console.log(`\n${passed} passed · ${failed} failed`);
 process.exit(failed ? 1 : 0);

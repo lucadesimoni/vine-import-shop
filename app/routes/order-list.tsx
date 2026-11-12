@@ -60,7 +60,7 @@ export default function OrderList({ loaderData }: Route.ComponentProps) {
             </ButtonLink>
             <Link to={to("/shop")} className="text-center text-sm text-muted-fg hover:text-fg">{t("cart.continue")}</Link>
           </Card>
-          {!summary.isRequest && (
+          {!summary.isRequest && shop.modules.coupons && (
             <Form method="post" action="/cart" className="flex gap-2">
               <input type="hidden" name="intent" value="coupon" />
               <input type="hidden" name="redirectTo" value={to("/order-list")} />

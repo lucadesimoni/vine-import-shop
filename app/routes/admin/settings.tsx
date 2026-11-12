@@ -5,8 +5,9 @@ import { getDb, schema } from "~/.server/db";
 import { getSettings, saveSetting } from "~/.server/settings";
 import { listPriceSources } from "~/.server/price-sources";
 import { LOCALES, LOCALE_LABELS } from "~/lib/localized";
+import { PRESETS, PRODUCER_TERMS, TRADE_TERMS } from "~/lib/settings";
 import { parseMoneyInput } from "~/lib/money";
-import { Checkbox, Field, Input, Notice, Select, Textarea } from "~/components/ui";
+import { Button, Checkbox, Field, Input, Notice, RadioCard, Select, Textarea } from "~/components/ui";
 import { formToObject, PageHeader, Panel, SaveBar, Toggle } from "~/components/admin";
 
 const CHANNEL_HINTS: Record<string, string> = {
@@ -33,6 +34,12 @@ export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
   const o = formToObject(form) as Record<string, any>;
   const { shop } = await getSettings("shop");
+  if (form.get("intent") === "preset") {
+    const key = String(form.get("profile")) as keyof typeof PRESETS;
+    if (!PRESETS[key]) return data({ error: "Unbekanntes Profil" }, { status: 400 });
+    await saveSetting("shop", { ...shop, ...PRESETS[key].patch, profile: key });
+    return { ok: true };
+  }
   let shipping = shop.shipping;
   try {
     shipping = JSON.parse(String(o.shippingJson));
@@ -52,6 +59,14 @@ export async function action({ request }: Route.ActionArgs) {
     originMap: {
       mode: ["auto", "regions", "world", "off"].includes(o.originMap?.mode) ? o.originMap.mode : shop.originMap.mode,
       country: /^[A-Za-z]{2}$/.test(o.originMap?.country ?? "") ? String(o.originMap.country).toUpperCase() : shop.originMap.country,
+    },
+    modules: {
+      producers: form.has("modules.producers"), story: form.has("modules.story"), trade: form.has("modules.trade"),
+      wineDetails: form.has("modules.wineDetails"), conditions: form.has("modules.conditions"), coupons: form.has("modules.coupons"),
+    },
+    terms: {
+      producers: (PRODUCER_TERMS as readonly string[]).includes(o.terms?.producers) ? o.terms.producers : shop.terms.producers,
+      trade: (TRADE_TERMS as readonly string[]).includes(o.terms?.trade) ? o.terms.trade : shop.terms.trade,
     },
     priceVisibility: o.priceVisibility,
     priceSource: listPriceSources().some((x) => x.id === o.priceSource) ? o.priceSource : shop.priceSource,
@@ -94,10 +109,42 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
   const { shop, groups, keys, priceSources } = loaderData;
   const result = useActionData<typeof action>();
   return (
+    <>
+    <Panel title="Geschäftsmodell" description="Ein Profil setzt passende Module, Begriffe und die Alterskontrolle — alles bleibt danach einzeln anpassbar." className="mb-6">
+      <Form method="post" className="grid gap-4">
+        <input type="hidden" name="intent" value="preset" />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {Object.entries(PRESETS).map(([key, p]) => (
+            <RadioCard key={key} name="profile" value={key} defaultChecked={shop.profile === key} label={p.label} description={p.description} />
+          ))}
+        </div>
+        <Button type="submit" variant="secondary" className="w-fit">Profil anwenden</Button>
+      </Form>
+    </Panel>
     <Form method="post">
       <PageHeader title="Einstellungen" subtitle="Verkaufsmodell, Sprachen, Preise, Versand und Zahlung." />
       {result && "error" in result && <Notice tone="danger" className="mb-6">{result.error}</Notice>}
       <div className="grid gap-6 xl:grid-cols-2">
+        <Panel title="Module & Begriffe" description="Funktionen ein-/ausblenden; ausgeschaltete Seiten verschwinden aus Navigation & Sitemap." className="xl:col-span-2">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="divide-y divide-border">
+              <Toggle name="modules.producers" label="Produzenten / Marken & Herkunftskarte" defaultChecked={shop.modules.producers} />
+              <Toggle name="modules.story" label="Geschichte" defaultChecked={shop.modules.story} />
+              <Toggle name="modules.trade" label="B2B-Seite & Antrag" defaultChecked={shop.modules.trade} />
+              <Toggle name="modules.wineDetails" label="Weinangaben" description="Jahrgang, Rebsorten, Appellation" defaultChecked={shop.modules.wineDetails} />
+              <Toggle name="modules.conditions" label="Konditionen (B2B-Rabatte)" defaultChecked={shop.modules.conditions} />
+              <Toggle name="modules.coupons" label="Gutscheine" defaultChecked={shop.modules.coupons} />
+            </div>
+            <div className="grid content-start gap-4">
+              <Field label="Bezeichnung Produzenten">
+                {(id) => <Select id={id} name="terms.producers" defaultValue={shop.terms.producers}><option value="producers">Produzenten</option><option value="winemakers">Winzer</option><option value="brands">Marken</option><option value="makers">Manufakturen</option><option value="suppliers">Lieferanten</option></Select>}
+              </Field>
+              <Field label="Bezeichnung B2B-Bereich">
+                {(id) => <Select id={id} name="terms.trade" defaultValue={shop.terms.trade}><option value="gastronomy">Gastronomie</option><option value="business">Firmenkunden</option><option value="resellers">Wiederverkauf</option></Select>}
+              </Field>
+            </div>
+          </div>
+        </Panel>
         <Panel title="Kanäle & Domains" description="Ein gemeinsamer Shop, oder ein getrennter B2C-Shop (Direktvertrieb) und ein B2B-Portal — optional je auf eigener Domain." className="xl:col-span-2">
           <div className="grid gap-5 lg:grid-cols-3">
             <Field label="Kanalmodell" hint={CHANNEL_HINTS[shop.channels.mode]}>
@@ -237,5 +284,6 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
       </div>
       <SaveBar saved={!!result && "ok" in result} />
     </Form>
+    </>
   );
 }
