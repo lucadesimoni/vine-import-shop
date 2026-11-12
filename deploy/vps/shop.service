@@ -1,0 +1,20 @@
+# systemd unit — /etc/systemd/system/shop.service   (systemctl enable --now shop)
+[Unit]
+Description=Wine & speciality shop
+After=network-online.target
+
+[Service]
+User=shop
+WorkingDirectory=/srv/shop
+Environment=NODE_ENV=production HOST=127.0.0.1 PORT=3000
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+# hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/srv/shop/data
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

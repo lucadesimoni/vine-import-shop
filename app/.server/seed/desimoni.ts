@@ -216,7 +216,7 @@ export async function seedDeSimoniDemo(db: DB) {
         slug,
         kind: p.kind,
         name: { de: p.name, it: p.name },
-        short: p.kind === "wine" ? { de: `${p.producer}`, it: `${p.producer}` } : null,
+        short: null,
         categoryId: catIds.get(p.category),
         producerId,
         color: p.color,

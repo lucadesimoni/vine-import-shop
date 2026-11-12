@@ -37,7 +37,7 @@ export function Packshot({ name, producer, shape, className }: { name: string; p
     >
       {/* hairline frame */}
       <span aria-hidden className="pointer-events-none absolute inset-0 hidden rounded-badge border @[9rem]:block" style={{ borderColor: "color-mix(in oklab, var(--t-primary) 22%, var(--t-media))" }} />
-      <span className="relative grid w-[76%] justify-items-center gap-[0.55em] text-center text-[clamp(9px,6.5cqi,15px)]">
+      <span className="relative grid w-[76%] justify-items-center gap-[0.55em] text-center text-[clamp(9px,6cqi,24px)]">
         <Icon aria-hidden strokeWidth={1.1} className="h-[2.4em] w-[2.4em] text-primary/70 @[9rem]:h-[2.1em] @[9rem]:w-[2.1em]" />
         <span aria-hidden className="hidden h-px w-[2.4em] bg-primary/40 @[9rem]:block" />
         {producer && <span className="hidden max-w-full truncate text-[0.68em] font-medium uppercase tracking-[0.22em] text-muted-fg @[9rem]:block">{producer}</span>}

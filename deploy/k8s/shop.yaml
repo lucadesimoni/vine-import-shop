@@ -1,0 +1,58 @@
+# Kubernetes (Exoscale SKS, Infomaniak Public Cloud, Azure Switzerland North, AWS eu-central-2 Zurich, GKE europe-west6 …)
+# Requires managed PostgreSQL (DATABASE_URL) + S3-compatible storage (STORAGE_DRIVER=s3) for >1 replica.
+#   kubectl create secret generic shop-env --from-env-file=.env
+#   kubectl apply -f deploy/k8s/shop.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: shop }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: shop } }
+  template:
+    metadata: { labels: { app: shop } }
+    spec:
+      containers:
+        - name: shop
+          image: ghcr.io/your-org/shop:latest
+          ports: [{ containerPort: 3000 }]
+          envFrom: [{ secretRef: { name: shop-env } }]
+          env:
+            - { name: JOBS_INTERVAL_MINUTES, value: "0" } # jobs run via the CronJob below (not per replica)
+          readinessProbe: { httpGet: { path: /api/health, port: 3000 }, periodSeconds: 10 }
+          livenessProbe: { httpGet: { path: /api/health, port: 3000 }, periodSeconds: 30 }
+          resources: { requests: { cpu: 100m, memory: 256Mi }, limits: { memory: 768Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: shop }
+spec: { selector: { app: shop }, ports: [{ port: 80, targetPort: 3000 }] }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shop
+  annotations: { cert-manager.io/cluster-issuer: letsencrypt }
+spec:
+  tls: [{ hosts: [shop.example.ch, b2b.example.ch], secretName: shop-tls }]
+  rules:
+    - host: shop.example.ch
+      http: { paths: [{ path: /, pathType: Prefix, backend: { service: { name: shop, port: { number: 80 } } } }] }
+    - host: b2b.example.ch
+      http: { paths: [{ path: /, pathType: Prefix, backend: { service: { name: shop, port: { number: 80 } } } }] }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata: { name: shop-jobs }
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: cron
+              image: curlimages/curl:8.11.1
+              envFrom: [{ secretRef: { name: shop-env } }]
+              command: ["sh", "-c", 'curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" http://shop/api/cron']

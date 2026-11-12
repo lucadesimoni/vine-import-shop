@@ -97,11 +97,11 @@ export default function Product({ loaderData }: Route.ComponentProps) {
 
           {/* Variant table */}
           <div className="overflow-hidden rounded-surface border border-border bg-surface">
-            <div className="hidden grid-cols-[1fr_0.8fr_1fr_auto] gap-4 border-b border-border px-5 py-3 sm:grid sm:grid-cols-[1.1fr_0.7fr_0.9fr_17.5rem]">
-              {[isVintage ? t("product.vintage") : t("product.variant"), t("product.format"), t("product.art"), ""].map((h, i) => <span key={i} className="text-eyebrow text-[10px] text-muted-fg">{h}</span>)}
+            <div className="hidden gap-4 border-b border-border px-5 py-3 sm:grid sm:grid-cols-[1.1fr_0.7fr_0.9fr] 2xl:grid-cols-[1fr_0.6fr_0.8fr_auto]">
+              {[isVintage ? t("product.vintage") : t("product.variant"), t("product.format"), t("product.art")].map((h, i) => <span key={i} className="text-eyebrow text-[10px] text-muted-fg">{h}</span>)}
             </div>
             {c.variants.map((v) => (
-              <div key={v.id} className="grid gap-4 border-b border-border px-5 py-5 last:border-0 sm:grid-cols-[1.1fr_0.7fr_0.9fr_17.5rem] sm:items-center">
+              <div key={v.id} className="grid gap-4 border-b border-border px-5 py-5 last:border-0 sm:grid-cols-[1.1fr_0.7fr_0.9fr] sm:items-center 2xl:grid-cols-[1fr_0.6fr_0.8fr_auto]">
                 <div className="grid gap-1">
                   <span className="font-medium tabular-nums">{isVintage ? (v.vintage ?? "—") : (v.size ?? c.name)}</span>
                   <StockLabel level={v.stock} qty={v.stockQty} />
@@ -111,7 +111,7 @@ export default function Product({ loaderData }: Route.ComponentProps) {
                   <span className="text-sm tabular-nums">{v.sku}</span>
                   {v.price && <span className="text-[13px] text-muted-fg tabular-nums">{formatMoney(v.price.display, shop.currency, locale)}</span>}
                 </div>
-                <AddToList variantId={v.id} packSize={v.packSize} compact disabled={v.stock === "out"} />
+                <div className="sm:col-span-3 2xl:col-span-1"><AddToList variantId={v.id} packSize={v.packSize} compact disabled={v.stock === "out"} /></div>
               </div>
             ))}
           </div>
@@ -131,7 +131,7 @@ export default function Product({ loaderData }: Route.ComponentProps) {
           )}
           {!showPrices && !user && <Notice>{t("auth.tradeText")} <Link to="/trade#apply" className="font-medium underline underline-offset-4">{t("trade.apply")}</Link></Notice>}
 
-          {(p.description || p.short) && (
+          {(p.description || (p.short && p.short !== p.producer?.name)) && (
             <div className="grid gap-3">
               <h2 className="text-eyebrow text-[11px] text-muted-fg">{t("product.details")}</h2>
               <p className="text-lead whitespace-pre-line">{p.description || p.short}</p>

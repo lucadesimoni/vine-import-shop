@@ -18,7 +18,9 @@
     "e2e": "node tests/e2e/smoke.mjs",
     "smoke": "tsx scripts/smoke.ts",
     "vinx:spec": "node scripts/vinx-spec.mjs",
-    "e2e:platform": "node tests/e2e/platform.mjs"
+    "e2e:platform": "node tests/e2e/platform.mjs",
+    "setup": "node scripts/setup.mjs",
+    "release": "node scripts/release.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",
@@ -54,5 +56,6 @@
     "vite": "^8.3.8",
     "vitest": "^5.1.0",
     "wait-on": "^9.5.1"
-  }
+  },
+  "version": "1.0.0"
 }

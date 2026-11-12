@@ -16,6 +16,25 @@ npm run dev            # http://localhost:5173 — creates an embedded DB + demo
 | Gastro customer (B2B, approved) | `gastro@demo.ch` / `gastro-demo-1234` |
 | Private customer | `kunde@demo.ch` / `kunde-demo-1234` |
 
+## Deploy in 3 steps
+
+```bash
+# 1 · download the ready-to-run release (GitHub › Releases) onto your server
+curl -L https://github.com/<org>/<repo>/releases/latest/download/shop-<version>.tar.gz | tar xz && cd shop
+# 2 · install: detects Hostpoint Flex (CSC), Linux/systemd or plain Node and sets everything up
+./deploy/install.sh --production
+# 3 · point your domain at it (Hostpoint: Control Panel › "Nginx Custom Mode", port 8080)
+```
+
+**Docker:** `npm run setup && docker compose up -d`.
+**PaaS:** connect the repo (`Procfile`).
+**Kubernetes:** `deploy/k8s/shop.yaml`.
+
+- There's no database server to install: it uses an embedded database, or PostgreSQL via `DATABASE_URL`.
+- Migrations, secrets and the job scheduler are automatic.
+- Updates: run the same three steps again (data and `.env` are kept).
+- Details per host, including Swiss providers: [docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## Stack — and why
 
 | Layer | Choice | Reason |

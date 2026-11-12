@@ -16,7 +16,8 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/build ./build
 COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/public ./public
-COPY package.json server.js ./
+COPY package.json server.js passenger.cjs ./
+COPY deploy ./deploy
 RUN mkdir -p data && chown -R node:node data
 USER node
 VOLUME ["/app/data"]
