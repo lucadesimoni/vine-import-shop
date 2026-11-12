@@ -74,6 +74,7 @@ export function Header() {
   }, []);
 
   return (
+    <>
     <header className={cn("sticky top-0 z-40 border-b bg-bg/90 backdrop-blur-md transition-[border-color,box-shadow] duration-300", scrolled ? "border-border shadow-bar" : "border-transparent")}>
       {announcement && (
         <div className="bg-primary px-4 py-1.5 text-center text-[11px] tracking-wide text-on-primary">{announcement}</div>
@@ -148,7 +149,9 @@ export function Header() {
         </Form>
       )}
 
-      {/* Mobile navigation */}
+    </header>
+
+      {/* Mobile navigation — outside <header>: its backdrop-filter would become the containing block of position:fixed */}
       <div className={cn("fixed inset-0 z-50 lg:hidden", open ? "visible" : "invisible delay-300")} aria-hidden={!open}>
         <div className={cn("absolute inset-0 bg-fg/40 transition-opacity duration-300", open ? "opacity-100" : "opacity-0")} onClick={() => setOpen(false)} />
         <nav className={cn("absolute inset-y-0 left-0 flex w-[min(360px,88vw)] flex-col bg-bg px-6 pb-8 pt-5 shadow-pop transition-transform duration-300 ease-out", open ? "translate-x-0" : "-translate-x-full")}>
@@ -178,7 +181,7 @@ export function Header() {
           </div>
         </nav>
       </div>
-    </header>
+    </>
   );
 }
 
@@ -400,7 +403,7 @@ export function AddToList({ variantId, packSize = 1, compact = false, iconOnly =
           {done ? <Check size={16} /> : <ShoppingBag size={16} strokeWidth={1.6} />}
         </Button>
       ) : (
-      <Button type="submit" size={compact ? "sm" : "md"} disabled={busy || disabled} className={cn(compact ? "" : "min-w-[13rem]", done && "bg-success!")}>
+      <Button type="submit" size={compact ? "sm" : "md"} disabled={busy || disabled} className={cn(compact ? "min-w-0 flex-1 sm:flex-none" : "min-w-[13rem]", done && "bg-success!")}>
         {done ? <><Check size={16} /> {t("product.added")}</> : <>{!compact && <ShoppingBag size={16} strokeWidth={1.6} />} {t("product.add")}</>}
       </Button>
       )}
@@ -409,5 +412,5 @@ export function AddToList({ variantId, packSize = 1, compact = false, iconOnly =
 }
 
 export function Toast({ children }: { children: ReactNode }) {
-  return <div role="status" className="animate-fade-up fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-btn bg-fg px-5 py-3 text-sm text-bg shadow-pop">{children}</div>;
+  return <div role="status" className="animate-fade-up fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-1/2 z-50 max-w-[calc(100vw-2rem)] -translate-x-1/2 lg:bottom-6 rounded-btn bg-fg px-5 py-3 text-sm text-bg shadow-pop">{children}</div>;
 }

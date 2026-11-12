@@ -99,6 +99,7 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    overflow-x: clip; /* safety net: nothing may ever cause sideways scrolling on phones */
     scroll-behavior: smooth;
   }
   body {

@@ -67,5 +67,7 @@ describe("cn()", () => {
   it("lets the last display utility win so responsive hiding works on components", () => {
     expect(cn("inline-flex items-center", "hidden md:inline-flex")).toBe("items-center hidden md:inline-flex");
     expect(cn("flex", false, "gap-2")).toBe("flex gap-2");
+    expect(cn("h-11 w-full px-3", "w-20 md:w-28")).toBe("h-11 px-3 w-20 md:w-28");
+    expect(cn("h-11 w-11", "h-8 w-8")).toBe("h-8 w-8");
   });
 });

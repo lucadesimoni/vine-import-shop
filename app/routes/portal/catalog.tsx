@@ -66,9 +66,9 @@ export default function PortalCatalog({ loaderData }: Route.ComponentProps) {
         <EmptyState icon={<Search size={26} strokeWidth={1.4} />} title={t("shop.empty")} text={t("shop.emptyHint")} action={<Link to="/portal/catalog" className="text-sm underline underline-offset-4">{t("shop.resetFilters")}</Link>} />
       ) : (
         <Form method="post" action="/portal/quick-order" className={cn("grid gap-0 transition-opacity", loading && "opacity-50")}>
-          <Card className="mb-4 overflow-x-auto">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead>
+          <Card className="mb-4 md:overflow-x-auto">
+            <table className="w-full text-sm md:min-w-[760px]">
+              <thead className="hidden md:table-header-group">
                 <tr className="border-b border-border text-left">
                   {["", t("cart.item"), t("product.art"), t("portal.stock"), t("portal.unitPrice"), t("cart.qty")].map((h, i) => (
                     <th key={i} className={cn("text-eyebrow px-4 py-3 text-[10px] font-semibold text-muted-fg", i >= 4 && "text-right")}>{h}</th>
@@ -78,26 +78,26 @@ export default function PortalCatalog({ loaderData }: Route.ComponentProps) {
               <tbody>
                 {result.items.flatMap((p) =>
                   p.variants.map((v, i) => (
-                    <tr key={v.id} className="border-b border-border last:border-0 hover:bg-bg/60">
-                      <td className="w-14 py-2 pl-4">{i === 0 && <Link to={`/portal/product/${p.slug}`} className="relative block h-12 w-10 rounded-badge bg-media p-0.5" tabIndex={-1}><ProductImage product={p} /></Link>}</td>
-                      <td className="px-4 py-2.5">
+                    <tr key={v.id} className={cn("grid grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 border-b border-border px-3 py-3 last:border-0 hover:bg-bg/60 md:table-row md:p-0", i > 0 && "md:border-t-0")}>
+                      <td className="row-span-2 self-start md:w-14 md:py-2 md:pl-4">{i === 0 && <Link to={`/portal/product/${p.slug}`} className="relative block h-12 w-10 rounded-badge bg-media p-0.5" tabIndex={-1}><ProductImage product={p} /></Link>}</td>
+                      <td className="min-w-0 md:px-4 md:py-2.5">
                         {i === 0 ? (
                           <>
                             <Link to={`/portal/product/${p.slug}`} className="font-medium hover:underline">{p.name}</Link>
                             {p.promo && <Badge tone="primary" className="ml-2 align-middle">{t("shop.promo")}</Badge>}
-                            <span className="block text-[12px] text-muted-fg">{[p.producer?.name, v.vintage, v.size].filter(Boolean).join(" · ")}</span>
+                            <span className="block truncate text-[12px] text-muted-fg">{[p.producer?.name, v.vintage, v.size].filter(Boolean).join(" · ")}<span className="md:hidden"> · {v.sku}</span></span>
                           </>
                         ) : (
-                          <span className="block pl-0 text-[12px] text-muted-fg">{[v.vintage, v.size].filter(Boolean).join(" · ")}</span>
+                          <span className="block pl-0 text-[12px] text-muted-fg">{[v.vintage, v.size].filter(Boolean).join(" · ")}<span className="md:hidden"> · {v.sku}</span></span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 font-mono text-[12px] text-muted-fg">{v.sku}</td>
-                      <td className="px-4 py-2.5"><StockLabel level={v.stock} qty={v.stockQty} /></td>
-                      <td className="px-4 py-2.5 text-right tabular-nums">
+                      <td className="hidden px-4 py-2.5 font-mono text-[12px] text-muted-fg md:table-cell">{v.sku}</td>
+                      <td className="col-start-2 row-start-2 md:px-4 md:py-2.5"><StockLabel level={v.stock} qty={v.stockQty} /></td>
+                      <td className="col-start-3 row-start-1 text-right tabular-nums md:px-4 md:py-2.5">
                         {v.price ? formatMoney(v.price.display, shop.currency, locale) : "—"}
                         {v.price?.applied?.length ? <span className="block text-[11px] text-primary">{v.price.applied.map((a) => a.label).join(" · ")}</span> : v.price && v.price.tiers.length > 0 && <span className="block text-[11px] text-primary">{t("price.tiers")}</span>}
                       </td>
-                      <td className="w-28 px-4 py-2 text-right">
+                      <td className="col-start-3 row-start-2 text-right md:w-28 md:px-4 md:py-2">
                         <Input name={`qty:${v.id}`} type="number" min={0} step={1} placeholder="0" aria-label={`${t("cart.qty")} ${p.name}`} size="sm" className="ml-auto w-20 text-right tabular-nums" disabled={v.stock === "out"} />
                       </td>
                     </tr>
@@ -106,9 +106,9 @@ export default function PortalCatalog({ loaderData }: Route.ComponentProps) {
               </tbody>
             </table>
           </Card>
-          <div className="sticky bottom-0 z-10 -mx-4 flex items-center justify-between gap-4 border-t border-border bg-bg/90 px-4 py-4 backdrop-blur-md">
-            <p className="text-[13px] text-muted-fg">{t("portal.netHint")}</p>
-            <Button type="submit" disabled={busy}><ClipboardList size={16} /> {t("portal.addSelected")}</Button>
+          <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 -mx-4 flex items-center justify-between gap-4 border-t border-border bg-bg/90 px-4 py-3 backdrop-blur-md lg:bottom-0 lg:py-4">
+            <p className="hidden text-[13px] text-muted-fg sm:block">{t("portal.netHint")}</p>
+            <Button type="submit" disabled={busy} className="w-full sm:w-auto"><ClipboardList size={16} /> {t("portal.addSelected")}</Button>
           </div>
         </Form>
       )}

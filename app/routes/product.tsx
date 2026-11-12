@@ -105,17 +105,21 @@ export default function Product({ loaderData }: Route.ComponentProps) {
               {[isVintage ? t("product.vintage") : t("product.variant"), t("product.format"), t("product.art")].map((h, i) => <span key={i} className="text-eyebrow text-[10px] text-muted-fg">{h}</span>)}
             </div>
             {c.variants.map((v) => (
-              <div key={v.id} className="grid gap-4 border-b border-border px-5 py-5 last:border-0 sm:grid-cols-[1.1fr_0.7fr_0.9fr] sm:items-center 2xl:grid-cols-[1fr_0.6fr_0.8fr_auto]">
+              <div key={v.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-3 border-b border-border px-4 py-4 last:border-0 sm:grid-cols-[1.1fr_0.7fr_0.9fr] sm:items-center sm:gap-4 sm:px-5 sm:py-5 2xl:grid-cols-[1fr_0.6fr_0.8fr_auto]">
                 <div className="grid gap-1">
-                  <span className="font-medium tabular-nums">{isVintage ? (v.vintage ?? "—") : (v.size ?? c.name)}</span>
+                  <span className="font-medium tabular-nums">
+                    {isVintage ? (v.vintage ?? "—") : (v.size ?? c.name)}
+                    {isVintage && v.size && <span className="font-normal text-muted-fg sm:hidden"> · {v.size}</span>}
+                  </span>
                   <StockLabel level={v.stock} qty={v.stockQty} />
+                  <span className="text-[12px] text-muted-fg tabular-nums sm:hidden">{t("product.art")} {v.sku}</span>
                 </div>
-                <span className="text-sm">{v.size ?? "—"}</span>
-                <div className="grid gap-0.5">
-                  <span className="text-sm tabular-nums">{v.sku}</span>
-                  {v.price && <span className="text-[13px] text-muted-fg tabular-nums">{formatMoney(v.price.display, shop.currency, locale)}</span>}
+                <span className="hidden text-sm sm:block">{v.size ?? "—"}</span>
+                <div className="grid justify-items-end gap-0.5 sm:justify-items-start">
+                  <span className="hidden text-sm tabular-nums sm:inline">{v.sku}</span>
+                  {v.price && <span className="font-semibold tabular-nums sm:text-[13px] sm:font-normal sm:text-muted-fg">{formatMoney(v.price.display, shop.currency, locale)}</span>}
                 </div>
-                <div className="sm:col-span-3 2xl:col-span-1"><AddToList variantId={v.id} packSize={v.packSize} compact disabled={v.stock === "out"} /></div>
+                <div className="col-span-2 sm:col-span-3 2xl:col-span-1"><AddToList variantId={v.id} packSize={v.packSize} compact disabled={v.stock === "out"} /></div>
               </div>
             ))}
           </div>

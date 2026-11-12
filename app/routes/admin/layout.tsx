@@ -1,5 +1,6 @@
-import { Form, Link, NavLink, Outlet, redirect } from "react-router";
-import { ExternalLink, Grape, Percent, ShieldCheck, FileText, LayoutDashboard, LogOut, Package, Palette, PlugZap, Settings, ShoppingCart, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Form, Link, NavLink, Outlet, redirect, useLocation } from "react-router";
+import { ExternalLink, Grape, Menu, X, Percent, ShieldCheck, FileText, LayoutDashboard, LogOut, Package, Palette, PlugZap, Settings, ShoppingCart, Users } from "lucide-react";
 import { count, eq } from "drizzle-orm";
 import type { Route } from "./+types/layout";
 import { requireStaff, verifyPassword } from "~/.server/auth";
@@ -44,20 +45,28 @@ const NAV = [
 export default function AdminLayout({ loaderData }: Route.ComponentProps) {
   const { brand } = useRootData();
   const { user, badges } = loaderData;
+  const [open, setOpen] = useState(false);
+  const location = useLocation();
+  useEffect(() => setOpen(false), [location.pathname]);
+  const pending = Object.values(badges).reduce((a, b) => a + b, 0);
   return (
     <div className="min-h-screen bg-bg lg:grid lg:grid-cols-[248px_1fr]">
-      <aside className="flex flex-col gap-6 border-b border-border bg-surface px-4 py-5 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
+      <aside className="sticky top-0 z-30 flex flex-col gap-6 border-b border-border bg-surface px-4 py-3 lg:h-screen lg:border-b-0 lg:border-r lg:py-5">
         <div className="flex items-center gap-3 px-2">
+          <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label="Menü" className="relative -ml-2 grid h-10 w-10 place-items-center rounded-control hover:bg-muted lg:hidden">
+            {open ? <X size={20} /> : <Menu size={20} />}
+            {!open && pending > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />}
+          </button>
           {brand.logoUrl ? <img src={brand.logoUrl} alt="" className="h-8 w-auto" /> : <span className="grid h-8 w-8 place-items-center rounded-control bg-primary text-on-primary">{brand.name[0]}</span>}
           <div className="grid leading-tight">
             <span className="font-display text-lg">{brand.name}</span>
             <span className="text-eyebrow text-[9px] text-muted-fg">Admin</span>
           </div>
         </div>
-        <nav className="flex gap-1 overflow-x-auto lg:grid lg:content-start">
+        <nav className={cn("max-h-[calc(100dvh-4.5rem)] gap-1 overflow-y-auto pb-2 lg:grid lg:max-h-none lg:content-start lg:overflow-visible lg:pb-0", open ? "grid" : "hidden")}>
           {NAV.map((n, i) =>
             "section" in n ? (
-              <p key={i} className="text-eyebrow mt-4 hidden px-3 text-[9px] text-muted-fg lg:block">{n.section}</p>
+              <p key={i} className="text-eyebrow mt-4 px-3 text-[9px] text-muted-fg">{n.section}</p>
             ) : (
               <NavLink
                 key={n.to}
@@ -72,7 +81,7 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
             ),
           )}
         </nav>
-        <div className="mt-auto hidden gap-1 border-t border-border pt-4 text-[13px] lg:grid">
+        <div className={cn("mt-auto gap-1 border-t border-border pt-4 text-[13px] lg:grid", open ? "grid" : "hidden")}>
           <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-control px-3 py-2 text-fg/75 hover:bg-muted"><ExternalLink size={15} /> Shop ansehen</a>
           <Form method="post" action="/logout">
             <button className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-fg/75 hover:bg-muted"><LogOut size={15} /> Abmelden</button>
@@ -81,7 +90,7 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
           <Link to="/admin/system" className="block px-3 pt-1 text-[11px] text-muted-fg tabular-nums hover:text-fg">v{loaderData.version}</Link>
         </div>
       </aside>
-      <main className="min-w-0 px-6 py-8 md:px-10">
+      <main className="min-w-0 px-4 py-6 sm:px-6 md:px-10 md:py-8">
         <Outlet />
       </main>
     </div>

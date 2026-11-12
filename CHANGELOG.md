@@ -53,6 +53,15 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 - Language switch in the footer, so it is also reachable on phones. `npm run i18n:check` in CI keeps DE / IT / FR / EN complete.
 
 ### Fixed
+- **Phones.**
+  - The menu drawer was clipped to the header height and showed the page through it. It now renders outside the header.
+  - B2B portal: app-style bottom tab bar (overview, range, quick order, order list, orders) and a compact "more" menu (price list, shop, language, theme, logout).
+  - B2B order grid: rows become compact cards (name, article number, stock, price, quantity).
+  - Admin: menu button with the full navigation instead of a sideways-scrolling bar.
+  - Product variants: compact rows with the price on the right. Shorter "added" button label.
+  - Toasts sit above the tab bar. Sideways scrolling can no longer happen.
+- `cn()` resolves conflicting display / width / height utilities, so the width of an input or button is applied (the base `w-full` won before).
+- The German shop eyebrow said "Il sortimento".
 - On phones, header icons could be pushed off-screen: responsive `hidden` on buttons was overridden by the button's own display class.
 - Custom extensions that import `defineExtension` crashed the server at start (circular import).
 

@@ -16,6 +16,8 @@ const NAME = sql`coalesce(products.name->>'de', products.name::text)`;
 const PRICE = sql`(select min(vv.price_cents) from variants vv where vv.product_id = products.id)`;
 const STOCK = sql`(select coalesce(sum(vv.stock), 0) from variants vv where vv.product_id = products.id)`;
 
+const FIELD_LABELS: Record<string, string> = { price: "Preis", stock: "Lager", vintage: "Jahrgang", size: "Format", active: "Aktiv", taxClass: "MWST", packSize: "Gebinde" };
+
 const BULK = {
   activate: { label: "Aktivieren", field: "active", set: { active: true } },
   deactivate: { label: "Deaktivieren", field: "active", set: { active: false } },
@@ -90,7 +92,7 @@ export default function Products({ loaderData }: Route.ComponentProps) {
     <>
       <PageHeader
         title="Produkte"
-        subtitle={erp ? <span className="flex flex-wrap items-center gap-1.5"><Lock size={12} /> vinX führt {owned.join(", ")} — Texte, Bilder, Zuordnung & Sichtbarkeit pflegen Sie hier.</span> : "Texte, Bilder, Preise, Lager & Sichtbarkeit."}
+        subtitle={erp ? <span className="flex flex-wrap items-center gap-1.5"><Lock size={12} /> vinX führt {owned.map((f) => FIELD_LABELS[f] ?? f).join(", ")} — Texte, Bilder, Zuordnung & Sichtbarkeit pflegen Sie hier.</span> : "Texte, Bilder, Preise, Lager & Sichtbarkeit."}
         actions={<ButtonLink to="/admin/products/new" size="sm"><Plus size={15} /> Neues Produkt</ButtonLink>}
       />
       {result && "message" in result && <Notice tone="success" className="mb-5">{result.message}</Notice>}
