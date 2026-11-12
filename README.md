@@ -77,7 +77,7 @@ Commands: `npm test` (22 unit tests), `npm run e2e` (end-to-end browser smoke te
 - Swiss VAT: 8.1 % and 2.6 % on the same order.
 - Totals rounded to 5 Rappen, CHF formatting.
 - Age confirmation for alcohol, vouchers, rule-based shipping.
-- Payment by invoice, bank transfer, or Stripe (cards, Apple/Google Pay, TWINT).
+- Payment by invoice, bank transfer, or online through a pluggable provider registry: **Stripe**, **Mollie**, **Datatrans** (CH) and **Payrexx** (CH: TWINT, PostFinance Pay). Each uses a hosted payment page (no card data touches the shop) and a verified webhook at `POST /api/payments/<provider>`. Add Saferpay, wallee or PostFinance Checkout with `registerProvider()` in `app/.server/payments.ts`.
 - Branded order emails.
 
 **Admin.**

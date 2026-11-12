@@ -48,7 +48,7 @@ export default [
     route("cron", "routes/api/cron.ts"),
     route("vinx/webhook", "routes/api/vinx-webhook.ts"),
     route("vinx/import", "routes/api/vinx-import.ts"),
-    route("payments/stripe", "routes/api/stripe.ts"),
+    route("payments/:provider", "routes/api/payments.ts"),
     route("v1/products", "routes/api/products.ts"),
     route("health", "routes/api/health.ts"),
   ]),

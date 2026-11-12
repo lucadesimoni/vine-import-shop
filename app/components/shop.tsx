@@ -10,6 +10,7 @@ import { useRootData } from "~/lib/root-data";
 import { usePath } from "~/lib/channel";
 import type { ProductCard as Card } from "~/.server/catalog";
 import { Badge, Button, buttonClass, Stepper } from "./ui";
+import { Packshot, shapeFor } from "./packshot";
 
 /* ── Brand ─────────────────────────────────────────────────────────────── */
 
@@ -244,44 +245,26 @@ export function Footer() {
 
 /* ── Product presentation ──────────────────────────────────────────────── */
 
-/** Placeholder art is drawn from brand tokens only (adapts to every palette & dark mode). */
-const ART_TONES: Record<string, string> = {
-  red: "var(--t-primary)",
-  white: "color-mix(in oklab, var(--t-accent) 70%, var(--t-card))",
-  rose: "color-mix(in oklab, var(--t-primary) 45%, var(--t-card))",
-  sparkling: "color-mix(in oklab, var(--t-accent) 55%, var(--t-card))",
-  sweet: "color-mix(in oklab, var(--t-accent) 80%, var(--t-fg))",
-  spirit: "color-mix(in oklab, var(--t-muted-fg) 55%, var(--t-card))",
-  food: "color-mix(in oklab, var(--t-muted-fg) 70%, var(--t-card))",
-  beverage: "color-mix(in oklab, var(--t-muted-fg) 45%, var(--t-card))",
+type ImageProduct = Pick<Card, "image" | "name" | "kind" | "color"> & {
+  category?: { slug: string } | null;
+  producer?: { name: string } | string | null;
+  size?: string | null;
 };
 
-/** Product image with an on-brand fallback silhouette when no packshot exists. */
-export function ProductImage({ product, className }: { product: Pick<Card, "image" | "name" | "kind" | "color">; className?: string }) {
+/** Product photo, or an on-brand packshot illustration (shape by product type, real name on the label). */
+export function ProductImage({ product, className }: { product: ImageProduct; className?: string }) {
   if (product.image)
     return (
       <span className="relative block h-full w-full">
         <img src={product.image} alt={product.name} loading="lazy" decoding="async" className={cn("absolute inset-0 h-full w-full object-contain", className)} />
       </span>
     );
-  const tone = ART_TONES[product.color ?? product.kind] ?? ART_TONES.food;
-  const bottle = product.kind === "wine" || product.kind === "spirit" || product.kind === "beverage";
+  const producer = typeof product.producer === "string" ? product.producer : product.producer?.name;
+  const shape = shapeFor({ kind: product.kind, color: product.color, category: product.category?.slug, name: product.name, size: product.size });
   return (
-    <svg viewBox="0 0 200 300" role="img" aria-label={product.name} preserveAspectRatio="xMidYMid meet" className={cn("block h-full w-full", className)}>
-      {bottle ? (
-        <>
-          <path d="M90 22h20v60c0 10 26 22 26 52v146c0 6-4 10-10 10H74c-6 0-10-4-10-10V134c0-30 26-42 26-52z" style={{ fill: tone }} />
-          <rect x="88" y="16" width="24" height="24" rx="3" style={{ fill: "var(--t-fg)" }} opacity=".85" />
-          <rect x="72" y="172" width="56" height="66" rx="2" style={{ fill: "var(--t-media)" }} opacity=".92" />
-        </>
-      ) : (
-        <>
-          <rect x="62" y="72" width="76" height="16" rx="4" style={{ fill: "var(--t-fg)" }} opacity=".8" />
-          <rect x="56" y="88" width="88" height="160" rx="14" style={{ fill: tone }} />
-          <rect x="68" y="140" width="64" height="56" rx="3" style={{ fill: "var(--t-media)" }} opacity=".92" />
-        </>
-      )}
-    </svg>
+    <span className={cn("relative block h-full w-full", className)}>
+      <Packshot name={product.name} producer={producer} shape={shape} color={product.color} />
+    </span>
   );
 }
 

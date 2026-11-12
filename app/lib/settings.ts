@@ -134,6 +134,12 @@ export const shopSchema = z.object({
       invoice: z.object({ enabled: z.boolean().default(true), tradeOnly: z.boolean().default(true), termsDays: z.number().int().default(30) }).prefault({}),
       prepayment: z.object({ enabled: z.boolean().default(true), holder: z.string().default(""), iban: z.string().default(""), bank: z.string().default("") }).prefault({}),
       stripe: z.object({ enabled: z.boolean().default(false) }).prefault({}),
+      /** Mollie (TWINT, cards, PostFinance …) — env MOLLIE_API_KEY. methods: restrict, e.g. ["twint","creditcard"] */
+      mollie: z.object({ enabled: z.boolean().default(false), methods: z.array(z.string()).default([]) }).prefault({}),
+      /** Datatrans (CH) — env DATATRANS_MERCHANT_ID, DATATRANS_PASSWORD, DATATRANS_HMAC_KEY, DATATRANS_ENV=production */
+      datatrans: z.object({ enabled: z.boolean().default(false), methods: z.array(z.string()).default([]) }).prefault({}),
+      /** Payrexx (CH: TWINT, PostFinance, cards) — env PAYREXX_INSTANCE, PAYREXX_API_SECRET */
+      payrexx: z.object({ enabled: z.boolean().default(false), methods: z.array(z.string()).default([]) }).prefault({}),
     })
     .prefault({}),
   trade: z

@@ -93,7 +93,8 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
   const [shipDifferent, setShipDifferent] = useState(false);
   const submitting = useNavigation().state === "submitting";
   const m = (c: number) => formatMoney(c, shop.currency, locale);
-  const payLabel: Record<string, MessageKey> = { invoice: "payment.invoice", prepayment: "payment.prepayment", stripe: "payment.stripe" };
+  const payLabel = (p: string) => `payment.${p}` as MessageKey;
+  const payText = (p: string) => (p === "invoice" ? t("payment.invoiceText", { days: 30 }) : t(`payment.${p}Text` as MessageKey));
 
   return (
     <div className="container-page pb-24 pt-12">
@@ -150,7 +151,7 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
               {errors.payment && <p className="text-sm text-danger">{errors.payment}</p>}
               <div className="grid gap-3">
                 {payments.map((p, i) => (
-                  <RadioCard key={p} name="payment" value={p} defaultChecked={i === 0} label={t(payLabel[p] ?? "payment.invoice")} description={p === "invoice" ? t("payment.invoiceText", { days: 30 }) : p === "prepayment" ? t("payment.prepaymentText") : t("payment.stripeText")} />
+                  <RadioCard key={p} name="payment" value={p} defaultChecked={i === 0} label={t(payLabel(p))} description={payText(p)} />
                 ))}
               </div>
             </Section>

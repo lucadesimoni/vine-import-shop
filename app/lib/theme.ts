@@ -34,7 +34,10 @@ export type Palette = {
   bg: string; fg: string; card: string; primary: string; onPrimary: string; muted: string; mutedFg: string; accent: string; border: string;
   inverse: string; onInverse: string; media: string; scrim: string; shadow: string;
   success: string; successSoft: string; warning: string; warningSoft: string; danger: string; dangerSoft: string; onDanger: string;
+  /** product-material tones for packshot placeholders */
+  artOil: string; artGlass: string; artSpirit: string; artDairy: string;
 };
+const ART = { artOil: "#7d7a2e", artGlass: "#c9c48f", artSpirit: "#b8c0c2", artDairy: "#f1ede6" };
 
 /** Light palette = the brand colours from the admin + fixed, accessible status colours. */
 export function lightPalette(brand: Brand): Palette {
@@ -45,6 +48,7 @@ export function lightPalette(brand: Brand): Palette {
     media: c.card, scrim: "#000000", shadow: "#000000",
     success: "#2f6b45", successSoft: mix(c.card, "#2f6b45", 0.1), warning: "#8a5a12", warningSoft: mix(c.card, "#b9822b", 0.13),
     danger: "#a12a2a", dangerSoft: mix(c.card, "#a12a2a", 0.09), onDanger: "#ffffff",
+    ...ART,
   };
 }
 
@@ -70,6 +74,7 @@ export function darkPalette(brand: Brand): Palette {
     scrim: "#000000", shadow: "#000000",
     success: "#7cc196", successSoft: mix(card, "#7cc196", 0.14), warning: "#e0b25c", warningSoft: mix(card, "#e0b25c", 0.14),
     danger: "#f08a8a", dangerSoft: mix(card, "#f08a8a", 0.13), onDanger: "#1a0d0d",
+    ...ART, // packshots sit on the light media stage in both modes
   };
 }
 
@@ -77,6 +82,7 @@ const COLOR_VARS: Record<keyof Palette, string> = {
   bg: "--t-bg", fg: "--t-fg", card: "--t-card", primary: "--t-primary", onPrimary: "--t-on-primary", muted: "--t-muted", mutedFg: "--t-muted-fg",
   accent: "--t-accent", border: "--t-border", inverse: "--t-inverse", onInverse: "--t-on-inverse", media: "--t-media", scrim: "--t-scrim", shadow: "--t-shadow",
   success: "--t-success", successSoft: "--t-success-soft", warning: "--t-warning", warningSoft: "--t-warning-soft", danger: "--t-danger", dangerSoft: "--t-danger-soft", onDanger: "--t-on-danger",
+  artOil: "--t-art-oil", artGlass: "--t-art-glass", artSpirit: "--t-art-spirit", artDairy: "--t-art-dairy",
 };
 const colorVars = (p: Palette) => Object.fromEntries(Object.entries(COLOR_VARS).map(([k, v]) => [v, p[k as keyof Palette]]));
 

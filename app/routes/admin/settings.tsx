@@ -19,7 +19,14 @@ const CHANNEL_HINTS: Record<string, string> = {
 export async function loader() {
   const db = await getDb();
   const [{ shop }, groups] = await Promise.all([getSettings("shop"), db.select().from(schema.customerGroups).orderBy(asc(schema.customerGroups.id))]);
-  return { shop, groups, stripeKey: !!process.env.STRIPE_SECRET_KEY, priceSources: listPriceSources() };
+  const e = process.env;
+  const keys = {
+    stripe: !!e.STRIPE_SECRET_KEY && !!e.STRIPE_WEBHOOK_SECRET,
+    mollie: !!e.MOLLIE_API_KEY,
+    datatrans: !!e.DATATRANS_MERCHANT_ID && !!e.DATATRANS_PASSWORD && !!e.DATATRANS_HMAC_KEY,
+    payrexx: !!e.PAYREXX_INSTANCE && !!e.PAYREXX_API_SECRET,
+  };
+  return { shop, groups, keys, priceSources: listPriceSources() };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -63,6 +70,9 @@ export async function action({ request }: Route.ActionArgs) {
       invoice: { enabled: form.has("pay.invoice"), tradeOnly: form.has("pay.invoiceTradeOnly"), termsDays: Number(o.invoiceDays) || 30 },
       prepayment: { enabled: form.has("pay.prepayment"), holder: o.bank.holder, iban: o.bank.iban, bank: o.bank.bank },
       stripe: { enabled: form.has("pay.stripe") },
+      mollie: { enabled: form.has("pay.mollie"), methods: list(o.pay?.mollieMethods) },
+      datatrans: { enabled: form.has("pay.datatrans"), methods: list(o.pay?.datatransMethods) },
+      payrexx: { enabled: form.has("pay.payrexx"), methods: list(o.pay?.payrexxMethods) },
     },
     trade: { ...shop.trade, requireUid: form.has("trade.requireUid"), defaultGroup: o.trade.defaultGroup, quickOrder: form.has("trade.quickOrder"), priceListExport: form.has("trade.priceListExport") },
   });
@@ -73,13 +83,15 @@ export async function action({ request }: Route.ActionArgs) {
   return { ok: true };
 }
 
+const list = (v: unknown) => String(v ?? "").split(/[,\s]+/).map((x) => x.trim()).filter(Boolean);
+
 /** "https://B2B.example.ch/" → "b2b.example.ch" */
 function cleanHost(v: unknown) {
   return String(v ?? "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/[/:].*$/, "");
 }
 
 export default function Settings({ loaderData }: Route.ComponentProps) {
-  const { shop, groups, stripeKey, priceSources } = loaderData;
+  const { shop, groups, keys, priceSources } = loaderData;
   const result = useActionData<typeof action>();
   return (
     <Form method="post">
@@ -201,7 +213,15 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
             <Toggle name="pay.invoice" label="Rechnung" defaultChecked={shop.payments.invoice.enabled} />
             <Toggle name="pay.invoiceTradeOnly" label="Rechnung nur für Geschäftskunden" defaultChecked={shop.payments.invoice.tradeOnly} />
             <Toggle name="pay.prepayment" label="Vorauskasse" defaultChecked={shop.payments.prepayment.enabled} />
-            <Toggle name="pay.stripe" label="Karte / TWINT (Stripe)" description={stripeKey ? "Schlüssel konfiguriert" : "STRIPE_SECRET_KEY fehlt (Umgebungsvariable)"} defaultChecked={shop.payments.stripe.enabled} />
+            <Toggle name="pay.stripe" label="Stripe — Karte, Apple/Google Pay, TWINT" description={keys.stripe ? "Schlüssel konfiguriert · Webhook /api/payments/stripe" : "STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET fehlen (Umgebungsvariablen)"} defaultChecked={shop.payments.stripe.enabled} />
+            <Toggle name="pay.mollie" label="Mollie — TWINT, Karte, PostFinance" description={keys.mollie ? "Schlüssel konfiguriert · Webhook /api/payments/mollie" : "MOLLIE_API_KEY fehlt"} defaultChecked={shop.payments.mollie.enabled} />
+            <Toggle name="pay.datatrans" label="Datatrans (CH) — TWINT, Karte, PostFinance" description={keys.datatrans ? "Konfiguriert · Webhook /api/payments/datatrans" : "DATATRANS_MERCHANT_ID / _PASSWORD / _HMAC_KEY fehlen"} defaultChecked={shop.payments.datatrans.enabled} />
+            <Toggle name="pay.payrexx" label="Payrexx (CH) — TWINT, PostFinance Pay, Karte" description={keys.payrexx ? "Konfiguriert · Webhook /api/payments/payrexx" : "PAYREXX_INSTANCE / PAYREXX_API_SECRET fehlen"} defaultChecked={shop.payments.payrexx.enabled} />
+            <div className="grid gap-3 py-3 sm:grid-cols-3">
+              <Field label="Mollie-Methoden" hint="leer = alle aktiven">{(id) => <Input id={id} name="pay.mollieMethods" size="sm" defaultValue={shop.payments.mollie.methods.join(", ")} placeholder="twint, creditcard" />}</Field>
+              <Field label="Datatrans-Methoden" hint="z. B. TWI, VIS, ECA, PFC">{(id) => <Input id={id} name="pay.datatransMethods" size="sm" defaultValue={shop.payments.datatrans.methods.join(", ")} placeholder="TWI, VIS, ECA" />}</Field>
+              <Field label="Payrexx-Methoden" hint="z. B. twint, post-finance-pay">{(id) => <Input id={id} name="pay.payrexxMethods" size="sm" defaultValue={shop.payments.payrexx.methods.join(", ")} placeholder="twint, visa" />}</Field>
+            </div>
           </div>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <Field label="Zahlungsfrist (Tage)">{(id) => <Input id={id} name="invoiceDays" type="number" defaultValue={shop.payments.invoice.termsDays} />}</Field>

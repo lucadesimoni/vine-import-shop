@@ -82,7 +82,7 @@ function Line({ line: l, money, showPrice }: { line: Route.ComponentProps["loade
   return (
     <li className={`grid grid-cols-[64px_1fr_auto] items-center gap-x-4 gap-y-3 border-b border-border px-4 py-5 last:border-0 md:grid-cols-[72px_minmax(0,1fr)_128px_104px_36px] md:gap-5 md:px-6 ${busy ? "opacity-60" : ""}`}>
       <Link to={to(`/product/${l.productSlug}`)} className="relative row-span-2 aspect-square rounded-control bg-media ring-1 ring-border md:row-span-1">
-        <span className="absolute inset-1.5"><ProductImage product={{ image: l.image, name: l.name, kind: l.kind, color: l.color }} /></span>
+        <span className="absolute inset-1.5"><ProductImage product={{ image: l.image, name: l.name, kind: l.kind, color: l.color, producer: l.producer, size: l.size }} /></span>
       </Link>
       <div className="min-w-0">
         <Link to={to(`/product/${l.productSlug}`)} className="font-medium leading-snug hover:underline">{l.name}</Link>
