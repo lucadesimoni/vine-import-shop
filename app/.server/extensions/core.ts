@@ -22,4 +22,12 @@ const vinx = defineExtension({
   },
 });
 
-export const coreExtensions = [vinx];
+const maintenance = defineExtension({
+  id: "core:maintenance",
+  name: "Backups & Wartung",
+  setup(api) {
+    api.registerJob({ id: "backup", label: "Backup (täglich)", scheduled: true, run: async () => (await import("../maintenance")).backupIfDue() });
+  },
+});
+
+export const coreExtensions = [vinx, maintenance];

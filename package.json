@@ -21,7 +21,9 @@
     "e2e:platform": "node tests/e2e/platform.mjs",
     "setup": "node scripts/setup.mjs",
     "release": "node scripts/release.mjs",
-    "up": "npm ci && npm run build && npm start"
+    "up": "npm ci && npm run build && npm start",
+    "backup": "tsx scripts/backup.ts",
+    "restore": "tsx scripts/restore.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",

@@ -22,15 +22,30 @@ async function migrationFiles(): Promise<Record<string, string>> {
   return Object.fromEntries(journal.entries.map((e) => [e.tag, readFileSync(`${dir}/${e.tag}.sql`, "utf8")]));
 }
 
-export async function runMigrations(db: Executor) {
+/** Latest migration this app version knows (journal timestamp). */
+export const latestKnownMigration = Math.max(...journal.entries.map((e) => e.when));
+export const knownMigrations = journal.entries.length;
+
+export class SchemaTooNewError extends Error {}
+
+export async function runMigrations(db: Executor, hooks: { beforeApply?: (pending: string[], appliedBefore: number) => Promise<void> } = {}) {
   const files = await migrationFiles();
   await db.execute(sql.raw(`CREATE SCHEMA IF NOT EXISTS "drizzle"`));
   await db.execute(sql.raw(`CREATE TABLE IF NOT EXISTS "drizzle"."__drizzle_migrations" (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint)`));
   const res = (await db.execute(sql.raw(`SELECT created_at FROM "drizzle"."__drizzle_migrations" ORDER BY created_at DESC LIMIT 1`))) as { rows?: { created_at: string }[] } | { created_at: string }[];
   const rows = Array.isArray(res) ? res : (res.rows ?? []);
   const last = rows[0] ? Number(rows[0].created_at) : 0;
-  for (const e of journal.entries) {
-    if (e.when <= last) continue;
+  // Downgrade guard: never run an older app against a schema it doesn't know.
+  if (last > latestKnownMigration) {
+    throw new SchemaTooNewError("The database was upgraded by a newer version of the shop. Start that newer version again, or restore the backup taken before the update (see docs/UPDATING.md).");
+  }
+  const pending = journal.entries.filter((e) => e.when > last);
+  if (pending.length && hooks.beforeApply) {
+    const applied = (await db.execute(sql.raw(`SELECT count(*)::int AS n FROM "drizzle"."__drizzle_migrations"`))) as { rows?: { n: number }[] } | { n: number }[];
+    const n = Number((Array.isArray(applied) ? applied : (applied.rows ?? []))[0]?.n ?? 0);
+    await hooks.beforeApply(pending.map((e) => e.tag), n);
+  }
+  for (const e of pending) {
     const content = files[e.tag];
     if (content == null) throw new Error(`migration ${e.tag} missing from bundle`);
     const hash = createHash("sha256").update(content).digest("hex");

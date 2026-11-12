@@ -1,21 +1,27 @@
-import { Form, NavLink, Outlet } from "react-router";
-import { ExternalLink, Percent, FileText, LayoutDashboard, LogOut, Package, Palette, PlugZap, Settings, ShoppingCart, Users } from "lucide-react";
+import { Form, Link, NavLink, Outlet, redirect } from "react-router";
+import { ExternalLink, Percent, ShieldCheck, FileText, LayoutDashboard, LogOut, Package, Palette, PlugZap, Settings, ShoppingCart, Users } from "lucide-react";
 import { count, eq } from "drizzle-orm";
 import type { Route } from "./+types/layout";
-import { requireStaff } from "~/.server/auth";
+import { requireStaff, verifyPassword } from "~/.server/auth";
+import { APP_VERSION } from "~/.server/maintenance";
 import { getDb, schema } from "~/.server/db";
 import { cn } from "~/lib/cn";
 import { useRootData } from "~/lib/root-data";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await requireStaff(request);
+  // Live installations (no demo data) must not keep the default admin password.
+  if ((process.env.DEMO_DATA ?? "true") === "false" && !new URL(request.url).pathname.startsWith("/admin/password")) {
+    const row = await (await getDb()).query.users.findFirst({ where: eq(schema.users.id, user.id) });
+    if (row && (await verifyPassword("admin-demo-1234", row.passwordHash))) throw redirect("/admin/password?required");
+  }
   const db = await getDb();
   const [[pending], [newOrders], [failed]] = await Promise.all([
     db.select({ n: count() }).from(schema.users).where(eq(schema.users.tradeStatus, "pending")),
     db.select({ n: count() }).from(schema.orders).where(eq(schema.orders.status, "new")),
     db.select({ n: count() }).from(schema.erpOutbox).where(eq(schema.erpOutbox.status, "failed")),
   ]);
-  return { user: { name: user.name, email: user.email }, badges: { customers: pending.n, orders: newOrders.n, integrations: failed.n } };
+  return { version: APP_VERSION, user: { name: user.name, email: user.email }, badges: { customers: pending.n, orders: newOrders.n, integrations: failed.n } };
 }
 
 export const meta: Route.MetaFunction = () => [{ title: "Admin" }, { name: "robots", content: "noindex" }];
@@ -31,6 +37,7 @@ const NAV = [
   { to: "/admin/content", label: "Inhalte", icon: FileText },
   { to: "/admin/settings", label: "Einstellungen", icon: Settings },
   { to: "/admin/integrations", label: "vinX ERP", icon: PlugZap, badge: "integrations" },
+  { to: "/admin/system", label: "System & Backups", icon: ShieldCheck },
 ] as const;
 
 export default function AdminLayout({ loaderData }: Route.ComponentProps) {
@@ -70,6 +77,7 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
             <button className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-fg/75 hover:bg-muted"><LogOut size={15} /> Abmelden</button>
           </Form>
           <p className="truncate px-3 pt-2 text-[12px] text-muted-fg">{user.email}</p>
+          <Link to="/admin/system" className="block px-3 pt-1 text-[11px] text-muted-fg tabular-nums hover:text-fg">v{loaderData.version}</Link>
         </div>
       </aside>
       <main className="min-w-0 px-6 py-8 md:px-10">

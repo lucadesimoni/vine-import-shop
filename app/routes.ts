@@ -66,5 +66,8 @@ export default [
     route("content", "routes/admin/content.tsx"),
     route("settings", "routes/admin/settings.tsx"),
     route("integrations", "routes/admin/integrations.tsx"),
+    route("system", "routes/admin/system.tsx"),
+    route("system/backups/:name", "routes/admin/backup-download.ts"),
+    route("password", "routes/admin/password.tsx"),
   ]),
 ] satisfies RouteConfig;

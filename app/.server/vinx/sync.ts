@@ -343,7 +343,7 @@ export async function runScheduled(only?: string[]) {
   for (const id of ids) {
     const j = jobs.get(id);
     if (!j) { out[id] = { ok: false, message: "unknown job" }; continue; }
-    if (!cfg.enabled && !id.includes(":") && ["outbox", "stock", "prices", "conditions", "articles"].includes(id)) { out[id] = { ok: true, message: "vinx disabled" }; continue; }
+    if (!cfg.enabled && ["outbox", "stock", "prices", "conditions", "articles"].includes(id)) { out[id] = { ok: true, message: "vinx disabled" }; continue; }
     try { out[id] = await j.run(); } catch (e) { out[id] = { ok: false, message: (e as Error).message }; }
   }
   return out;

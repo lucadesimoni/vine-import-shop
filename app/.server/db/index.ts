@@ -11,7 +11,25 @@ import { runMigrations } from "./migrate";
  */
 export type DB = ReturnType<typeof drizzlePg<typeof schema>>;
 
+/** Connection facts used by backups / the admin system page. */
+export type DbInfo = { kind: "embedded"; dir: string; client: import("@electric-sql/pglite").PGlite } | { kind: "postgres"; url: string };
+let info: DbInfo | undefined;
+export const dbInfo = () => info;
+
 let dbPromise: Promise<DB> | undefined;
+
+/** Before applying migrations to an existing database: take a backup (rollback point). */
+const beforeApply = async (pending: string[], appliedBefore: number) => {
+  if (!appliedBefore) return; // fresh database — nothing to protect
+  const { createBackup } = await import("../maintenance");
+  try {
+    const b = await createBackup(`pre-update-${pending[0]}`);
+    console.log(`[db] backup before migrating (${pending.join(", ")}): ${b.name}`);
+  } catch (e) {
+    if (process.env.MIGRATE_WITHOUT_BACKUP !== "1") throw new Error(`Backup before migration failed (${(e as Error).message}). Fix it or set MIGRATE_WITHOUT_BACKUP=1 if your provider takes snapshots.`);
+    console.warn("[db] migrating without backup (MIGRATE_WITHOUT_BACKUP=1)");
+  }
+};
 
 async function connect(): Promise<DB> {
   const url = process.env.DATABASE_URL?.trim();
@@ -20,7 +38,8 @@ async function connect(): Promise<DB> {
     const { default: postgres } = await import("postgres");
     const client = postgres(url, { max: Number(process.env.DB_POOL ?? 10), prepare: false });
     const db = drizzlePg(client, { schema });
-    await runMigrations(db as never);
+    info = { kind: "postgres", url };
+    await runMigrations(db as never, { beforeApply });
     return db;
   }
 
@@ -33,9 +52,11 @@ async function connect(): Promise<DB> {
     const { mkdirSync } = await import("node:fs");
     mkdirSync(dir, { recursive: true });
   }
+  if (dir !== "memory") await (await import("../maintenance")).applyPendingRestore(dir);
   const client = dir === "memory" ? new PGlite() : new PGlite(dir);
   const db = drizzlePglite(client, { schema });
-  await runMigrations(db as never);
+  info = { kind: "embedded", dir, client };
+  await runMigrations(db as never, { beforeApply });
   // Same query API for both drivers.
   return db as unknown as DB;
 }
