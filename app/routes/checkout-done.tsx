@@ -25,7 +25,7 @@ export default function Done({ loaderData }: Route.ComponentProps) {
   const m = (c: number) => formatMoney(c, order.currency, locale);
   const request = order.kind === "request";
   return (
-    <div className="container-page grid justify-items-center py-20">
+    <div className="container-page grid justify-items-center section-y">
       <Card className="animate-fade-up grid w-full max-w-2xl justify-items-center gap-6 p-8 text-center md:p-12">
         <span className="grid h-16 w-16 place-items-center rounded-full bg-primary text-on-primary"><Check size={28} /></span>
         <h1 className="text-h1">{t("done.title")}</h1>

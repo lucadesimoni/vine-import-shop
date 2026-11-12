@@ -10,7 +10,7 @@ import type { MessageKey } from "~/lib/i18n";
 import { useI18n } from "~/lib/i18n";
 import { cn } from "~/lib/cn";
 import { useRootData } from "~/lib/root-data";
-import { Button, Chip, EmptyState, Eyebrow, Input, Select } from "~/components/ui";
+import { Button, Chip, EmptyState, Eyebrow, Input, Pagination, Select } from "~/components/ui";
 import { ProductGrid } from "~/components/shop";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -126,8 +126,8 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
   );
 
   return (
-    <div className="container-page pb-24 pt-12 md:pt-16">
-      <header className="mb-10 grid gap-3 md:mb-14">
+    <div className="container-page page-top">
+      <header className="mb-7 grid gap-2.5 md:mb-14 md:gap-3">
         <Eyebrow line>{t("shop.eyebrow")}</Eyebrow>
         <h1 className="text-h1">{activeCat?.name ?? (params.region ? regionLabel : params.origin ? countryName(params.origin, locale) : params.promo ? t("shop.promo") : t("shop.title"))}</h1>
         <p className="text-muted-fg">
@@ -139,15 +139,15 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
       <div className="grid gap-10 lg:grid-cols-[240px_1fr] lg:gap-14">
         <aside className="hidden lg:block">{Facets}</aside>
 
-        <div>
-          <div className="mb-8 flex flex-wrap items-center gap-3 border-b border-border pb-5">
-            <Form method="get" className="relative min-w-60 flex-1" role="search">
+        <div className="min-w-0">
+          <div className="mb-6 flex flex-wrap items-center gap-2.5 border-b border-border pb-5 sm:mb-8 sm:gap-3">
+            <Form method="get" className="relative w-full min-w-0 sm:w-auto sm:min-w-60 sm:flex-1" role="search">
               {[...searchParams].filter(([k]) => !["q", "page"].includes(k)).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
               <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-fg" />
               <Input name="q" defaultValue={params.q} placeholder={t("shop.search")} aria-label={t("nav.search")} className="pl-10" />
             </Form>
-            <Button variant="secondary" className="lg:hidden" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={16} /> {t("shop.filters")}</Button>
-            <Form method="get" onChange={(e) => submit(e.currentTarget)} className="w-52">
+            <Button variant="secondary" className="flex-1 sm:flex-none lg:hidden" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={16} /> {t("shop.filters")}</Button>
+            <Form method="get" onChange={(e) => submit(e.currentTarget)} className="min-w-0 flex-1 sm:w-52 sm:flex-none">
               {[...searchParams].filter(([k]) => !["sort", "page"].includes(k)).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
               <Select name="sort" defaultValue={params.sort} aria-label={t("shop.sort")}>
                 <option value="">{t("shop.sort.recommended")}</option>
@@ -180,15 +180,7 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
           </div>
 
           {result.pages > 1 && (
-            <nav className="mt-16 flex items-center justify-center gap-1" aria-label="Pagination">
-              {Array.from({ length: result.pages }, (_, i) => i + 1).map((n) => {
-                const next = new URLSearchParams(searchParams);
-                next.set("page", String(n));
-                return (
-                  <Link key={n} to={`/shop?${next}`} aria-current={n === result.page ? "page" : undefined} className={cn("grid h-9 min-w-9 place-items-center rounded-btn text-sm tabular-nums", n === result.page ? "bg-fg text-bg" : "hover:bg-muted")}>{n}</Link>
-                );
-              })}
-            </nav>
+            <div className="mt-16"><Pagination page={result.page} pages={result.pages} href={(n) => { const next = new URLSearchParams(searchParams); next.set("page", String(n)); return `/shop?${next}`; }} labels={{ prev: t("common.prev"), next: t("common.next") }} /></div>
           )}
         </div>
       </div>

@@ -6,7 +6,7 @@ import { homeBlocks } from "../blocks";
 import { hashPassword } from "../auth";
 import type { DB } from "../db";
 import { schema } from "../db";
-import products from "./desimoni-products.json";
+import products from "./desimoni-catalog.json";
 import texts from "./desimoni-texts.json";
 
 /** Demo product texts (short / description / pairing, DE + IT), keyed by the first SKU. */
@@ -91,8 +91,8 @@ export async function seedDeSimoniDemo(db: DB) {
     },
     stats: [
       { value: String(new Date().getFullYear() - 1917), label: { de: "Jahre in Kriens", it: "Anni a Kriens" } },
-      { value: "18", label: { de: "Produzenten", it: "Produttori" } },
-      { value: "9", label: { de: "Regionen Italiens", it: "Regioni d'Italia" } },
+      { value: String(new Set((products as { producer: string }[]).map((p) => p.producer)).size), label: { de: "Produzenten", it: "Produttori" } },
+      { value: (products as unknown[]).length.toLocaleString("de-CH"), label: { de: "Artikel", it: "Articoli" } },
     ],
     categories: { title: { de: "Was auf den Tisch kommt", it: "Cosa arriva in tavola" }, show: true },
     promo: { show: true, eyebrow: { de: "Diesen Monat", it: "Questo mese" }, title: { de: "Aktionen", it: "Promozioni" }, text: { de: "Ausgewählte Weine und Spezialitäten zu besonderen Preisen — solange Vorrat.", it: "Vini e specialità selezionati a prezzi speciali — fino a esaurimento scorte." } },
@@ -177,15 +177,22 @@ export async function seedDeSimoniDemo(db: DB) {
     ["wein", { de: "Weine", it: "Vini", fr: "Vins", en: "Wines" }, null, null, true],
     ["rotwein", { de: "Rotwein", it: "Vino rosso", fr: "Vin rouge", en: "Red wine" }, "wein", null, false],
     ["weisswein", { de: "Weisswein", it: "Vino bianco", fr: "Vin blanc", en: "White wine" }, "wein", null, false],
+    ["schaumwein", { de: "Schaumwein", it: "Spumante", fr: "Vin mousseux", en: "Sparkling wine" }, "wein", null, false],
+    ["rosewein", { de: "Roséwein", it: "Vino rosato", fr: "Vin rosé", en: "Rosé wine" }, "wein", null, false],
+    ["suesswein", { de: "Süsswein & Vermouth", it: "Vini dolci & Vermouth", fr: "Vins doux & Vermouth", en: "Sweet wine & Vermouth" }, "wein", null, false],
     ["lebensmittel", { de: "Lebensmittel", it: "Alimentari", fr: "Alimentation", en: "Food" }, null, null, false],
     ["pasta-mehl", { de: "Pasta & Mehl", it: "Pasta & Farine", fr: "Pâtes & Farines", en: "Pasta & Flour" }, "lebensmittel", `${D}/pasta-farine.jpg`, true],
     ["olivenoel", { de: "Olivenöl & Würzmittel", it: "Olio & Condimenti", fr: "Huile & Condiments", en: "Olive oil & Condiments" }, "lebensmittel", `${D}/olio-condimenti.jpg`, true],
     ["wurstwaren", { de: "Wurstwaren", it: "Salumi", fr: "Charcuterie", en: "Cured meats" }, "lebensmittel", `${D}/salumi.jpg`, true],
     ["kaese", { de: "Käse & Butter", it: "Formaggi & Burro", fr: "Fromages & Beurre", en: "Cheese & Butter" }, "lebensmittel", `${D}/formaggi.jpg`, true],
     ["antipasti", { de: "Italienische Spezialitäten", it: "Specialità italiane", fr: "Spécialités italiennes", en: "Italian specialities" }, "lebensmittel", `${D}/specialita-italiane.jpg`, true],
+    ["reis-polenta", { de: "Reis & Polenta", it: "Riso & Polenta", fr: "Riz & Polenta", en: "Rice & Polenta" }, "lebensmittel", null, false],
+    ["dolci", { de: "Dolci & Snacks", it: "Dolci & Snack", fr: "Douceurs & Snacks", en: "Sweets & Snacks" }, "lebensmittel", null, false],
     ["spirituosen-gruppe", { de: "Spirituosen", it: "Distillati", fr: "Spiritueux", en: "Spirits" }, null, null, false],
     ["spirituosen", { de: "Gin & Spirituosen", it: "Gin & Distillati", fr: "Gin & Spiritueux", en: "Gin & Spirits" }, "spirituosen-gruppe", null, false],
     ["aperitif", { de: "Aperitif & Bitter", it: "Aperitivi & Amari", fr: "Apéritif & Bitter", en: "Aperitif & Bitters" }, "spirituosen-gruppe", null, false],
+    ["grappa", { de: "Grappa & Brände", it: "Grappa & Acquaviti", fr: "Grappa & Eaux-de-vie", en: "Grappa & Brandies" }, "spirituosen-gruppe", null, false],
+    ["getraenke", { de: "Getränke", it: "Bevande", fr: "Boissons", en: "Beverages" }, null, null, false],
   ];
   const catIds = new Map<string, number>();
   for (const [i, [slug, name, parent, image, showOnHome]] of catDefs.entries()) {
@@ -207,63 +214,63 @@ export async function seedDeSimoniDemo(db: DB) {
   let spotlightSlug = "";
   let skuCounter = 0;
 
-  for (const p of products as DemoProduct[]) {
-    let producerId = producerIds.get(p.producer);
-    if (!producerId) {
-      const [row] = await db.insert(schema.producers).values({ slug: slugify(p.producer), name: p.producer, erpId: p.producer, country: "Italia", region: p.region ?? null, featured: producerIds.size < 12 }).onConflictDoNothing().returning();
-      producerId = row?.id ?? (await db.query.producers.findFirst({ where: eq(schema.producers.slug, slugify(p.producer)) }))!.id;
-      producerIds.set(p.producer, producerId);
-    }
-    const slug = slugify(p.name);
-    const isPromo = promoNames.some((n) => p.name.includes(n));
-    const [prod] = await db
-      .insert(schema.products)
-      .values({
-        slug,
-        kind: p.kind,
-        name: { de: p.name, it: p.name },
-        categoryId: catIds.get(p.category),
-        producerId,
-        color: p.color,
-        country: "Italia",
-        region: p.region ?? null,
-        alcohol: p.alcohol,
-        organic: /\bBio\b/.test(p.name),
-        taxClass: p.kind === "food" ? "reduced" : "standard",
-        ageRestricted: p.kind !== "food",
-        promo: isPromo,
-        featured: isPromo,
-        isNew: /di farro/.test(p.name),
-        image: p.image,
-        ...(TEXTS[p.variants[0].sku] ?? {}),
-      })
-      .onConflictDoNothing()
-      .returning();
-    if (!prod) continue;
-    if (/Paccheri rigati/.test(p.name)) spotlightSlug = slug;
+  // Catalogue from the reference site's article list (scripts/demo/build-catalog.py): batched inserts keep a cold start fast.
+  const catalog = products as DemoProduct[];
+  const LOGOS = ["acquerello", "barlotti", "beppino-occelli", "brimi", "cavalieri", "de-carlo", "defendi", "delicius", "fabbri", "felicetti", "gusto-squisito", "i-solai-di-san-giorgio", "italianavera", "la-pasta-di-aldo", "la-valletta", "latteria-sociale-mantova", "madeo", "mancini", "marabotto", "molino-dallagiovanna", "nonno-nanni", "preite", "principato-di-lucedio", "rossogargano", "rovagnati", "rummo", "sant-agata", "sapori-del-lagonero"];
+  const logoFor = (name: string) => {
+    const s = slugify(name);
+    const hit = LOGOS.find((l) => s === l || s.startsWith(`${l}-`) || s.includes(l) || (l.split("-").length > 1 && l.split("-").every((w) => s.includes(w))));
+    return hit ? `${D}/marchi/${hit}.webp` : null;
+  };
+  const prodInfo = new Map<string, { region: string | null; country: string; curated: boolean; erp: string }>();
+  for (const p of catalog) {
+    const cur = prodInfo.get(p.producer);
+    if (!cur || (!cur.region && p.region)) prodInfo.set(p.producer, { region: p.region ?? cur?.region ?? null, country: p.country ?? "Italia", curated: !!(cur?.curated || p.curated), erp: p.producerErp ?? p.producer });
+  }
+  const chunk = <T,>(a: T[], n = 250) => Array.from({ length: Math.ceil(a.length / n) }, (_, i) => a.slice(i * n, i * n + n));
+  const usedSlugs = new Set<string>();
+  const uniq = (base: string) => { let s = base || "x", i = 2; while (usedSlugs.has(s)) s = `${base}-${i++}`; usedSlugs.add(s); return s; };
 
-    for (const [i, v] of p.variants.entries()) {
-      const [variant] = await db
-        .insert(schema.variants)
-        .values({
-          productId: prod.id, sku: v.sku, erpId: String(500000 + ++skuCounter), vintage: v.vintage, size: v.size,
-          volumeMl: v.size?.endsWith("cl") ? Number(v.size.replace(/[^\d.]/g, "")) * 10 : null,
-          packSize: p.kind === "wine" ? 6 : 1, priceCents: Math.round(v.price * 100), stock: v.stock, sort: i,
-          discountGroup: p.kind === "wine" ? "WEIN" : p.kind === "spirit" ? "SPIRITUOSEN" : "FOOD", // vinX "Artikelgruppe für Kundenrabatt"
-        })
-        .onConflictDoNothing()
-        .returning();
-      if (!variant) continue;
-      // Demo price lists: trade + gastro net prices with quantity breaks (normally from vinX ProductInfo)
-      const rate = p.kind === "food" ? 2.6 : 8.1;
-      const net = Math.round((v.price * 100) / (1 + rate / 100));
-      const breaks = p.kind === "wine" ? [[1, 0.8], [12, 0.76], [60, 0.72]] : [[1, 0.82], [10, 0.78]];
-      await db.insert(schema.prices).values([
-        ...breaks.map(([min, f]) => ({ variantId: variant.id, groupId: tradeGroup.id, minQty: min, netCents: Math.round(net * f) })),
-        ...breaks.map(([min, f]) => ({ variantId: variant.id, groupId: gastro.id, minQty: min, netCents: Math.round(net * (f - 0.03)) })),
-      ]);
+  const producerRows = [...prodInfo].map(([name, info]) => ({ slug: uniq(slugify(name)), name, erpId: info.erp, country: info.country, region: info.region, logo: logoFor(name), featured: !!logoFor(name) || info.curated }));
+  for (const part of chunk(producerRows)) for (const r of await db.insert(schema.producers).values(part).returning({ id: schema.producers.id, name: schema.producers.name })) producerIds.set(r.name, r.id);
+
+  usedSlugs.clear();
+  const textFor = (p: DemoProduct) => p.variants.map((v) => TEXTS[v.sku]).find(Boolean) ?? {};
+  const productRows = catalog.map((p) => {
+    // promotions: the curated picks + a stable selection of pictured articles across the range
+    const isPromo = (p.curated && promoNames.some((n) => p.name.includes(n))) || (!!p.image && p.variants[0].sku.endsWith("7") && Number(p.variants[0].sku) % 9 === 0);
+    return {
+      slug: uniq(slugify(p.name)), kind: p.kind, name: { de: p.name, it: p.name }, categoryId: catIds.get(p.category), producerId: producerIds.get(p.producer),
+      color: p.color, country: p.country ?? "Italia", region: p.region ?? null, alcohol: p.alcohol, organic: /\bbio\b/i.test(p.name),
+      taxClass: (p.kind === "food" || p.kind === "beverage" ? "reduced" : "standard") as "standard", ageRestricted: p.kind === "wine" || p.kind === "spirit",
+      promo: isPromo, featured: isPromo || (p.curated && !!p.image), isNew: /di farro/.test(p.name), image: p.image, ...textFor(p),
+    };
+  });
+  const productIds: number[] = [];
+  for (const part of chunk(productRows)) productIds.push(...(await db.insert(schema.products).values(part).returning({ id: schema.products.id })).map((r) => r.id));
+  spotlightSlug = productRows.find((r) => /Paccheri rigati/.test(r.name.de))?.slug ?? "";
+
+  const variantRows = catalog.flatMap((p, pi) => p.variants.map((v, i) => ({
+    productId: productIds[pi], sku: v.sku, erpId: String(500000 + ++skuCounter), vintage: v.vintage, size: v.size,
+    volumeMl: /cl$/.test(v.size ?? "") ? Number(v.size!.replace(/[^\d.]/g, "")) * 10 : null,
+    packSize: p.kind === "wine" ? 6 : 1, priceCents: Math.round(v.price * 100), stock: v.stock, sort: i,
+    discountGroup: p.kind === "wine" ? "WEIN" : p.kind === "spirit" ? "SPIRITUOSEN" : "FOOD", // vinX "Artikelgruppe für Kundenrabatt"
+  })));
+  const priceRows: (typeof schema.prices.$inferInsert)[] = [];
+  for (const part of chunk(variantRows)) {
+    const rows = await db.insert(schema.variants).values(part).returning({ id: schema.variants.id, priceCents: schema.variants.priceCents, discountGroup: schema.variants.discountGroup });
+    // Demo price lists: trade + gastro net prices with quantity breaks (normally from vinX ProductInfo / SellingPrices)
+    for (const v of rows) {
+      const rate = v.discountGroup === "FOOD" ? 2.6 : 8.1;
+      const net = Math.round(v.priceCents / (1 + rate / 100));
+      const breaks = v.discountGroup === "WEIN" ? [[1, 0.8], [12, 0.76], [60, 0.72]] : [[1, 0.82], [10, 0.78]];
+      for (const [min, f] of breaks) {
+        priceRows.push({ variantId: v.id, groupId: tradeGroup.id, minQty: min, netCents: Math.round(net * f) });
+        priceRows.push({ variantId: v.id, groupId: gastro.id, minQty: min, netCents: Math.round(net * (f - 0.03)) });
+      }
     }
   }
+  for (const part of chunk(priceRows, 1000)) await db.insert(schema.prices).values(part);
   home.spotlight.productSlug = spotlightSlug;
 
   // Shop-only articles (not in vinX): fully editable and deletable in the admin, unlike the synced range
@@ -280,7 +287,7 @@ export async function seedDeSimoniDemo(db: DB) {
   const at = base.findIndex((b) => b.id === "brands");
   home.blocks = [
     ...base.slice(0, at),
-    { id: "origin", type: "origin", enabled: true, data: { eyebrow: { de: "Herkunft", it: "Provenienza" }, title: { de: "Aus 9 Regionen Italiens", it: "Da 9 regioni d'Italia" }, text: { de: "Von Südtirol bis Sizilien — wählen Sie eine Region und entdecken Sie ihre Produzenten.", it: "Dall'Alto Adige alla Sicilia — scegliete una regione e scoprite i suoi produttori." }, buttonLabel: { de: "Zur Karte", it: "Alla mappa" } } },
+    { id: "origin", type: "origin", enabled: true, data: { eyebrow: { de: "Herkunft", it: "Provenienza" }, title: { de: "Aus ganz Italien — und der Schweiz", it: "Da tutta Italia — e dalla Svizzera" }, text: { de: "Vom Piemont bis Sizilien, vom Tessin bis in die Wachau — wählen Sie eine Region und entdecken Sie ihre Produzenten.", it: "Dal Piemonte alla Sicilia, dal Ticino alla Wachau — scegliete una regione e scoprite i suoi produttori." }, buttonLabel: { de: "Zur Karte", it: "Alla mappa" } } },
     ...base.slice(at),
     { id: "cta-trade", type: "cta", enabled: true, data: { eyebrow: { de: "Gastronomie", it: "Ristorazione" }, title: { de: "Ihre Konditionen, Ihr Portal.", it: "Le vostre condizioni, il vostro portale." }, text: { de: "Kundenpreise, Schnellbestellung und Bestellhistorie — für Restaurants, Hotels und Fachhandel.", it: "Prezzi cliente, ordine rapido e storico ordini — per ristoranti, hotel e rivenditori." }, buttonLabel: { de: "B2B-Konto eröffnen", it: "Aprire un conto B2B" }, buttonHref: "/trade#apply", tone: "primary" } },
   ];
@@ -338,7 +345,8 @@ export async function seedDeSimoniDemo(db: DB) {
 }
 
 type DemoProduct = {
-  name: string; category: string; kind: "wine" | "food" | "spirit"; producer: string; region?: string | null; color: "red" | "white" | null; alcohol: number | null; image: string | null;
+  name: string; category: string; kind: "wine" | "food" | "spirit" | "beverage"; producer: string; producerErp?: string; region?: string | null; country?: string; curated?: boolean;
+  color: "red" | "white" | "rose" | "sparkling" | "sweet" | null; alcohol: number | null; image: string | null;
   variants: { sku: string; vintage: string | null; size: string | null; price: number; stock: number }[];
 };
 

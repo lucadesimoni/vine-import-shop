@@ -175,6 +175,11 @@
 @utility btn-text-md { font-size: calc(14px * var(--t-btn-scale)); }
 @utility btn-text-lg { font-size: calc(15px * var(--t-btn-scale)); }
 
+/* Vertical rhythm — one scale for every page and block (tighter on phones) */
+@utility page-top { padding-top: clamp(1.75rem, 1rem + 3vw, 3.5rem); padding-bottom: clamp(4rem, 3rem + 4vw, 6rem); }
+@utility section-y { padding-block: clamp(3rem, 2rem + 4.5vw, 7rem); }
+@utility section-y-sm { padding-block: clamp(2.25rem, 1.75rem + 2.5vw, 4rem); }
+
 @utility container-page {
   width: 100%;
   max-width: 1400px;

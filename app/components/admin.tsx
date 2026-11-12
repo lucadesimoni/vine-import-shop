@@ -22,10 +22,10 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 
 export function Panel({ title, description, children, className, actions }: { title?: string; description?: ReactNode; children: ReactNode; className?: string; actions?: ReactNode }) {
   return (
-    <Card className={cn("p-6", className)}>
+    <Card className={cn("min-w-0 p-4 sm:p-6", className)}>
       {(title || actions) && (
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div className="grid gap-1">
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+          <div className="grid min-w-0 gap-1">
             {title && <h2 className="font-sans text-[15px] font-semibold tracking-normal">{title}</h2>}
             {description && <p className="text-[13px] text-muted-fg">{description}</p>}
           </div>
@@ -211,7 +211,7 @@ export function LocalizedInput({ name, value, locales, multiline = false, rows =
 export function SaveBar({ saved, label = "Speichern" }: { saved?: boolean; label?: string }) {
   const busy = useNavigation().state === "submitting";
   return (
-    <div className="sticky bottom-0 z-10 -mx-6 mt-8 flex items-center justify-end gap-3 border-t border-border bg-bg/90 px-6 py-4 backdrop-blur md:-mx-10 md:px-10">
+    <div className="sticky bottom-0 z-10 -mx-4 mt-8 flex items-center justify-end gap-3 border-t border-border bg-bg/90 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 md:-mx-10 md:px-10 md:py-4">
       {saved && !busy && <span className="flex items-center gap-1.5 text-sm text-success"><Check size={16} /> Gespeichert</span>}
       <Button type="submit" disabled={busy}>{busy ? "Speichert …" : label}</Button>
     </div>
@@ -221,7 +221,7 @@ export function SaveBar({ saved, label = "Speichern" }: { saved?: boolean; label
 export function Toggle({ name, label, description, defaultChecked, disabled }: { name: string; label: string; description?: string; defaultChecked?: boolean; disabled?: boolean }) {
   return (
     <label className={cn("flex items-start justify-between gap-6 py-3", disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer")}>
-      <span className="grid gap-0.5">
+      <span className="grid min-w-0 gap-0.5 [overflow-wrap:anywhere]">
         <span className="text-sm font-medium">{label}</span>
         {description && <span className="text-[13px] text-muted-fg">{description}</span>}
       </span>

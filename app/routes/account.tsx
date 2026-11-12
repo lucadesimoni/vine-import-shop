@@ -28,7 +28,7 @@ export default function Account({ loaderData }: Route.ComponentProps) {
   const { t, locale } = useI18n();
   const to = usePath();
   return (
-    <div className="container-page pb-24 pt-12">
+    <div className="container-page page-top">
       <header className="mb-10 grid gap-3">
         <Eyebrow line>{[user.company, isTrade && user.group].filter(Boolean).join(" · ") || t("account.title")}</Eyebrow>
         <h1 className="text-h1">{t("account.hello", { name: user.name.split(" ")[0] || "" })}</h1>

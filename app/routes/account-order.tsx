@@ -42,7 +42,7 @@ export default function AccountOrder({ loaderData }: Route.ComponentProps) {
   const m = (c: number) => formatMoney(c, order.currency, locale);
   const request = order.kind === "request";
   return (
-    <div className="container-page pb-24 pt-12">
+    <div className="container-page page-top">
       <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
         <div className="grid gap-3">
           <Eyebrow line>{t(request ? "account.request" : "account.order")} · {new Date(order.createdAt).toLocaleDateString(`${locale}-CH`)}</Eyebrow>

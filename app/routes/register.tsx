@@ -34,7 +34,7 @@ export default function Register({ actionData }: Route.ComponentProps) {
   const errors = (actionData?.errors ?? {}) as Record<string, string>;
   const busy = useNavigation().state === "submitting";
   return (
-    <div className="container-page grid justify-items-center py-16 md:py-24">
+    <div className="container-page grid justify-items-center section-y">
       <Card className="grid w-full max-w-lg gap-8 p-8 md:p-10">
         <div className="grid gap-3">
           <Eyebrow line>{t("auth.register")}</Eyebrow>

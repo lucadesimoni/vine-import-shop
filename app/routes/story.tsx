@@ -19,7 +19,7 @@ export default function Story({ loaderData }: Route.ComponentProps) {
   const L = (v: Parameters<typeof tl>[0]) => tl(v, locale);
   return (
     <>
-      <section className="container-page grid gap-8 py-20 md:py-28">
+      <section className="container-page grid gap-8 section-y">
         <Eyebrow>{L(story.eyebrow)}</Eyebrow>
         <h1 className="text-display"><Lines text={L(story.title)} /></h1>
         <p className="text-lead max-w-2xl text-muted-fg">{L(story.intro)}</p>
@@ -27,7 +27,7 @@ export default function Story({ loaderData }: Route.ComponentProps) {
       {story.imageUrl && (
         <div className="container-page"><img src={story.imageUrl} alt="" className="aspect-[21/9] w-full rounded-surface object-cover" /></div>
       )}
-      <section className="container-page py-20 md:py-28">
+      <section className="container-page section-y">
         <ol className="relative grid gap-14 border-l border-border pl-8 md:mx-auto md:max-w-3xl md:pl-14">
           {story.timeline.map((s, i) => (
             <li key={i} className="relative grid gap-2">
@@ -40,7 +40,7 @@ export default function Story({ loaderData }: Route.ComponentProps) {
         </ol>
       </section>
       {L(story.quote) && (
-        <section className="bg-inverse py-24 text-on-inverse">
+        <section className="bg-inverse section-y text-on-inverse">
           <blockquote className="container-page max-w-4xl text-center font-display text-3xl italic leading-snug md:text-4xl">«{L(story.quote)}»</blockquote>
         </section>
       )}

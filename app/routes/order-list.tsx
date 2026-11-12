@@ -28,14 +28,14 @@ export default function OrderList({ loaderData }: Route.ComponentProps) {
 
   if (!summary.lines.length) {
     return (
-      <div className="container-page py-20">
+      <div className="container-page section-y">
         <EmptyState icon={<ShoppingBag size={30} strokeWidth={1.3} />} title={t("cart.empty")} text={t("cart.emptyHint")} action={<ButtonLink to={to("/shop")}>{t("cart.toShop")}</ButtonLink>} />
       </div>
     );
   }
 
   return (
-    <div className="container-page pb-24 pt-12">
+    <div className="container-page page-top">
       <header className="mb-10 grid gap-3">
         <Eyebrow line>{t("cart.units", { n: summary.count })}</Eyebrow>
         <h1 className="text-h1">{t("cart.title")}</h1>

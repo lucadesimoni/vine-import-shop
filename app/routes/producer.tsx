@@ -51,7 +51,7 @@ export default function Producer({ loaderData }: Route.ComponentProps) {
   const mapHref = origin.regionId ? `/producers?view=${regionMap ? "regions" : "world"}&region=${origin.regionId}${regionMap ? "" : `&origin=${origin.iso}`}` : origin.iso ? `/producers?view=world&origin=${origin.iso}` : "/producers";
 
   return (
-    <div className="container-page pb-24 pt-10 md:pt-14">
+    <div className="container-page page-top">
       <Link to="/producers" className="mb-8 inline-flex items-center gap-1.5 text-[13px] text-muted-fg hover:text-fg"><ArrowLeft size={14} /> {t("producer.back")}</Link>
 
       <header className="grid gap-10 border-b border-border pb-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-16">

@@ -27,13 +27,13 @@ export default function Page({ loaderData }: Route.ComponentProps) {
     const ownHeading = blocks[0]?.type === "hero";
     return (
       <>
-        {!ownHeading && <h1 className="text-h1 container-page pt-16 md:pt-24">{title}</h1>}
+        {!ownHeading && <h1 className="text-h1 container-page pt-8 md:pt-20">{title}</h1>}
         <Blocks blocks={blocks} />
       </>
     );
   }
   return (
-    <article className="container-page max-w-3xl py-20 md:py-28">
+    <article className="container-page max-w-3xl section-y">
       <h1 className="text-h1 mb-10">{title}</h1>
       <div className="prose-shop" dangerouslySetInnerHTML={{ __html: html }} />
     </article>

@@ -278,7 +278,7 @@ ok((await admin.inputValue("input[name=phone]")) === "+41 41 555 12 34", "custom
 
 section("Page builder (blocks)");
 await guest.goto(B + "/");
-ok(await guest.getByText("Aus 9 Regionen Italiens").isVisible(), "home: origin-map block rendered");
+ok(await guest.getByText("Aus ganz Italien — und der Schweiz").isVisible(), "home: origin-map block rendered");
 ok((await guest.locator("main section").count()) >= 8, "home: built from blocks");
 ok((await guest.goto(B + "/page/fragen"))?.status() === 200 && (await guest.locator("details summary").count()) === 4, "block page: FAQ with 4 questions");
 await admin.goto(B + "/admin/content");
@@ -286,7 +286,7 @@ const blockRow = (label) => admin.locator("ol > li").filter({ has: admin.locator
 await blockRow("Herkunftskarte").locator('button[aria-label="Ausblenden"]').click();
 await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button:has-text('Speichern')")]);
 await guest.goto(B + "/");
-ok(!(await guest.getByText("Aus 9 Regionen Italiens").isVisible()), "editor: hidden block disappears from the home page");
+ok(!(await guest.getByText("Aus ganz Italien — und der Schweiz").isVisible()), "editor: hidden block disappears from the home page");
 await admin.goto(B + "/admin/content");
 await blockRow("Herkunftskarte").locator('button[aria-label="Einblenden"]').click();
 await admin.locator("ol > li").last().locator('button[aria-label="Nach oben"]').click();
@@ -295,7 +295,7 @@ await admin.locator("button:has-text('Zitat')").click();
 await admin.locator("ol > li").last().locator("textarea").first().fill("Qualität ist kein Zufall.");
 await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button:has-text('Speichern')")]);
 await guest.goto(B + "/");
-ok(await guest.getByText("Qualität ist kein Zufall.").isVisible() && await guest.getByText("Aus 9 Regionen Italiens").isVisible(), "editor: add block + show again + reorder saved");
+ok(await guest.getByText("Qualität ist kein Zufall.").isVisible() && await guest.getByText("Aus ganz Italien — und der Schweiz").isVisible(), "editor: add block + show again + reorder saved");
 await admin.goto(B + "/admin/content?tab=pages&page=new");
 await admin.fill("input[name=slug]", "events");
 await admin.fill('input[name="title.de"]', "Events");

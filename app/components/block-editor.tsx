@@ -90,7 +90,7 @@ export function BlockEditor({ name, initial, locales, options, only }: { name: s
                   <GripVertical size={16} />
                 </span>
                 <button type="button" onClick={() => setOpen(expanded ? null : b.id)} className="flex min-w-0 flex-1 items-center gap-3 rounded-control px-2 py-2 text-left hover:bg-muted/60" aria-expanded={expanded}>
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-control bg-muted text-fg/80"><Icon name={def?.icon ?? "puzzle"} /></span>
+                  <span className="hidden h-8 w-8 shrink-0 place-items-center rounded-control bg-muted text-fg/80 min-[400px]:grid"><Icon name={def?.icon ?? "puzzle"} /></span>
                   <span className="grid min-w-0">
                     <span className="text-sm font-medium">{def?.label ?? b.type}</span>
                     <span className="truncate text-[12px] text-muted-fg">{def?.summary?.(b.data) || def?.description}</span>
@@ -147,7 +147,7 @@ export function BlockEditor({ name, initial, locales, options, only }: { name: s
 
 function IconBtn({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: ReactNode }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled} title={label} aria-label={label} className="grid h-9 w-9 shrink-0 place-items-center rounded-control text-muted-fg transition-colors hover:bg-muted hover:text-fg disabled:pointer-events-none disabled:opacity-30">
+    <button type="button" onClick={onClick} disabled={disabled} title={label} aria-label={label} className="grid h-8 w-8 shrink-0 place-items-center rounded-control text-muted-fg transition-colors hover:bg-muted hover:text-fg disabled:pointer-events-none disabled:opacity-30 sm:h-9 sm:w-9">
       {children}
     </button>
   );

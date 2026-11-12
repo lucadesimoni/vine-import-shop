@@ -7,7 +7,7 @@ import { useI18n, metaT } from "~/lib/i18n";
 import { cn } from "~/lib/cn";
 import { formatMoney } from "~/lib/money";
 import { useRootData } from "~/lib/root-data";
-import { Badge, Button, Card, EmptyState, Eyebrow, Input, Select } from "~/components/ui";
+import { Badge, Button, Card, EmptyState, Eyebrow, Input, Pagination, Select } from "~/components/ui";
 import { ProductImage, StockLabel } from "~/components/shop";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -114,11 +114,7 @@ export default function PortalCatalog({ loaderData }: Route.ComponentProps) {
       )}
 
       {result.pages > 1 && (
-        <nav className="flex items-center justify-center gap-1" aria-label="Pagination">
-          {Array.from({ length: result.pages }, (_, i) => i + 1).map((n) => (
-            <Link key={n} to={pageLink(n)} aria-current={n === result.page ? "page" : undefined} className={cn("grid h-9 min-w-9 place-items-center rounded-btn text-sm tabular-nums", n === result.page ? "bg-fg text-bg" : "hover:bg-muted")}>{n}</Link>
-          ))}
-        </nav>
+        <Pagination page={result.page} pages={result.pages} href={pageLink} labels={{ prev: t("common.prev"), next: t("common.next") }} />
       )}
     </div>
   );

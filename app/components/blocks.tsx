@@ -53,7 +53,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
       <section className="relative isolate -mt-px overflow-hidden bg-inverse text-on-inverse">
         {d<string>(b, "image") && <img src={d<string>(b, "image")} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" fetchPriority={first ? "high" : undefined} loading={first ? undefined : "lazy"} />}
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-scrim/70 via-scrim/35 to-scrim/10" />
-        <div className={cn("container-page grid content-center gap-6 md:gap-8", h === "compact" ? "min-h-[min(44vh,420px)] py-14" : h === "medium" ? "min-h-[min(60vh,560px)] py-16" : "min-h-[min(78vh,760px)] py-16 md:py-20")}>
+        <div className={cn("container-page grid content-center gap-6 md:gap-8", h === "compact" ? "min-h-[min(44vh,420px)] py-14" : h === "medium" ? "min-h-[min(60vh,560px)] py-16" : "min-h-[min(78vh,760px)] section-y-sm")}>
           {L(b.data.eyebrow) && <Eyebrow line className="animate-fade-up text-on-inverse/85">{L(b.data.eyebrow)}</Eyebrow>}
           <Title className="text-display animate-fade-up max-w-3xl [animation-delay:80ms]"><Lines text={L(b.data.title)} /></Title>
           {L(b.data.text) && <p className="text-lead animate-fade-up max-w-xl text-on-inverse/85 [animation-delay:160ms]">{L(b.data.text)}</p>}
@@ -88,7 +88,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     const cats = (b.res?.categories as { id: number; slug: string; name: string; image: string | null }[]) ?? [];
     if (!cats.length) return null;
     return (
-      <section className="container-page py-16 md:py-28">
+      <section className="container-page section-y">
         <SectionHeading center title={L(b.data.title) || t("shop.title")} action={<Link to="/shop" className="text-eyebrow inline-flex items-center gap-2 text-[11px] text-fg/80 hover:text-fg">{t("common.showAll")} <ArrowUpRight size={14} /></Link>} />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {cats.map((c) => (
@@ -111,7 +111,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     if (!items.length) return null;
     const grid = d<string>(b, "layout") === "grid";
     return (
-      <section className={cn("py-16 md:py-24", d<string>(b, "source") === "promo" && "border-y border-border bg-surface")}>
+      <section className={cn("section-y", d<string>(b, "source") === "promo" && "border-y border-border bg-surface")}>
         <div className="container-page">
           <SectionHeading eyebrow={L(b.data.eyebrow)} title={L(b.data.title)} action={<ButtonLink to={String(b.res?.more ?? "/shop")} size="sm" variant="secondary">{t("common.showAll")} <ArrowRight size={14} /></ButtonLink>} />
           {L(b.data.text) && <p className="-mt-6 mb-10 max-w-2xl text-muted-fg">{L(b.data.text)}</p>}
@@ -132,7 +132,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     const card = b.res?.card as Card | undefined;
     if (!card) return null;
     return (
-      <section className="container-page py-16 md:py-28">
+      <section className="container-page section-y">
         <div className="mx-auto grid max-w-5xl overflow-hidden rounded-surface border border-border bg-surface md:grid-cols-2">
           <div className="relative min-h-72 bg-media md:min-h-96"><div className="absolute inset-[10%]"><ProductImage product={card} /></div></div>
           <div className="grid content-center gap-5 p-6 md:p-12">
@@ -156,7 +156,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     const tone = d<string>(b, "tone");
     const right = d<string>(b, "imageSide") === "right";
     return (
-      <section className={cn("py-16 md:py-28", tone === "surface" && "border-y border-border bg-surface", tone === "muted" && "bg-muted/50")}>
+      <section className={cn("section-y", tone === "surface" && "border-y border-border bg-surface", tone === "muted" && "bg-muted/50")}>
         <div className="container-page grid items-center gap-10 md:grid-cols-2 md:gap-16">
           {d<string>(b, "image") && <img src={d<string>(b, "image")} alt="" loading="lazy" className={cn("aspect-[4/3] w-full rounded-surface object-cover", right && "md:order-2")} />}
           <div className="grid content-center gap-6">
@@ -171,7 +171,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
   },
 
   text: ({ b, L }) => (
-    <section className={cn("container-page py-14 md:py-20", d<string>(b, "width") !== "wide" && "max-w-3xl", d<string>(b, "align") === "center" && "text-center")}>
+    <section className={cn("container-page section-y-sm", d<string>(b, "width") !== "wide" && "max-w-3xl", d<string>(b, "align") === "center" && "text-center")}>
       {L(b.data.title) && <h2 className="text-h2 mb-6">{L(b.data.title)}</h2>}
       <div className="prose-shop" dangerouslySetInnerHTML={{ __html: String(b.res?.html ?? "") }} />
     </section>
@@ -180,7 +180,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
   cta: ({ b, L }) => {
     const tone = d<string>(b, "tone");
     return (
-      <section className="container-page py-10 md:py-16">
+      <section className="container-page section-y-sm">
         <div className={cn("grid items-center gap-6 rounded-surface px-6 py-10 md:grid-cols-[1fr_auto] md:px-12 md:py-14", tone === "inverse" ? "bg-inverse text-on-inverse" : tone === "muted" ? "border border-border bg-muted" : "bg-primary text-on-primary")}>
           <div className="grid gap-3">
             {L(b.data.eyebrow) && <Eyebrow className={tone === "muted" ? "" : "text-current opacity-80"}>{L(b.data.eyebrow)}</Eyebrow>}
@@ -199,7 +199,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     const brands = (b.res?.brands as { slug: string; name: string; logo: string | null }[]) ?? [];
     if (!brands.length) return null;
     return (
-      <section className="container-page py-16 md:py-20">
+      <section className="container-page section-y-sm">
         <p className="text-eyebrow mb-10 text-center text-muted-fg">{L(b.data.title)}</p>
         <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
           {brands.map((x) =>
@@ -219,7 +219,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     const { locale } = useI18n();
     if (!res) return null;
     return (
-      <section className="border-y border-border bg-surface py-16 md:py-24">
+      <section className="border-y border-border bg-surface section-y">
         <div className="container-page grid items-center gap-10 md:grid-cols-[1fr_1.1fr] md:gap-16">
           <div className="grid content-center gap-5">
             {L(b.data.eyebrow) && <Eyebrow line>{L(b.data.eyebrow)}</Eyebrow>}
@@ -248,7 +248,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     const items = d<{ icon: string; title: Localized; text: Localized }[]>(b, "items") ?? [];
     if (!items.length) return null;
     return (
-      <section className="border-t border-border bg-muted/50 py-16 md:py-24">
+      <section className="border-t border-border bg-muted/50 section-y">
         <div className="container-page">
           {L(b.data.title) && <p className="text-eyebrow mb-12 text-center text-muted-fg md:mb-14">{L(b.data.title)}</p>}
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
@@ -269,7 +269,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
   },
 
   quote: ({ b, L }) => (
-    <section className="container-page max-w-4xl py-16 text-center md:py-24">
+    <section className="container-page max-w-4xl section-y text-center">
       <blockquote className="grid gap-6">
         <p className="font-display text-[clamp(1.5rem,3.5vw,2.5rem)] italic leading-snug">{L(b.data.text)}</p>
         {d<string>(b, "author") && <footer className="text-eyebrow text-[11px] text-muted-fg">— {d<string>(b, "author")}</footer>}
@@ -283,7 +283,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     const ratio = d<string>(b, "ratio");
     const img = <img src={src} alt={L(b.data.caption)} loading="lazy" className={cn("w-full rounded-surface object-cover", ratio === "square" ? "aspect-square md:aspect-[4/3]" : ratio === "cinema" ? "aspect-[16/9] md:aspect-[21/9]" : "aspect-[4/3] md:aspect-video")} />;
     return (
-      <figure className="container-page grid gap-3 py-10 md:py-16">
+      <figure className="container-page grid gap-3 section-y-sm">
         {d<string>(b, "href") ? <Link to={d<string>(b, "href")}>{img}</Link> : img}
         {L(b.data.caption) && <figcaption className="text-center text-[13px] text-muted-fg">{L(b.data.caption)}</figcaption>}
       </figure>
@@ -295,7 +295,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     const answers = (b.res?.answers as string[]) ?? [];
     if (!items.length) return null;
     return (
-      <section className="container-page max-w-3xl py-14 md:py-20">
+      <section className="container-page max-w-3xl section-y-sm">
         {L(b.data.title) && <h2 className="text-h2 mb-8">{L(b.data.title)}</h2>}
         <div className="divide-y divide-border border-y border-border">
           {items.map((x, i) => (

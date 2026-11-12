@@ -38,7 +38,7 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
   const busy = useNavigation().state === "submitting";
   const to = usePath();
   const page = (
-    <div className="container-page grid gap-10 py-16 md:py-24 lg:grid-cols-[minmax(0,480px)_minmax(0,1fr)] lg:gap-20">
+    <div className="container-page grid gap-10 section-y lg:grid-cols-[minmax(0,480px)_minmax(0,1fr)] lg:gap-20">
       <Card className="grid gap-8 p-8 md:p-10">
         <div className="grid gap-3">
           <Eyebrow line>{to.portal ? t("portal.title") : t("auth.login")}</Eyebrow>

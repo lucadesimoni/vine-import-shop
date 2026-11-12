@@ -58,7 +58,7 @@ export default function Product({ loaderData }: Route.ComponentProps) {
   ].filter(([, v]) => v) as [string, string][];
 
   return (
-    <div className="container-page pb-24 pt-8">
+    <div className="container-page page-top">
       <nav aria-label="Breadcrumb" className="mb-8 flex flex-wrap items-center gap-1.5 text-[13px] text-muted-fg">
         <Link to={to("/shop")} className="hover:text-fg">{t("nav.shop")}</Link>
         {c.category && <><ChevronRight size={13} /><Link to={to(`/shop?category=${c.category.slug}`)} className="hover:text-fg">{c.category.name}</Link></>}

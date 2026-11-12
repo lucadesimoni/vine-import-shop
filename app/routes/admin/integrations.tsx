@@ -44,7 +44,7 @@ export async function action({ request }: Route.ActionArgs) {
       ...vinx, mapping,
       enabled: form.has("enabled"), driver: form.get("driver"), baseUrl: String(form.get("baseUrl") ?? "").trim(), apiVersion: form.get("apiVersion"),
       username: String(form.get("username") ?? ""), livePrices: form.has("livePrices"), liveBasket: form.has("liveBasket"),
-      pushOrders: form.has("pushOrders"), pushCustomers: form.has("pushCustomers"),
+      pushOrders: form.has("pushOrders"), pushCustomers: form.has("pushCustomers"), pullCustomers: form.has("pullCustomers"),
       promoArticleId: Number(form.get("promoArticleId")) || null,
       clientId: String(form.get("clientId") ?? "").trim() || "Integrated",
       defaultDeliveryConditionId: Number(form.get("defaultDeliveryConditionId")) || null,
@@ -154,7 +154,8 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
               <div className="divide-y divide-border">
                 <Toggle name="enabled" label="Integration aktiv" defaultChecked={vinx.enabled} />
                 <Toggle name="pushOrders" label="Bestellungen an vinX (Online/Basket action=order)" defaultChecked={vinx.pushOrders} />
-                <Toggle name="pushCustomers" label="Neukunden als Onlineadresse" defaultChecked={vinx.pushCustomers} />
+                <Toggle name="pushCustomers" label="Kunden an vinX senden (neu und geändert, Online/OnlineAddress)" defaultChecked={vinx.pushCustomers} />
+                <Toggle name="pullCustomers" label="Adressänderungen aus vinX übernehmen" description="BaseData/Address für verknüpfte Kunden — Job „Kundenadressen“" defaultChecked={vinx.pullCustomers} />
                 <Toggle name="livePrices" label="Live-Preise (Calculated/ProductInfo)" defaultChecked={vinx.livePrices} />
                 <Toggle name="liveBasket" label="Warenkorbberechnung durch vinX (B2B)" description="Konditionen, Aktionen, Gebinde, LSVA, Fracht" defaultChecked={vinx.liveBasket} />
                 <Toggle name="syncConditions" label="Aktions- & Spezialpreise als Konditionen übernehmen" description="SellingPrices.promotionPrice, SpecialPrices → Admin › Konditionen (Quelle vinX)" defaultChecked={vinx.syncConditions} />

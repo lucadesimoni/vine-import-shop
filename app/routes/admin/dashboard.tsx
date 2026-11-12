@@ -76,8 +76,8 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           <ul className="grid gap-2 text-sm">
             {lowStock.map((v) => (
               <li key={v.sku} className="flex items-center justify-between gap-3">
-                <Link to={`/admin/products/${v.id}`} className="truncate hover:underline">{v.name.de} <span className="text-muted-fg">· {v.sku}</span></Link>
-                <Badge tone={v.stock > 0 ? "warning" : "danger"}>{v.stock}</Badge>
+                <Link to={`/admin/products/${v.id}`} className="min-w-0 truncate hover:underline">{v.name.de} <span className="text-muted-fg">· {v.sku}</span></Link>
+                <Badge tone={v.stock > 0 ? "warning" : "danger"} className="shrink-0">{v.stock}</Badge>
               </li>
             ))}
             {lowStock.length === 0 && <li className="text-muted-fg">Alles ausreichend an Lager.</li>}

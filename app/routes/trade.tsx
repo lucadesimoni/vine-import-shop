@@ -69,7 +69,7 @@ export default function Trade({ loaderData, actionData }: Route.ComponentProps) 
   return (
     <>
       <section className="border-b border-border">
-        <div className={`container-page grid items-center gap-12 py-20 md:py-28 ${trade.imageUrl ? "lg:grid-cols-[1.15fr_1fr]" : ""}`}>
+        <div className={`container-page grid items-center gap-12 section-y ${trade.imageUrl ? "lg:grid-cols-[1.15fr_1fr]" : ""}`}>
           <div className="grid gap-8">
             <Eyebrow>{L(trade.eyebrow)}</Eyebrow>
             <h1 className="text-display max-w-4xl"><Lines text={L(trade.title)} /></h1>
@@ -84,7 +84,7 @@ export default function Trade({ loaderData, actionData }: Route.ComponentProps) 
       </section>
 
       {trade.services.length > 0 && (
-        <section className="container-page py-20 md:py-28">
+        <section className="container-page section-y">
           <h2 className="text-h1 mb-14">{L(trade.servicesTitle)}</h2>
           <div className="grid gap-px overflow-hidden rounded-surface border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
             {trade.services.map((s, i) => (
@@ -115,7 +115,7 @@ export default function Trade({ loaderData, actionData }: Route.ComponentProps) 
         </section>
       )}
 
-      <section id="apply" className="container-page grid scroll-mt-24 gap-12 py-20 md:py-28 lg:grid-cols-[1fr_1.2fr]">
+      <section id="apply" className="container-page grid scroll-mt-24 gap-12 section-y lg:grid-cols-[1fr_1.2fr]">
         <div className="grid content-start gap-5">
           <Eyebrow>— {t("trade.apply")}</Eyebrow>
           <h2 className="text-h1">{L(trade.formTitle)}</h2>

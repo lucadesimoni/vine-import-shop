@@ -30,7 +30,7 @@ export default function Contact({ actionData }: Route.ComponentProps) {
   const c = brand.contact;
   const busy = useNavigation().state === "submitting";
   return (
-    <div className="container-page grid gap-12 py-20 md:py-28 lg:grid-cols-[1.2fr_1fr]">
+    <div className="container-page grid gap-12 section-y lg:grid-cols-[1.2fr_1fr]">
       <div className="grid content-start gap-8">
         <div className="grid gap-4">
           <Eyebrow line>{brand.name}</Eyebrow>

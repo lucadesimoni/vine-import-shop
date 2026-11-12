@@ -91,7 +91,7 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
   const viewLabel = { regions: t("origin.viewRegions"), world: t("origin.viewWorld"), az: t("origin.az") };
 
   return (
-    <div className="container-page pb-24 pt-12 md:pt-16">
+    <div className="container-page page-top">
       <header className="mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-border pb-8">
         <div className="grid gap-3">
           <Eyebrow line>{t("origin.eyebrow")}</Eyebrow>

@@ -23,6 +23,8 @@ const de = {
   "common.save": "Speichern",
   "common.cancel": "Abbrechen",
   "common.back": "Zurück",
+  "common.prev": "Zurück",
+  "common.next": "Weiter",
   "common.more": "Mehr",
   "common.showAll": "Alle anzeigen",
   "common.required": "Pflichtfeld",

@@ -243,3 +243,26 @@ export function Chip({ active = false, removable = false, className, children, .
     </Link>
   );
 }
+
+/** Compact pagination: ‹ 1 … 4 5 6 … 57 › — never wider than a phone. */
+export function Pagination({ page, pages, href, labels }: { page: number; pages: number; href: (n: number) => string; labels: { prev: string; next: string } }) {
+  if (pages <= 1) return null;
+  const set = new Set([1, pages, page - 1, page, page + 1].filter((n) => n >= 1 && n <= pages));
+  const nums = [...set].sort((a, b) => a - b);
+  const item = "grid h-10 min-w-10 place-items-center rounded-btn px-2 text-sm tabular-nums transition-colors";
+  return (
+    <nav className="flex flex-wrap items-center justify-center gap-1" aria-label="Pagination">
+      <Link to={href(Math.max(1, page - 1))} aria-label={labels.prev} aria-disabled={page <= 1} className={cn(item, "hover:bg-muted", page <= 1 && "pointer-events-none opacity-30")}><ChevronLeftIcon /></Link>
+      {nums.map((n, i) => (
+        <span key={n} className="contents">
+          {i > 0 && n - nums[i - 1] > 1 && <span className="px-1 text-muted-fg" aria-hidden>…</span>}
+          <Link to={href(n)} aria-current={n === page ? "page" : undefined} className={cn(item, n === page ? "bg-fg text-bg" : "hover:bg-muted")}>{n}</Link>
+        </span>
+      ))}
+      <Link to={href(Math.min(pages, page + 1))} aria-label={labels.next} aria-disabled={page >= pages} className={cn(item, "hover:bg-muted", page >= pages && "pointer-events-none opacity-30")}><ChevronLeftIcon className="rotate-180" /></Link>
+    </nav>
+  );
+}
+const ChevronLeftIcon = ({ className }: { className?: string }) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden><path d="m15 18-6-6 6-6" /></svg>
+);

@@ -97,7 +97,7 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
   const payText = (p: string) => (p === "invoice" ? t("payment.invoiceText", { days: 30 }) : t(`payment.${p}Text` as MessageKey));
 
   return (
-    <div className="container-page pb-24 pt-12">
+    <div className="container-page page-top">
       <header className="mb-10 grid gap-3">
         <Eyebrow line>{t("nav.orderList")} → {t("checkout.review")}</Eyebrow>
         <h1 className="text-h1">{summary.isRequest ? t("checkout.requestTitle") : t("checkout.title")}</h1>

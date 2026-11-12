@@ -74,7 +74,7 @@ export default function QuickOrder({ loaderData, actionData }: Route.ComponentPr
   const { shop } = useRootData();
   const busy = useNavigation().state === "submitting";
   return (
-    <div className="container-page pb-24 pt-12">
+    <div className="container-page page-top">
       <header className="mb-10 grid gap-3">
         <Eyebrow line>B2B</Eyebrow>
         <h1 className="text-h1">{t("quick.title")}</h1>
