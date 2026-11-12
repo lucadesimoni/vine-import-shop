@@ -54,7 +54,13 @@ let booted: Promise<void> | null = null;
 export function bootExtensions() {
   booted ??= (async () => {
     const [{ coreExtensions }, { default: enabled }] = await Promise.all([import("./core"), import("~/extensions.config")]);
-    for (const ext of [...coreExtensions, ...enabled]) {
+    // Customer extensions: custom/extensions/<name>/index.ts — auto-discovered, never touched by core updates
+    // lazy glob: loaded after this module is initialised, so extensions may import defineExtension from here
+    const custom: Extension[] = import.meta.env
+      ? await Promise.all(Object.values(import.meta.glob<Extension>("../../../custom/extensions/*/index.ts", { import: "default" })).map((load) => load()))
+      : [];
+    const disabled = new Set((process.env.EXTENSIONS_DISABLED ?? "").split(",").map((x) => x.trim()).filter(Boolean));
+    for (const ext of [...coreExtensions, ...enabled, ...custom].filter((e) => e && !disabled.has(e.id))) {
       try {
         await ext.setup(api);
         loaded.push({ id: ext.id, name: ext.name, version: ext.version });

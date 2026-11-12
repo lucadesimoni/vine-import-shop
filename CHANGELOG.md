@@ -27,6 +27,10 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 - **Zero-config start.** Secrets are generated once into `data/secrets.json`. `docker compose up -d` (one container, built-in database) and `npm run up`.
 - **One-click deploy** for Elestio, Vercel and Render, plus configs for Railway, Coolify and Dokploy.
 
+- **Customer extensions folder** (`custom/extensions/<name>/index.ts`). It is loaded automatically and never touched by core updates. `EXTENSIONS_DISABLED` switches extensions off.
+- **Automated dependency updates** (Renovate): grouped weekly PRs, majors need approval, security fixes immediately.
+- Vercel demo functions run in Frankfurt (fra1). Neutral default favicon; demo favicon.
+
 ### Changed
 - Database migrations are bundled into the server build. This works on serverless hosts and is compatible with existing installations.
 - `docker-compose.yml` is now the single-container setup. App + Postgres moved to `docker-compose.postgres.yml`.

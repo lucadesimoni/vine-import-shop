@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommitsDisabled"],
+  "schedule": ["before 6am on monday"],
+  "timezone": "Europe/Zurich",
+  "labels": ["dependencies"],
+  "packageRules": [
+    { "matchUpdateTypes": ["patch", "minor"], "matchCurrentVersion": "!/^0/", "groupName": "minor & patch updates", "automerge": false },
+    { "matchPackagePatterns": ["^@react-router/", "^react-router", "^@vercel/react-router"], "groupName": "react-router" },
+    { "matchPackagePatterns": ["^drizzle"], "groupName": "drizzle" },
+    { "matchUpdateTypes": ["major"], "dependencyDashboardApproval": true }
+  ],
+  "vulnerabilityAlerts": { "labels": ["security"], "schedule": ["at any time"] }
+}
