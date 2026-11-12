@@ -120,6 +120,7 @@ export async function seedDeSimoniDemo(db: DB) {
   });
 
   const trade = parseSettings("trade", {
+    imageUrl: `${D}/macchine.png`,
     eyebrow: { de: "— Per la ristorazione", it: "— Per la ristorazione" },
     title: { de: "Ihr Partner\nhinter der Karte.", it: "Il vostro partner\ndietro il menu." },
     text: {

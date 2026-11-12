@@ -93,7 +93,7 @@ export default function Design({ loaderData }: Route.ComponentProps) {
                   <span className="text-[12px] font-medium uppercase tracking-[0.1em] text-muted-fg">{label}</span>
                   <div className={`grid h-24 place-items-center rounded-md border border-border ${bg}`}>{url ? <img src={url} alt="" className="max-h-16 max-w-[80%]" /> : <span className="text-[12px] text-muted-fg">—</span>}</div>
                   <input type="hidden" name={`${k}Url`} value={url} />
-                  <Input type="file" name={`${k}File`} accept="image/png,image/webp,image/jpeg" className="h-auto py-1.5 text-[12px]" />
+                  <Input type="file" name={`${k}File`} accept="image/png,image/webp,image/jpeg" aria-label={`${label} hochladen`} className="h-auto py-1.5 text-[0px] file:mr-0 file:w-full" />
                 </div>
               ))}
             </div>

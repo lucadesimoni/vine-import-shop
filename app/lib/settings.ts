@@ -151,6 +151,7 @@ export const homeSchema = z.object({
 });
 
 export const tradeSchema = z.object({
+  imageUrl: url,
   eyebrow: loc.default({}),
   title: loc.default({}),
   text: loc.default({}),

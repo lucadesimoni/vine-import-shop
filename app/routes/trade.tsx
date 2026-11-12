@@ -65,14 +65,17 @@ export default function Trade({ loaderData, actionData }: Route.ComponentProps) 
   return (
     <>
       <section className="border-b border-border">
-        <div className="container-page grid gap-8 py-20 md:py-28">
-          <Eyebrow>{L(trade.eyebrow)}</Eyebrow>
-          <h1 className="text-display max-w-4xl"><Lines text={L(trade.title)} /></h1>
-          <p className="text-lead max-w-2xl text-muted-fg">{L(trade.text)}</p>
-          <div className="flex flex-wrap gap-3">
-            <ButtonLink to="#apply" size="lg">{t("trade.apply")} <ArrowRight size={16} /></ButtonLink>
-            <ButtonLink to="/shop" size="lg" variant="secondary">{t("cart.toShop")}</ButtonLink>
+        <div className={`container-page grid items-center gap-12 py-20 md:py-28 ${trade.imageUrl ? "lg:grid-cols-[1.15fr_1fr]" : ""}`}>
+          <div className="grid gap-8">
+            <Eyebrow>{L(trade.eyebrow)}</Eyebrow>
+            <h1 className="text-display max-w-4xl"><Lines text={L(trade.title)} /></h1>
+            <p className="text-lead max-w-2xl text-muted-fg">{L(trade.text)}</p>
+            <div className="flex flex-wrap gap-3">
+              <ButtonLink to="#apply" size="lg">{t("trade.apply")} <ArrowRight size={16} /></ButtonLink>
+              <ButtonLink to="/shop" size="lg" variant="secondary">{t("cart.toShop")}</ButtonLink>
+            </div>
           </div>
+          {trade.imageUrl && <img src={trade.imageUrl} alt="" className="aspect-[4/3] w-full rounded-lg object-cover shadow-card" />}
         </div>
       </section>
 
