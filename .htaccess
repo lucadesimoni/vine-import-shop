@@ -1,0 +1,9 @@
+# Fallback for hosters where the document root cannot point at /public:
+# upload the whole project and everything is routed into public/.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^(app|config|database|storage|bin|tests|docs|vendor)(/|$) - [F,L]
+  RewriteRule ^\.env - [F,L]
+  RewriteRule ^$ public/ [L]
+  RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

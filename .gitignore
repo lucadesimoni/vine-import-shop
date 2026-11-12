@@ -1,0 +1,16 @@
+/config/config.php
+/.env
+/storage/*.sqlite*
+/storage/sessions/
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/cache/*
+!/storage/cache/.gitkeep
+/storage/vinx/inbox/*
+!/storage/vinx/inbox/.gitkeep
+/storage/vinx/outbox/*
+!/storage/vinx/outbox/.gitkeep
+/storage/ADMIN_PASSWORD.txt
+/vendor/
+/node_modules/
+.DS_Store
