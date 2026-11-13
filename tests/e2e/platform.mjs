@@ -200,6 +200,15 @@ ok(stripe.status >= 400, "stripe webhook rejects invalid signature", stripe.stat
 await guest.goto(B + "/shop?q=10679");
 ok(/77|Gut an Lager|An Lager/.test(await guest.locator("article").first().innerText()), "CSV stock import reflected in shop");
 
+// serverless time budget: a long job stops cleanly and the next call continues where it stopped
+const cronRun = (q) => fetch(`${B}/api/cron?${q}`, { method: "POST", headers: { Authorization: `Bearer ${CRON}` } }).then((r) => r.json());
+const part1 = await cronRun("jobs=articles&budget=9");
+ok(part1.articles?.partial === true && part1.articles.items > 0, "time budget: article sync stops partway", JSON.stringify(part1.articles));
+let partN = await cronRun("jobs=articles&budget=9"), rounds = 1;
+ok(/ab Datensatz \d+/.test(partN.articles?.message ?? ""), "time budget: next call continues at the same record", partN.articles?.message);
+while (partN.articles?.partial && rounds++ < 30) partN = await cronRun("jobs=articles&budget=9");
+ok(partN.articles?.ok && !partN.articles.partial, `time budget: chain completes (${rounds + 1} calls)`, JSON.stringify(partN.articles));
+
 section("Extensions & business profiles");
 ok(/order-webhook/.test(await (await admin.goto(B + "/admin/integrations"), admin.locator("main").innerText())), "extension listed in admin");
 ok(hooks.filter((h) => h.body.event === "order.placed").length >= 2 && hooks.every((h) => /^[0-9a-f]{64}$/.test(h.sig ?? "")), "order-webhook extension delivered signed events", JSON.stringify(hooks.map((h) => h.body.event)));

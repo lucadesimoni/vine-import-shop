@@ -5,6 +5,7 @@ import type { Route } from "./+types/integrations";
 import { getDb, schema } from "~/.server/db";
 import { getSettings, saveSetting } from "~/.server/settings";
 import { decodeUpload } from "~/.server/vinx/csv";
+import { defaultBudgetMs, withBudget } from "~/.server/job-runtime";
 import { erpClient, lastSuccess, outboxCounts, processOutbox, retryOutbox, syncArticles, syncPrices, syncSpecialPrices, syncStock } from "~/.server/vinx/sync";
 import { Badge, Button, buttonClass, Field, Input, Notice, Select, Textarea } from "~/components/ui";
 import { DataTable, label, PageHeader, Panel, Stat, Toggle } from "~/components/admin";
@@ -81,7 +82,8 @@ export async function action({ request }: Route.ActionArgs) {
   }
   const client = await erpClient(vinx);
   try {
-    const r =
+    // same time budget as the cron (serverless limit); long jobs continue on the next click / cron run
+    const r = await withBudget(defaultBudgetMs(), async () =>
       intent === "ping" ? { ok: true, message: await client.ping() }
       : intent === "articles" ? await syncArticles(client, form.has("full"))
       : intent === "stock" ? await syncStock(client)
@@ -89,7 +91,7 @@ export async function action({ request }: Route.ActionArgs) {
       : intent === "conditions" ? await syncSpecialPrices(client)
       : intent === "outbox" ? await processOutbox(client)
       : intent.startsWith("job:") ? await runJob(intent.slice(4))
-      : { ok: false, message: "unknown" };
+      : { ok: false, message: "unknown" });
     return { ok: r.ok, message: r.message };
   } catch (e) {
     return { ok: false, message: (e as Error).message };

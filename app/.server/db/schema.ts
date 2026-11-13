@@ -402,7 +402,7 @@ export const erpOutbox = pgTable(
 export const syncLog = pgTable("sync_log", {
   id: serial("id").primaryKey(),
   job: text("job").notNull(),
-  status: text("status", { enum: ["running", "ok", "error"] }).notNull(),
+  status: text("status", { enum: ["running", "ok", "error", "partial"] }).notNull(),
   items: integer("items").notNull().default(0),
   message: text("message"),
   startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),

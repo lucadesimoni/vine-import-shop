@@ -46,10 +46,23 @@ The button in the README opens Elestio's CI/CD deploy for this repository, confi
 - **Database:** add Neon (Vercel Marketplace › Storage). It sets `DATABASE_URL`. Without it the app starts as an **ephemeral demo** (embedded DB in `/tmp`, reset on cold start).
 - **Migrations** are bundled into the build and run on first request.
 - **Uploads:** `STORAGE_DRIVER=s3` with Cloudflare R2, AWS S3, Exoscale SOS or another S3-compatible store.
-- **Jobs:** `vercel.json` schedules `/api/cron`. Vercel sends `Authorization: Bearer $CRON_SECRET`.
-  - Hobby plans run crons at most once a day; on Pro, set `*/10 * * * *`.
-  - Orders and new customers are pushed to the ERP **inline** on serverless, so they don't wait for the cron.
-- Long ERP syncs (full article import) are better run on a long-running Node host or via `npm run jobs`.
+- **Jobs (cron):** three ways to call `/api/cron` (each call needs `Authorization: Bearer $CRON_SECRET`):
+  - **Vercel Cron** (`vercel.json`, daily at 04:00 — the Hobby plan allows nothing more frequent). On Pro, set `*/10 * * * *` in `vercel.json`.
+  - **GitHub Actions** (`.github/workflows/cron.yml`, every 15 min, any plan): set the repository secrets `SHOP_URL` and `CRON_SECRET`.
+  - Any external scheduler (cron-job.org, UptimeRobot, server cron) with a `POST`.
+  - Orders and new customers are pushed to the ERP **inline** when they are placed, so they don't wait for the cron.
+- **Time limits:** jobs run within a budget below the function limit, controlled by `JOB_BUDGET_SECONDS`. The default on Vercel is 50 s, which fits every plan.
+  - With Fluid Compute (Settings › Functions, max. duration 300 s) set `JOB_BUDGET_SECONDS=270`.
+  - Order: orders → vinX, order status, stock, prices, special prices, articles, customers, images.
+  - What does not fit is reported as `deferred` and runs next time.
+  - Long jobs (article delta/full sync, stock, price lists, customer pull, receipts, customer import, images) stop cleanly and continue at the same record in the next call. Each run makes progress.
+  - Delta syncs keep the start of the first partial run, so nothing is missed.
+  - Price lists are written per complete article, never half.
+  - Every vinX request has a timeout inside the budget.
+- **Do not use per-route `export const config`** without `DATABASE_URL`: Vercel would build a separate function with its own temporary database.
+- **Backups:** automatic file backups are off on Vercel (`/tmp` is temporary). Use the managed Postgres backups (Neon: point-in-time restore).
+- **Image optimizer:** runs on Vercel only with `STORAGE_DRIVER=s3`; without it the job skips itself (files in `/tmp` would vanish).
+- **vinX firewall:** if vinX only accepts known IP addresses, Vercel needs Static IPs (Pro / Secure Compute), or use a host with a fixed IP.
 
 ### Render
 `render.yaml` creates the web service (Node, `npm start`, health check `/api/health`) and a Postgres database, and generates the secrets. Uploads persist only with `STORAGE_DRIVER=s3` or a Render disk.

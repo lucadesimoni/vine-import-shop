@@ -1,0 +1,47 @@
+# Scheduler for serverless hosting (Vercel Hobby allows only one cron run per day).
+# Calls the shop's job endpoint every 15 minutes: orders → vinX, order status, stock, prices, articles …
+# Each call stays within the shop's time budget; long jobs continue in the next call.
+#
+# Setup (GitHub › Settings › Secrets and variables › Actions):
+#   SHOP_URL     e.g. https://shop.example.ch   (no trailing slash)
+#   CRON_SECRET  the same value as the shop's CRON_SECRET environment variable
+# Without these secrets the workflow does nothing.
+name: Shop jobs
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      jobs:
+        description: "Only these jobs (comma-separated, e.g. outbox,stock) — empty: all scheduled jobs"
+        required: false
+
+permissions: {}
+
+concurrency:
+  group: shop-jobs
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Call /api/cron
+        env:
+          SHOP_URL: ${{ secrets.SHOP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          JOBS: ${{ github.event.inputs.jobs }}
+        run: |
+          if [ -z "$SHOP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "SHOP_URL / CRON_SECRET not set — nothing to do"; exit 0
+          fi
+          url="$SHOP_URL/api/cron"
+          [ -n "$JOBS" ] && url="$url?jobs=$JOBS"
+          status=$(curl -sS -o result.json -w '%{http_code}' --retry 2 --retry-delay 10 --max-time 330 \
+            -X POST -H "Authorization: Bearer $CRON_SECRET" "$url")
+          cat result.json; echo
+          if [ "$status" -ge 400 ]; then echo "HTTP $status"; exit 1; fi
+          # a job that failed (ok: false) marks the run red so it shows up in GitHub
+          if grep -q '"ok":false' result.json; then echo "a job reported an error"; exit 1; fi

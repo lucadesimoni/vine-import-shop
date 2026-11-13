@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { and, count, eq, isNotNull, like, not } from "drizzle-orm";
 import { getDb, schema } from "./db";
+import { outOfTime } from "./job-runtime";
 import { readUpload, saveBuffer } from "./storage";
 
 /**
@@ -58,6 +59,8 @@ export async function optimizeImage(src: string, name: string) {
 
 /** Job: optimize the next batch of product images that are not optimized yet. */
 export async function optimizeProductImages(limit = 40) {
+  // serverless file systems are temporary: optimized files would vanish → only with S3-compatible storage
+  if (process.env.VERCEL && process.env.STORAGE_DRIVER !== "s3") return { ok: true, items: 0, message: "Übersprungen: auf Vercel braucht der Bild-Optimierer dauerhaften Speicher (STORAGE_DRIVER=s3)" };
   const db = await getDb();
   const p = schema.products;
   const rows = await db.select({ id: p.id, slug: p.slug, image: p.image }).from(p)
@@ -65,6 +68,7 @@ export async function optimizeProductImages(limit = 40) {
   let done = 0, failed = 0, before = 0, after = 0;
   const errors: string[] = [];
   for (const r of rows) {
+    if (outOfTime()) break;
     try {
       const o = await optimizeImage(r.image!, r.slug);
       await db.update(p).set({ image: o.url, updatedAt: new Date() }).where(eq(p.id, r.id));

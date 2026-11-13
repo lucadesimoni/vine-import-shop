@@ -13,11 +13,24 @@ export class MockClient implements ErpClient {
   readonly name = "vinX Mock (Demo)";
   readonly mapping = "rest" as const;
 
+  // offset: continue a time-limited run (see job-runtime.ts)
+  async *articles(_since?: Date | null, offset = 0) { yield* skip(this.articlesAll(), offset); }
+  async *stock(offset = 0) { yield* skip(this.stockAll(), offset); }
+  async *receipts(_since?: Date | null, offset = 0) { yield* skip(this.receiptsAll(), offset); }
+  async *addresses(_since?: Date | null, offset = 0) { yield* skip(this.addressesAll(), offset); }
+  async *prices(offset = 0) {
+    // like the REST driver ($orderby=articleId): all rows of an article together
+    const rows: Raw[] = [];
+    for await (const r of this.pricesAll()) rows.push(r);
+    rows.sort((a, b) => Number(a.articleId) - Number(b.articleId) || Number(a.id ?? 0) - Number(b.id ?? 0));
+    yield* rows.slice(offset);
+  }
+
   async ping() {
     return "Demo mode — no real ERP connected";
   }
 
-  async *articles(): AsyncIterable<Raw> {
+  private async *articlesAll(): AsyncIterable<Raw> {
     const db = await getDb();
     const rows = await db
       .select({ v: schema.variants, p: schema.products, producer: schema.producers, category: schema.categories })
@@ -44,7 +57,7 @@ export class MockClient implements ErpClient {
     }
   }
 
-  async *stock(): AsyncIterable<Raw> {
+  private async *stockAll(): AsyncIterable<Raw> {
     const db = await getDb();
     for (const v of await db.select({ id: schema.variants.id, erpId: schema.variants.erpId, stock: schema.variants.stock }).from(schema.variants)) {
       yield { articleId: Number(v.erpId ?? v.id), quantityAvailableForShop: Math.max(0, v.stock + Math.floor(Math.random() * 19) - 6) };
@@ -58,7 +71,7 @@ export class MockClient implements ErpClient {
   }
 
   /** BaseData/SellingPrices: consumer list price (incl. VAT) + trade tiers (excl. VAT) + a demo promotion. */
-  async *prices(): AsyncIterable<Raw> {
+  private async *pricesAll(): AsyncIterable<Raw> {
     const db = await getDb();
     const groups = await db.select().from(schema.customerGroups);
     const consumer = groups.find((g) => !g.isTrade && g.erpCode);
@@ -106,7 +119,7 @@ export class MockClient implements ErpClient {
   }
 
   /** BaseData/Receipt shape for orders handed to "vinX": status advances with the order's age (demo). */
-  async *receipts(): AsyncIterable<Raw> {
+  private async *receiptsAll(): AsyncIterable<Raw> {
     const db = await getDb();
     for (const o of await db.select().from(schema.orders).where(isNotNull(schema.orders.erpId))) {
       const hours = (Date.now() - o.createdAt.getTime()) / 3600e3;
@@ -116,7 +129,7 @@ export class MockClient implements ErpClient {
   }
 
   /** BaseData/Address shape for every linked customer (unchanged data → the pull is a no-op, but runs end-to-end). */
-  async *addresses(): AsyncIterable<Raw> {
+  private async *addressesAll(): AsyncIterable<Raw> {
     const db = await getDb();
     for (const u of await db.select().from(schema.users).where(isNotNull(schema.users.erpId))) {
       const [firstName, ...rest] = (u.billing?.name ?? u.name).split(" ");
@@ -239,4 +252,9 @@ export function minimalPdf(lines: string[]): Uint8Array {
   const xref = out.length;
   out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offsets.map((n) => `${String(n).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
   return new TextEncoder().encode(out);
+}
+
+async function* skip<T>(it: AsyncIterable<T>, n: number) {
+  let i = 0;
+  for await (const x of it) if (i++ >= n) yield x;
 }

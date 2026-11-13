@@ -21,10 +21,10 @@ export interface ErpClient {
   /** which field mapping applies to this driver's raw records */
   readonly mapping: "rest" | "csv";
   ping(): Promise<string>;
-  articles(since?: Date | null): AsyncIterable<Raw>;
-  stock(): AsyncIterable<Raw>;
+  articles(since?: Date | null, offset?: number): AsyncIterable<Raw>;
+  stock(offset?: number): AsyncIterable<Raw>;
   /** Price-group prices (one row per article / group / from-quantity, optional promotion price + validity). */
-  prices(): AsyncIterable<Raw>;
+  prices(offset?: number): AsyncIterable<Raw>;
   /** Price groups incl. whether their prices include VAT. */
   priceGroups?(): Promise<{ id: string; name: string; pricesWithVat: boolean }[]>;
   /** Customer special prices (vinX SpecialPrices). */
@@ -58,9 +58,9 @@ export interface ErpClient {
   /** Change the shop login (e-mail) of an ERP address — BaseData/Address({id})/ChangeShopUsername. */
   changeShopUsername?(addressId: string, username: string): Promise<void>;
   /** Receipts (orders / delivery notes / invoices) changed since — vinX BaseData/Receipt; `shopId` = shop order number. */
-  receipts?(since?: Date | null): AsyncIterable<Raw>;
+  receipts?(since?: Date | null, offset?: number): AsyncIterable<Raw>;
   /** Customer addresses changed since (vinX BaseData/Address) — pulled into linked shop customers. */
-  addresses?(since?: Date | null): AsyncIterable<Raw>;
+  addresses?(since?: Date | null, offset?: number): AsyncIterable<Raw>;
   pushOrder(payload: OrderPayload): Promise<string>;
   pushCustomer(payload: CustomerPayload): Promise<string>;
 }

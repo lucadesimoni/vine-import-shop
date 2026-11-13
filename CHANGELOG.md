@@ -12,6 +12,20 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Serverless-ready jobs (Vercel):**
+  - Each cron and admin job run has a time budget below the function limit: `JOB_BUDGET_SECONDS`, default 50 s on Vercel, 900 s elsewhere.
+  - Jobs run by priority (orders → vinX, order status, stock, prices …). What does not fit is reported as `deferred`.
+  - **Resumable:** article sync, stock, price lists, customer pull, receipts, customer import and images stop cleanly and continue at the same record in the next call. Each run makes progress.
+  - Delta syncs keep the start of the first partial run, so nothing is missed. Price lists are written per complete article (sorted `$orderby=articleId`), never half.
+  - Every vinX request has a timeout inside the budget.
+  - Test it with `/api/cron?budget=<s>`.
+- **Scheduler for every plan:** `.github/workflows/cron.yml` calls `/api/cron` every 15 min. Set the repository secrets `SHOP_URL` and `CRON_SECRET`. Vercel Cron stays daily, which is what the Hobby plan allows.
+
+### Changed
+- The image optimizer runs on Vercel only with S3 storage (files in `/tmp` would vanish).
+- `docs/DEPLOY.md › Vercel`: cron options, time limits, database and function notes, backups, vinX IP allowlist.
+
 ## [1.8.0] - 2026-11-13
 
 ### Added

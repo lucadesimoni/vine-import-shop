@@ -1,3 +1,4 @@
+import { requestTimeout } from "../job-runtime";
 import type { Settings } from "~/lib/settings";
 import type { BasketLine, BasketRequest, BasketResult, CustomerPayload, ErpClient, OrderPayload, ProductInfo, Raw } from "./client";
 
@@ -51,7 +52,7 @@ export class Rest3Client implements ErpClient {
         ...(body ? { "Content-Type": "application/json" } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(requestTimeout(45_000)),
     });
     if (res.status === 401 && retry) {
       this.token = null;
@@ -63,14 +64,16 @@ export class Rest3Client implements ErpClient {
   }
 
   /** OData paging over a GET collection. */
-  private async *collection(path: string, filter?: string): AsyncIterable<Raw> {
+  private async *collection(path: string, filter?: string, start = 0, orderby?: string): AsyncIterable<Raw> {
     // vinX OData endpoints return the array (minimal metadata) — tolerate the { value: [] } envelope too.
+    // `start` + a stable `orderby` let a job continue where a time-limited run stopped (serverless).
     const top = this.cfg.pageSize;
-    for (let skip = 0; skip < 1_000_000; skip += top) {
+    for (let skip = start; skip < 1_000_000; skip += top) {
       const u = new URL(this.shop(path));
       u.searchParams.set("$top", String(top));
       u.searchParams.set("$skip", String(skip));
       if (filter) u.searchParams.set("$filter", filter);
+      if (orderby) u.searchParams.set("$orderby", orderby);
       const json = await this.request<Raw[] | { value?: Raw[] }>("GET", u.toString());
       const rows = Array.isArray(json) ? json : (json?.value ?? []);
       yield* rows;
@@ -135,14 +138,14 @@ export class Rest3Client implements ErpClient {
   }
 
   /** Articles enriched with their referenced master data so the generic mapper can use nested paths. */
-  async *articles(since?: Date | null) {
+  async *articles(since?: Date | null, offset = 0) {
     const L = await this.lookups();
     const top = (id: unknown): Raw | undefined => {
       let r = L.regions.get(Number(id));
       for (let i = 0; r && r.parentId != null && i < 6; i++) r = L.regions.get(Number(r.parentId)) ?? r;
       return r;
     };
-    for await (const a of this.collection("BaseData/Article", since ? `${this.cfg.modifiedField} gt ${since.toISOString()}` : undefined)) {
+    for await (const a of this.collection("BaseData/Article", since ? `${this.cfg.modifiedField} gt ${since.toISOString()}` : undefined, offset, "id")) {
       yield {
         ...a,
         producer: L.producers.get(Number(a.producerId)),
@@ -163,8 +166,8 @@ export class Rest3Client implements ErpClient {
     }
   }
 
-  stock() {
-    return this.collection("Calculated/StockData");
+  stock(offset = 0) {
+    return this.collection("Calculated/StockData", undefined, offset, "articleId");
   }
 
   async documents(addressId: string) {
@@ -245,12 +248,12 @@ export class Rest3Client implements ErpClient {
   }
 
   /** BaseData/Receipt with a shop order reference, incrementally by changedOn (positions not needed). */
-  receipts(since?: Date | null) {
-    return this.collection("BaseData/Receipt", [`shopId ne null`, since ? `changedOn gt ${since.toISOString()}` : ""].filter(Boolean).join(" and "));
+  receipts(since?: Date | null, offset = 0) {
+    return this.collection("BaseData/Receipt", [`shopId ne null`, since ? `changedOn gt ${since.toISOString()}` : ""].filter(Boolean).join(" and "), offset, "id");
   }
 
   /** BaseData/Address (customers), incrementally by changedOn, with the country resolved to its ISO code. */
-  async *addresses(since?: Date | null) {
+  async *addresses(since?: Date | null, offset = 0) {
     const [countries, reps, tours, days, categories, chains, channels, salutations, selections, platform, marketing, customerMarketing] = await Promise.all(
       ["BaseData/Country", "BaseData/SalesRepresentative", "BaseData/Tour", "BaseData/DeliveryDay", "BaseData/CustomerCategory", "BaseData/Chain", "BaseData/DistributionChannel", "BaseData/Salutation",
         "BaseData/SelectionCode", "BaseData/PlatformAssortment", "BaseData/Marketing", "BaseData/CustomerMarketing"].map((p) => this.all(p).catch(() => [] as Raw[])),
@@ -270,7 +273,7 @@ export class Rest3Client implements ErpClient {
       if (cm.active === false || !m?.designation) continue;
       marketingByAddress.set(Number(cm.addressId), [...(marketingByAddress.get(Number(cm.addressId)) ?? []), String(m.designation)]);
     }
-    for await (const a of this.collection("BaseData/Address", since ? `changedOn gt ${since.toISOString()}` : undefined)) {
+    for await (const a of this.collection("BaseData/Address", since ? `changedOn gt ${since.toISOString()}` : undefined, offset, "id")) {
       yield {
         ...a,
         country: C.get(Number(a.countryId)),
@@ -289,8 +292,9 @@ export class Rest3Client implements ErpClient {
   }
 
   /** BaseData/SellingPrices: per price group, from-quantity tiers, optional promotion price with validity. */
-  prices() {
-    return this.collection("BaseData/SellingPrices");
+  prices(offset = 0) {
+    // sorted by article so a time-limited run can stop between articles and continue
+    return this.collection("BaseData/SellingPrices", undefined, offset, "articleId,id");
   }
 
   async priceGroups() {

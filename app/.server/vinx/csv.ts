@@ -54,9 +54,9 @@ export class CsvClient implements ErpClient {
   async ping() {
     return "CSV mode — upload exports in Admin or POST to /api/vinx/import";
   }
-  async *articles() { yield* parseCsv(this.files.articles ?? ""); }
-  async *stock() { yield* parseCsv(this.files.stock ?? ""); }
-  async *prices() { yield* parseCsv(this.files.prices ?? ""); }
+  async *articles(_since?: Date | null, offset = 0) { yield* parseCsv(this.files.articles ?? "").slice(offset); }
+  async *stock(offset = 0) { yield* parseCsv(this.files.stock ?? "").slice(offset); }
+  async *prices(offset = 0) { yield* parseCsv(this.files.prices ?? "").slice(offset); }
   async pushOrder(p: OrderPayload) { return p.order.number; } // picked up via /api/vinx/orders.csv
   async pushCustomer(p: CustomerPayload) { return `web-${p.id}`; }
 }

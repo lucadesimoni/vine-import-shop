@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, lte, or, sql } from "drizzle-orm";
 import type { Settings } from "~/lib/settings";
 import { slugify } from "~/lib/slug";
 import { getDb, schema } from "../db";
+import { BudgetExhausted, defaultBudgetMs, outOfTime, withBudget } from "../job-runtime";
 import type { ErpCustomerInfo } from "../db/schema";
 import { getSetting } from "../settings";
 import type { CustomerPayload, ErpClient, OrderPayload, Raw } from "./client";
@@ -17,12 +18,23 @@ export async function erpClient(cfg?: Settings["vinx"], files?: ConstructorParam
   return (erpDrivers.get(cfg.driver) ?? erpDrivers.get("mock")!).create(cfg);
 }
 
-async function job<T extends { items: number; message: string }>(name: string, fn: () => Promise<T>) {
+/**
+ * Runs a job with a log row. Time-limited runs (serverless) may stop early and return `partial` with the number of
+ * records done so far; the next run receives that number as `resume` (offset) and continues. When the chain completes,
+ * the final "ok" row takes the start time of the first partial run, so delta syncs (lastSuccess) miss nothing.
+ */
+async function job<T extends { items: number; message: string; partial?: boolean }>(name: string, fn: (resume: number) => Promise<T>) {
   const db = await getDb();
+  const recent = await db.select().from(schema.syncLog).where(eq(schema.syncLog.job, name)).orderBy(desc(schema.syncLog.id)).limit(50);
+  const chain = [];
+  for (const r of recent) { if (r.status !== "partial") break; chain.push(r); }
+  const resume = chain[0]?.items ?? 0;
+  const chainStart = chain.length ? chain[chain.length - 1].startedAt : null;
   const [log] = await db.insert(schema.syncLog).values({ job: name, status: "running" }).returning();
   try {
-    const r = await fn();
-    await db.update(schema.syncLog).set({ status: "ok", items: r.items, message: r.message, finishedAt: new Date() }).where(eq(schema.syncLog.id, log.id));
+    const r = await fn(resume);
+    const status = r.partial ? "partial" : "ok";
+    await db.update(schema.syncLog).set({ status, items: r.items, message: r.partial ? `${r.message} — Zeitbudget erreicht, nächster Lauf setzt fort` : r.message, finishedAt: new Date(), ...(status === "ok" && chainStart ? { startedAt: chainStart } : {}) }).where(eq(schema.syncLog.id, log.id));
     return { ok: true, ...r };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
@@ -60,7 +72,7 @@ async function uniqueSlug(table: "products" | "producers" | "categories", base: 
 
 /** Articles: ERP owns commercial fields; shop owns texts/images/flags. */
 export async function syncArticles(client: ErpClient, full = false) {
-  return job("articles", async () => {
+  return job("articles", async (resume) => {
     const cfg = await getSetting("vinx");
     const owned = new Set(cfg.ownedFields);
     const db = await getDb();
@@ -71,7 +83,10 @@ export async function syncArticles(client: ErpClient, full = false) {
 
     // optional e-commerce assortment (vinX ArticleSelectionCode): articles outside it are not offered online
     const assortment = cfg.selectionCodeId && client.assortment ? await client.assortment(cfg.selectionCodeId) : null;
-    for await (const raw of client.articles(since)) {
+    let seen = 0, partial = false;
+    for await (const raw of client.articles(since, resume)) {
+      if (seen > 0 && outOfTime()) { partial = true; break; } // at least one record per run → always progress
+      seen++;
       const a = mapArticle(raw, mappingFor(cfg, client));
       if (!a.sku) { skipped++; continue; }
       if (assortment && !assortment.has(String(a.variant.erpId ?? a.sku))) a.variant.active = false;
@@ -161,19 +176,22 @@ export async function syncArticles(client: ErpClient, full = false) {
       await db.insert(schema.variants).values({ ...vPatch, productId: product.id, sku: a.sku, priceCents: vPatch.priceCents ?? 0, stock: vPatch.stock ?? 0 });
       created++;
     }
-    return { items: created + updated, message: `${created} created, ${updated} updated, ${skipped} skipped${since ? ` (delta since ${since.toISOString()})` : " (full)"}` };
+    return { items: partial ? resume + seen : created + updated, partial, message: `${created} created, ${updated} updated, ${skipped} skipped${since ? ` (delta since ${since.toISOString()})` : " (full)"}${resume ? ` · ab Datensatz ${resume}` : ""}` };
   });
 }
 
 export async function syncStock(client: ErpClient) {
-  return job("stock", async () => {
+  return job("stock", async (resume) => {
     const cfg = await getSetting("vinx");
     const db = await getDb();
     let n = 0;
     const ids = await variantRefs();
     // Rarities add-in: stock per bottle condition (StockData.conditionId → BaseData/Condition)
     const conditions = client.conditions ? new Map((await client.conditions()).map((c) => [Number(c.id), c])) : new Map<number, Raw>();
-    for await (const raw of client.stock()) {
+    let seen = 0, partial = false;
+    for await (const raw of client.stock(resume)) {
+      if (seen > 0 && outOfTime()) { partial = true; break; } // at least one record per run → always progress
+      seen++;
       const s = mapStock(raw, mappingFor(cfg, client));
       const id = ids.get(s.ref);
       if (!id) continue;
@@ -188,7 +206,7 @@ export async function syncStock(client: ErpClient) {
       }
       n++;
     }
-    return { items: n, message: `${n} variants updated` };
+    return { items: partial ? resume + seen : n, partial, message: `${n} variants updated` };
   });
 }
 
@@ -198,7 +216,7 @@ export async function syncStock(client: ErpClient) {
  * Price groups flagged pricesWithVat are converted with the article's VAT rate.
  */
 export async function syncPrices(client: ErpClient) {
-  return job("prices", async () => {
+  return job("prices", async (resume) => {
     const cfg = await getSetting("vinx");
     const shop = await getSetting("shop");
     const db = await getDb();
@@ -214,10 +232,21 @@ export async function syncPrices(client: ErpClient) {
     const tiers = new Map<string, { minQty: number; netCents: number }[]>();
     const listPrices = new Map<number, number>();
     const promos: (typeof schema.conditions.$inferInsert)[] = [];
-    for await (const raw of client.prices()) {
+    // Rows come sorted by article: when the time budget runs out, only fully read articles are written and the next
+    // run continues after them (offset = rows of those articles). An article's rows are never written half.
+    const touched = new Set<number>();
+    let consumed = 0, committedRows = 0, currentRef: string | null = null, partial = false;
+    for await (const raw of client.prices(resume)) {
       const pr = mapPrice(raw, mappingFor(cfg, client));
+      if (pr.ref !== currentRef) {
+        if (consumed > 0 && outOfTime()) { partial = true; break; } // at least one article per run → always progress
+        currentRef = pr.ref;
+        committedRows = consumed;
+      }
+      consumed++;
       const v = byRef.get(pr.ref);
       if (!v || !pr.current || pr.netCents <= 0) continue;
+      touched.add(v.id);
       const withVat = erpGroups.get(pr.list)?.pricesWithVat ?? pr.list === consumerList;
       const toNet = (c: number) => (withVat ? Math.round(c / (1 + rate(v.taxClass))) : c);
       const toGross = (c: number) => (withVat ? c : Math.round(c * (1 + rate(v.taxClass))));
@@ -236,6 +265,16 @@ export async function syncPrices(client: ErpClient) {
         });
       }
     }
+    // stopped mid-article: drop that article's rows, it is read again in the next run
+    if (partial && currentRef) {
+      const v = byRef.get(currentRef);
+      if (v) {
+        touched.delete(v.id);
+        listPrices.delete(v.id);
+        for (const k of [...tiers.keys()]) if (k.startsWith(`${v.id}:`)) tiers.delete(k);
+        for (let i = promos.length - 1; i >= 0; i--) if (promos[i].target === String(v.id)) promos.splice(i, 1);
+      }
+    } else committedRows = consumed;
     let rows = 0;
     await db.transaction(async (tx) => {
       for (const [id, cents] of listPrices) await tx.update(schema.variants).set({ priceCents: cents, syncedAt: new Date() }).where(eq(schema.variants.id, id));
@@ -246,11 +285,13 @@ export async function syncPrices(client: ErpClient) {
         rows += list.length;
       }
       if (cfg.syncConditions) {
-        await tx.delete(schema.conditions).where(and(eq(schema.conditions.source, "vinx"), eq(schema.conditions.type, "promotion_price")));
+        // promotions are replaced per article of this run (a complete run without resume replaces them all)
+        if (!resume && !partial) await tx.delete(schema.conditions).where(and(eq(schema.conditions.source, "vinx"), eq(schema.conditions.type, "promotion_price")));
+        else if (touched.size) await tx.delete(schema.conditions).where(and(eq(schema.conditions.source, "vinx"), eq(schema.conditions.type, "promotion_price"), inArray(schema.conditions.target, [...touched].map(String))));
         if (promos.length) await tx.insert(schema.conditions).values(promos);
       }
     });
-    return { items: rows + listPrices.size, message: `${listPrices.size} list prices, ${rows} tier rows (${tiers.size} variant/group pairs), ${promos.length} promotions` };
+    return { items: partial ? resume + committedRows : rows + listPrices.size, partial, message: `${listPrices.size} list prices, ${rows} tier rows (${tiers.size} variant/group pairs), ${promos.length} promotions` };
   });
 }
 
@@ -265,6 +306,7 @@ export async function syncSpecialPrices(client: ErpClient) {
     const rowsOut: (typeof schema.conditions.$inferInsert)[] = [];
     let skipped = 0;
     for await (const r of client.specialPrices()) {
+      if (outOfTime()) throw new BudgetExhausted("conditions");
       const userId = users.get(String(r.addressId));
       const variantId = refs.get(String(r.articleId));
       if (!userId || !variantId) { skipped++; continue; }
@@ -323,14 +365,17 @@ export async function orderPayload(orderId: number): Promise<OrderPayload> {
  * its change is already queued for vinX (customer.updated → Online/OnlineAddress changeType "change").
  */
 export async function syncCustomers(client: ErpClient) {
-  return job("customers", async () => {
+  return job("customers", async (resume) => {
     const cfg = await getSetting("vinx");
     if (!client.addresses || !cfg.pullCustomers) return { items: 0, message: "customer pull off / not supported by driver" };
     const db = await getDb();
     const since = await lastSuccess("customers");
     const groups = await db.select().from(schema.customerGroups);
     let updated = 0, skipped = 0;
-    for await (const a of client.addresses(since)) {
+    let seen = 0, partial = false;
+    for await (const a of client.addresses(since, resume)) {
+      if (seen > 0 && outOfTime()) { partial = true; break; } // at least one record per run → always progress
+      seen++;
       const id = String(a.id ?? a.addressNumber ?? "");
       // the address's own login (contact-person logins share the address id and follow below)
       const linked = id ? await db.select().from(schema.users).where(eq(schema.users.erpId, id)) : [];
@@ -365,7 +410,7 @@ export async function syncCustomers(client: ErpClient) {
       }
       updated++;
     }
-    return { items: updated, message: `${updated} customers updated from vinX, ${skipped} unchanged/not linked` };
+    return { items: partial ? resume + seen : updated, partial, message: `${updated} customers updated from vinX, ${skipped} unchanged/not linked` };
   });
 }
 
@@ -401,12 +446,15 @@ export function erpInfoOf(a: Raw): ErpCustomerInfo {
 }
 
 export async function syncOrderStatus(client: ErpClient) {
-  return job("orders:status", async () => {
+  return job("orders:status", async (resume) => {
     if (!client.receipts) return { items: 0, message: "driver has no receipts feed" };
     const db = await getDb();
     const { setOrderStatus, markPaid } = await import("../orders");
     let updated = 0, unknown = 0;
-    for await (const r of client.receipts(await lastSuccess("orders:status"))) {
+    let seen = 0, partial = false;
+    for await (const r of client.receipts(await lastSuccess("orders:status"), resume)) {
+      if (seen > 0 && outOfTime()) { partial = true; break; } // at least one record per run → always progress
+      seen++;
       const number = String(r.shopId ?? "");
       const order = number ? await db.query.orders.findFirst({ where: eq(schema.orders.number, number) }) : undefined;
       if (!order) { unknown++; continue; }
@@ -420,7 +468,7 @@ export async function syncOrderStatus(client: ErpClient) {
       await setOrderStatus(order.id, next, tracking ? { carrier: order.carrier ?? "post", trackingNumber: tracking } : undefined);
       updated++;
     }
-    return { items: updated, message: `${updated} orders updated from vinX receipts${unknown ? `, ${unknown} receipts without shop order` : ""}` };
+    return { items: partial ? resume + seen : updated, partial, message: `${updated} orders updated from vinX receipts${unknown ? `, ${unknown} receipts without shop order` : ""}` };
   });
 }
 
@@ -429,14 +477,17 @@ export async function syncOrderStatus(client: ErpClient) {
  * Accounts have no usable password; send invitations from Admin › Kunden (bulk action) when ready.
  */
 export async function importErpCustomers(client: ErpClient) {
-  return job("customers:import", async () => {
+  return job("customers:import", async (resume) => {
     if (!client.addresses) return { items: 0, message: "driver has no address feed" };
     const cfg = await getSetting("vinx");
     const db = await getDb();
     const groups = await db.select().from(schema.customerGroups);
     const { randomBytes } = await import("node:crypto");
     let created = 0, existing = 0, skipped = 0;
-    for await (const a of client.addresses(null)) {
+    let seen = 0, partial = false;
+    for await (const a of client.addresses(null, resume)) {
+      if (seen > 0 && outOfTime()) { partial = true; break; } // at least one record per run → always progress
+      seen++;
       const email = String(a.eMail ?? "").trim().toLowerCase();
       const erpId = String(a.id ?? a.addressNumber ?? "");
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || a.isActive === false) { skipped++; continue; }
@@ -465,6 +516,7 @@ export async function importErpCustomers(client: ErpClient) {
     }
     // BaseData/ContactPerson: one portal login per contact person with an e-mail (same address, prices and conditions)
     let contacts = 0;
+    if (partial) return { items: resume + seen, partial, message: `${created} customers created from vinX` };
     if (client.contactPersons) {
       for await (const c of client.contactPersons()) {
         const email = String(c.email ?? "").trim().toLowerCase();
@@ -506,6 +558,7 @@ export async function processOutbox(client?: ErpClient, limit = 50) {
       .orderBy(schema.erpOutbox.id).limit(limit);
     let sent = 0, failed = 0;
     for (const row of rows) {
+      if (outOfTime()) break;
       try {
         if (row.type === "order") {
           const erpId = await client.pushOrder(row.payload as OrderPayload);
@@ -542,19 +595,32 @@ export async function retryOutbox(id: number) {
 
 /** Scheduled run: called by /api/cron, `npm run jobs`, or a platform cron. */
 /** Runs registered jobs (core vinX jobs + extension jobs). Default: every job flagged `scheduled`. */
-export async function runScheduled(only?: string[]) {
-  const cfg = await getSetting("vinx");
-  const { bootExtensions, jobs } = await import("../extensions");
-  await bootExtensions();
-  const ids = only ?? [...jobs.values()].filter((j) => j.scheduled).map((j) => j.id);
-  const out: Record<string, unknown> = {};
-  for (const id of ids) {
-    const j = jobs.get(id);
-    if (!j) { out[id] = { ok: false, message: "unknown job" }; continue; }
-    if (!cfg.enabled && ["outbox", "stock", "prices", "conditions", "articles"].includes(id)) { out[id] = { ok: true, message: "vinx disabled" }; continue; }
-    try { out[id] = await j.run(); } catch (e) { out[id] = { ok: false, message: (e as Error).message }; }
-  }
-  return out;
+/** Order of the scheduled run: what customers notice first (orders to the ERP, status, stock) before bulk data. */
+const PRIORITY = ["outbox", "orders:status", "stock", "prices", "conditions", "articles", "customers", "images", "backup"];
+
+/**
+ * Scheduled jobs within a time budget (serverless: below the function's maxDuration). Jobs that do not fit are
+ * reported as deferred and run in the next call; long jobs continue where they stopped.
+ */
+export async function runScheduled(only?: string[], budgetMs = defaultBudgetMs()) {
+  return withBudget(budgetMs, async () => {
+    const cfg = await getSetting("vinx");
+    const { bootExtensions, jobs } = await import("../extensions");
+    await bootExtensions();
+    const ids = (only ?? [...jobs.values()].filter((j) => j.scheduled).map((j) => j.id)).sort((a, b) => (PRIORITY.indexOf(a) + 1 || 99) - (PRIORITY.indexOf(b) + 1 || 99));
+    const out: Record<string, unknown> = {};
+    let started = 0;
+    for (const id of ids) {
+      const j = jobs.get(id);
+      if (!j) { out[id] = { ok: false, message: "unknown job" }; continue; }
+      if (!cfg.enabled && ["outbox", "stock", "prices", "conditions", "articles", "customers", "orders:status"].includes(id)) { out[id] = { ok: true, message: "vinx disabled" }; continue; }
+      // the first job always runs (progress even with a small budget); later ones only with time left
+      if (started > 0 && outOfTime(20_000)) { out[id] = { ok: true, deferred: true, message: "Zeitbudget erreicht — nächster Lauf" }; continue; }
+      started++;
+      try { out[id] = await j.run(); } catch (e) { out[id] = { ok: false, message: (e as Error).message }; }
+    }
+    return out;
+  });
 }
 
 export async function outboxCounts() {

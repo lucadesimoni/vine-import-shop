@@ -253,7 +253,7 @@ export const LABELS: Record<string, string> = {
   new: "Neu", confirmed: "Bestätigt", processing: "In Bearbeitung", shipped: "Versandt", completed: "Abgeschlossen", cancelled: "Storniert",
   pending: "Ausstehend", paid: "Bezahlt", failed: "Fehler", transferred: "Übertragen", retry: "Wiederholung", sent: "Gesendet",
   invoice: "Rechnung", prepayment: "Vorauskasse", stripe: "Karte/TWINT", mollie: "Mollie", datatrans: "Datatrans", payrexx: "Payrexx", request: "Offerte", approved: "Freigegeben", rejected: "Abgelehnt",
-  ok: "OK", error: "Fehler", running: "Läuft",
+  ok: "OK", error: "Fehler", running: "Läuft", partial: "Teilweise — wird fortgesetzt",
 };
 export const label = (code: string) => LABELS[code] ?? code;
 
