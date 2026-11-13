@@ -1,6 +1,7 @@
 {
   "name": "whitelabel-wine-shop",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "engines": {
     "node": ">=20.19"
@@ -26,6 +27,8 @@
     "restore": "tsx scripts/restore.ts",
     "version:bump": "node scripts/version.mjs",
     "i18n:check": "node scripts/check-i18n.mjs",
+    "licenses": "node scripts/licenses.mjs",
+    "licenses:check": "node scripts/licenses.mjs --check",
     "changelog:check": "node scripts/check-changelog.mjs"
   },
   "dependencies": {

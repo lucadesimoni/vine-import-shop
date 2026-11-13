@@ -1,0 +1,34 @@
+Proprietary Software Licence
+
+Copyright (c) 2026 lucadesimoni (https://github.com/lucadesimoni). All rights reserved.
+
+This repository and all files in it — source code, configuration, documentation, design system,
+build and deployment scripts — (the "Software") are the confidential, proprietary property of the
+copyright holder.
+
+1. No licence is granted by making the Software available. Any use, copying, modification,
+   distribution, sublicensing, hosting for third parties or creation of derivative works requires a
+   separate written licence agreement with the copyright holder.
+
+2. Licensees may use the Software only within the scope, term and number of installations set out
+   in their licence agreement. Unless that agreement says otherwise:
+   a) the licensee may install, configure and adapt the Software for its own business, including
+      customisations in the `custom/` directory and in the admin settings;
+   b) the licensee may not resell, sublicense or publish the Software or substantial parts of it,
+      and may not remove copyright notices;
+   c) customisations made by the licensee in `custom/` belong to the licensee.
+
+3. Third-party components included with or used by the Software remain under their own licences
+   (see THIRD_PARTY_LICENSES.md and NOTICE.md). Nothing in this licence restricts rights granted by
+   those licences.
+
+4. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+   NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+   NON-INFRINGEMENT, EXCEPT AS EXPRESSLY AGREED IN A LICENCE AGREEMENT. TO THE EXTENT PERMITTED BY
+   LAW, THE COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING
+   FROM THE SOFTWARE OR ITS USE.
+
+5. This licence is governed by Swiss law. Place of jurisdiction is the registered seat of the
+   copyright holder, unless a licence agreement provides otherwise.
+
+Licensing enquiries: via https://github.com/lucadesimoni

@@ -143,3 +143,8 @@ Commands: `npm test` (22 unit tests), `npm run e2e` (end-to-end browser smoke te
 - **vinX**: connection, mapping, jobs, CSV upload, outbox, log.
 
 More: [Architecture](docs/ARCHITECTURE.md) · [vinX integration](docs/VINX.md) · [Deployment](docs/DEPLOY.md) · [White-labelling](docs/WHITELABEL.md)
+
+## Licence
+
+Proprietary — all rights reserved; use under a written licence agreement only ([LICENSE](LICENSE)).
+Open-source dependencies keep their own licences ([THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)); data and demo-content notices are in [NOTICE.md](NOTICE.md).

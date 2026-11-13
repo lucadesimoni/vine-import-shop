@@ -12,6 +12,12 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Licensing.**
+  - Proprietary licence (`LICENSE`, `"license": "UNLICENSED"`).
+  - Inventory of all 90 runtime dependencies (`THIRD_PARTY_LICENSES.md`, `npm run licenses`). CI blocks copyleft or unknown licences (`npm run licenses:check`).
+  - `NOTICE.md` covers map data (Natural Earth, openpolis/ISTAT), fonts and the De Simoni demo content.
+
 ### Changed
 - Customer import accepts **CSV and XML** only, no Excel (from Excel: "Save as › CSV UTF-8"). XML now handles namespaced ERP exports and CDATA.
 

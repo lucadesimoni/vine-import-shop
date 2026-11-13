@@ -11,7 +11,7 @@ run("npm run build");
 rmSync("release", { recursive: true, force: true });
 const dir = "release/shop";
 mkdirSync(dir, { recursive: true });
-for (const f of ["build", "drizzle", "deploy", "scripts/setup.mjs", "server.js", "passenger.cjs", "package.json", "package-lock.json", ".env.example", "README.md", "docs"]) {
+for (const f of ["build", "drizzle", "deploy", "scripts/setup.mjs", "server.js", "passenger.cjs", "package.json", "package-lock.json", ".env.example", "README.md", "CHANGELOG.md", "LICENSE", "NOTICE.md", "THIRD_PARTY_LICENSES.md", "docs"]) {
   cpSync(f, `${dir}/${f}`, { recursive: true });
 }
 run(`tar -czf release/shop-${pkg.version ?? "0.0.0"}.tar.gz -C release shop`);
