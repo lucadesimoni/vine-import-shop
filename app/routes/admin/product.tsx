@@ -5,6 +5,7 @@ import type { Route } from "./+types/product";
 import { getDb, schema } from "~/.server/db";
 import { getSettings } from "~/.server/settings";
 import { saveUpload } from "~/.server/storage";
+import { optimizeImage } from "~/.server/images";
 import { erpOwnedFields } from "~/.server/erp-ownership";
 import { slugify } from "~/lib/slug";
 import { parseMoneyInput } from "~/lib/money";
@@ -50,6 +51,8 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (file instanceof File && file.size) {
     try {
       image = await saveUpload(file, "products");
+      // optimize right away (WebP, 1200 + 480 px); the original upload stays as fallback if it fails
+      image = await optimizeImage(image, String(o.slug || name.de || "product")).then((r) => r.url).catch(() => image);
     } catch (e) {
       return data({ error: (e as Error).message }, { status: 400 });
     }

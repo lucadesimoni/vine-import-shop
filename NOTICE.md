@@ -12,6 +12,12 @@ Third-party open-source packages: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES
 
 Map shading and the dot-matrix world map are the platform's own rendering of these data.
 
+## Image processing
+
+The image optimizer uses [sharp](https://sharp.pixelplumbing.com) (Apache-2.0) with the prebuilt **libvips** binary
+`@img/sharp-libvips-*` (LGPL-3.0-or-later). libvips is a separate shared library loaded at runtime and is not modified;
+it can be replaced by the licensee (e.g. `npm rebuild sharp` against a system libvips). Source: https://github.com/libvips/libvips.
+
 ## Fonts and icons
 
 - Default fonts Fraunces and Inter are loaded from Bunny Fonts and are licensed under the SIL Open Font License 1.1. Brand fonts chosen in the admin keep their own licences.

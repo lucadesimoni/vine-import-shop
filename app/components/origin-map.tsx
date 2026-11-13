@@ -24,12 +24,22 @@ function shade(count: number, max: number) {
 
 type Area = { id: string; count: number };
 
-export const RegionMap = memo(function RegionMap({ map, data, selected, href, locale, label, className, markers = true }: { map: RegionMapData; data: Area[]; selected?: string | null; href: (id: string) => string; locale: Locale; label: string; className?: string; markers?: boolean }) {
+type ZoomLabels = { zoomIn: string; zoomOut: string; reset: string; europe?: string };
+
+export const RegionMap = memo(function RegionMap({ map, data, selected, href, locale, label, className, markers = true, zoomable = false, labels }: { map: RegionMapData; data: Area[]; selected?: string | null; href: (id: string) => string; locale: Locale; label: string; className?: string; markers?: boolean; zoomable?: boolean; labels?: ZoomLabels }) {
   const counts = new Map(data.map((d) => [d.id, d.count]));
   const max = Math.max(1, ...data.map((d) => d.count));
   const ordered = [...map.regions].sort((a, b) => Number(a.id === selected) - Number(b.id === selected));
-  return (
-    <svg viewBox={map.viewBox} className={cn("block select-none", className ?? "h-auto w-full")} role="group" aria-label={label}>
+  const space = useMemo<Space>(() => {
+    const [x, y, w, h] = map.viewBox.split(" ").map(Number);
+    const b = { x, y, w, h };
+    return { bounds: b, aspect: w / h, max: 6, base: b };
+  }, [map.viewBox]);
+  const z = useZoom(zoomable, space.base, space);
+  // markers and labels keep their on-screen size while zooming
+  const s = 1 / Math.max(1, z.k) ** 0.85;
+  const svg = (
+    <svg ref={z.svgRef} viewBox={`${z.view.x} ${z.view.y} ${z.view.w} ${z.view.h}`} className={cn("block select-none", className ?? "h-auto w-full", zoomable && (z.k > 1.01 ? "cursor-grab touch-none active:cursor-grabbing" : "touch-pan-y"))} role="group" aria-label={label} {...z.handlers}>
       {ordered.map((r) => {
         const n = counts.get(r.id) ?? 0;
         const active = r.id === selected;
@@ -40,6 +50,7 @@ export const RegionMap = memo(function RegionMap({ map, data, selected, href, lo
             style={{ fill: active ? "var(--t-primary)" : shade(n, max) }}
             stroke="var(--t-bg)"
             strokeWidth={active ? 2.5 : 1.4}
+            vectorEffect="non-scaling-stroke"
             strokeLinejoin="round"
             className={cn("transition-[fill,opacity] duration-200", n > 0 && !active && "group-hover:opacity-80 group-focus-visible:opacity-80")}
           />
@@ -57,20 +68,20 @@ export const RegionMap = memo(function RegionMap({ map, data, selected, href, lo
       {markers && map.regions.filter((r) => counts.get(r.id)).map((r) => {
         const n = counts.get(r.id)!;
         const active = r.id === selected;
-        const rad = 22 + Math.min(14, Math.sqrt(n) * 4);
+        const rad = (22 + Math.min(14, Math.sqrt(n) * 4)) * s;
         return (
           <Link key={r.id} to={href(r.id)} preventScrollReset tabIndex={-1} aria-hidden className="group cursor-pointer">
-            <circle cx={r.cx} cy={r.cy} r={rad} fill={active ? "var(--t-on-primary)" : "var(--t-card)"} stroke="var(--t-primary)" strokeWidth={active ? 0 : 2.5} className="drop-shadow-sm" />
+            <circle cx={r.cx} cy={r.cy} r={rad} fill={active ? "var(--t-on-primary)" : "var(--t-card)"} stroke="var(--t-primary)" strokeWidth={active ? 0 : 2.5 * s} className="drop-shadow-sm" />
             <text x={r.cx} y={r.cy} dy="0.35em" textAnchor="middle" fontSize={rad * 0.9} fontWeight={600} fill="var(--t-primary)" className="font-sans tabular-nums">{n}</text>
             <text
               x={r.cx}
-              y={r.cy - rad - 12}
+              y={r.cy - rad - 12 * s}
               textAnchor="middle"
-              fontSize={28}
+              fontSize={28 * s}
               fontWeight={500}
               fill="var(--t-fg)"
               stroke="var(--t-bg)"
-              strokeWidth={7}
+              strokeWidth={7 * s}
               paintOrder="stroke"
               className={cn("font-sans transition-opacity duration-200", active ? "opacity-100" : "opacity-0 group-hover:opacity-100")}
             >
@@ -81,7 +92,24 @@ export const RegionMap = memo(function RegionMap({ map, data, selected, href, lo
       })}
     </svg>
   );
+  return zoomable ? <ZoomFrame z={z} max={space.max} labels={labels}>{svg}</ZoomFrame> : svg;
 });
+
+/** map + zoom controls (bottom right) */
+function ZoomFrame({ z, max, labels, europe, children }: { z: ReturnType<typeof useZoom>; max: number; labels?: ZoomLabels; europe?: boolean; children: React.ReactNode }) {
+  const btn = "flex size-9 items-center justify-center text-muted-fg transition-colors hover:bg-muted hover:text-fg disabled:pointer-events-none disabled:opacity-35";
+  return (
+    <div className="relative w-full">
+      {children}
+      <div className="absolute bottom-2 right-2 flex overflow-hidden rounded-control border border-border bg-card/90 shadow-card backdrop-blur-sm">
+        {europe && <><button type="button" onClick={z.europe} className={cn(btn, "w-auto px-3 text-note font-medium")}>{labels?.europe ?? "Europa"}</button><span className="w-px bg-border" /></>}
+        <button type="button" onClick={z.zoomOut} disabled={z.k <= 1.01} className={btn} aria-label={labels?.zoomOut}><Minus size={15} /></button>
+        <button type="button" onClick={z.zoomIn} disabled={z.k >= max - 0.01} className={btn} aria-label={labels?.zoomIn}><Plus size={15} /></button>
+        <button type="button" onClick={z.reset} disabled={z.k <= 1.01} className={btn} aria-label={labels?.reset}><Maximize2 size={14} /></button>
+      </div>
+    </div>
+  );
+}
 
 const COLS = 3; // dots array stride: x, y, countryIndex
 type View = { x: number; y: number; w: number; h: number };
@@ -94,14 +122,20 @@ const MAX_ZOOM = 10;
 /** zoom level from which real country outlines replace the dot matrix */
 const SHAPES_FROM = 2.2;
 
-function clampView(v: View): View {
-  const w = Math.min(BW, Math.max(BW / MAX_ZOOM, v.w));
-  const h = w / ASPECT;
-  const y = h >= BH ? BY + (BH - h) / 2 : Math.min(BY + BH - h, Math.max(BY, v.y));
-  return { w, h, x: Math.min(BX + BW - w, Math.max(BX, v.x)), y };
+/** a zoomable map: its full extent, the view's aspect ratio, the largest zoom factor */
+type Space = { bounds: View; aspect: number; max: number; base: View };
+const WORLD: Space = { bounds: { x: BX, y: BY, w: BW, h: BH }, aspect: ASPECT, max: MAX_ZOOM, base: BASE };
+function clampIn(sp: Space, v: View): View {
+  const { x: X, y: Y, w: W, h: H } = sp.bounds;
+  const w = Math.min(Math.max(W, H * sp.aspect), Math.max(W / sp.max, v.w));
+  const h = w / sp.aspect;
+  const x = w >= W ? X + (W - w) / 2 : Math.min(X + W - w, Math.max(X, v.x));
+  const y = h >= H ? Y + (H - h) / 2 : Math.min(Y + H - h, Math.max(Y, v.y));
+  return { w, h, x, y };
 }
+const clampView = (v: View) => clampIn(WORLD, v);
 /** zoom by factor f around the map point (px, py) */
-const zoomAt = (v: View, f: number, px = v.x + v.w / 2, py = v.y + v.h / 2) => clampView({ w: v.w / f, h: v.h / f, x: px - (px - v.x) / f, y: py - (py - v.y) / f });
+const zoomIn = (sp: Space, v: View, f: number, px = v.x + v.w / 2, py = v.y + v.h / 2) => clampIn(sp, { w: v.w / f, h: v.h / f, x: px - (px - v.x) / f, y: py - (py - v.y) / f });
 
 /** Pan & zoom for the world map: buttons, ctrl/⌘ + wheel or trackpad pinch, touch pinch, drag, double click. */
 /** initial view: the countries that have products, with some margin (whole world when they are spread out) */
@@ -114,9 +148,14 @@ function fitView(isos: string[]): View {
   return clampView({ x: cx - w / 2, y: cy - w / ASPECT / 2, w, h: w / ASPECT });
 }
 
-function useZoom(enabled: boolean, initial: View) {
+/**
+ * Pan & zoom for the maps: mouse wheel, trackpad pinch, touch pinch, drag, double click and buttons.
+ * The wheel scrolls the page again once the map is fully zoomed out (or in), so it never traps the page.
+ */
+function useZoom(enabled: boolean, initial: View, sp: Space = WORLD) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [view, setView] = useState<View>(enabled ? initial : { x: BX, y: BY, w: BW, h: BH });
+  const zoomAt = (v: View, f: number, px?: number, py?: number) => zoomIn(sp, v, f, px, py);
+  const [view, setView] = useState<View>(enabled ? initial : sp.bounds);
   const viewRef = useRef(view);
   viewRef.current = view;
   const anim = useRef(0);
@@ -145,13 +184,15 @@ function useZoom(enabled: boolean, initial: View) {
   useEffect(() => {
     const el = svgRef.current;
     if (!enabled || !el) return;
-    // wheel zoom only with ctrl/⌘ (trackpad pinch sends ctrl+wheel) — plain scrolling keeps scrolling the page
     const onWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey && !e.metaKey) return;
+      const k = sp.bounds.w / viewRef.current.w;
+      const out = e.deltaY > 0;
+      // at the limit in the wheel's direction the page scrolls on (trackpad pinch = ctrl+wheel always zooms)
+      if (!e.ctrlKey && ((out && k <= 1.001) || (!out && k >= sp.max - 0.001))) return;
       e.preventDefault();
       cancelAnimationFrame(anim.current);
       const [px, py] = toMap(e.clientX, e.clientY);
-      setView((v) => zoomAt(v, Math.exp(-e.deltaY * 0.01), px, py));
+      setView((v) => zoomAt(v, Math.exp(-Math.max(-60, Math.min(60, e.deltaY)) * (e.ctrlKey ? 0.01 : 0.004)), px, py));
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
@@ -182,7 +223,7 @@ function useZoom(enabled: boolean, initial: View) {
             const d = Math.hypot(ps[0].x - ps[1].x, ps[0].y - ps[1].y);
             v = zoomAt(v, d / s0.dist, v.x + ((s0.x - r.left) / r.width) * v.w, v.y + ((s0.y - r.top) / r.height) * v.h);
           }
-          setView(clampView({ ...v, x: v.x - ((cx - s0.x) / r.width) * v.w, y: v.y - ((cy - s0.y) / r.height) * v.h }));
+          setView(clampIn(sp, { ...v, x: v.x - ((cx - s0.x) / r.width) * v.w, y: v.y - ((cy - s0.y) / r.height) * v.h }));
         },
         onPointerUp: (e: React.PointerEvent<SVGSVGElement>) => {
           pointers.current.delete(e.pointerId);
@@ -195,12 +236,12 @@ function useZoom(enabled: boolean, initial: View) {
         onDoubleClick: (e: React.MouseEvent) => { const [px, py] = toMap(e.clientX, e.clientY); animateTo(zoomAt(viewRef.current, 2, px, py)); },
       }
     : {};
-  const k = BW / view.w;
+  const k = sp.bounds.w / view.w;
   return {
     svgRef, view, k, handlers,
     zoomIn: () => animateTo(zoomAt(viewRef.current, 1.8)),
     zoomOut: () => animateTo(zoomAt(viewRef.current, 1 / 1.8)),
-    reset: () => animateTo(BASE),
+    reset: () => animateTo(sp.base),
     europe: () => animateTo(EUROPE),
   };
 }
@@ -282,18 +323,5 @@ export const WorldDotMap = memo(function WorldDotMap({ data, selected, href, loc
         })}
     </svg>
   );
-  if (!zoomable) return svg;
-  const btn = "flex size-9 items-center justify-center text-muted-fg transition-colors hover:bg-muted hover:text-fg disabled:pointer-events-none disabled:opacity-35";
-  return (
-    <div className="relative w-full">
-      {svg}
-      <div className="absolute bottom-2 right-2 flex overflow-hidden rounded-control border border-border bg-card/90 shadow-card backdrop-blur-sm">
-        <button type="button" onClick={z.europe} className={cn(btn, "w-auto px-3 text-note font-medium")}>{labels?.europe ?? "Europa"}</button>
-        <span className="w-px bg-border" />
-        <button type="button" onClick={z.zoomOut} disabled={k <= 1.01} className={btn} aria-label={labels?.zoomOut}><Minus size={15} /></button>
-        <button type="button" onClick={z.zoomIn} disabled={k >= MAX_ZOOM - 0.01} className={btn} aria-label={labels?.zoomIn}><Plus size={15} /></button>
-        <button type="button" onClick={z.reset} disabled={k <= 1.01} className={btn} aria-label={labels?.reset}><Maximize2 size={14} /></button>
-      </div>
-    </div>
-  );
+  return zoomable ? <ZoomFrame z={z} max={MAX_ZOOM} labels={labels} europe>{svg}</ZoomFrame> : svg;
 });

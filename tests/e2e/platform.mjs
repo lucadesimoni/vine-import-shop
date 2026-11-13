@@ -87,6 +87,12 @@ const b2b = await newPage();
 await b2b.goto(B + "/portal/catalog");
 ok(b2b.url().includes("/portal/login"), "portal requires login");
 await login(b2b, null, "gastro@demo.ch", "gastro-demo-1234", /\/portal\/catalog/);
+// one login = one role: a B2B customer's shop pages lead into the portal (also client-side navigation)
+await b2b.goto(B + "/shop");
+ok(/\/portal\/catalog/.test(b2b.url()), "B2B login: shop → portal catalog");
+await b2b.goto(B + "/story");
+await Promise.all([b2b.waitForURL(/\/portal/), b2b.locator('header a[href="/shop"]').first().click()]);
+ok(/\/portal\/catalog/.test(b2b.url()), "B2B login: client-side navigation to the shop also lands in the portal");
 ok(true, "portal login → back to requested page");
 await b2b.goto(B + "/account");
 ok(b2b.url().includes("/portal/orders"), "separate channels: /account → portal");

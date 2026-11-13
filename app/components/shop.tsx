@@ -60,6 +60,8 @@ export function Header() {
   const nav = useNav();
   const [open, setOpen] = useState(false);
   const showPortal = channel.portalEnabled && (!user || user.role !== "customer" || channel.canUsePortal);
+  // a B2B customer in "separate" mode has the portal as account (one login = one role)
+  const tradeInPortal = channel.mode === "separate" && channel.canUsePortal;
   const [search, setSearch] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -126,17 +128,16 @@ export function Header() {
           <button className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10")} onClick={() => setSearch((s) => !s)} aria-label={t("nav.search")}>
             <Search size={19} strokeWidth={1.5} />
           </button>
-          <Link to={user ? (user.role === "customer" ? "/account" : "/admin") : "/login"} className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10 max-[359px]:hidden")} aria-label={user ? t("nav.account") : t("nav.login")}>
+          <Link to={user ? (user.role !== "customer" ? "/admin" : tradeInPortal ? `${channel.portalUrl}/portal` : "/account") : "/login"} reloadDocument={tradeInPortal && !!channel.portalUrl} className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10 max-[359px]:hidden")} aria-label={user ? t("nav.account") : t("nav.login")}>
             <User size={19} strokeWidth={1.5} />
           </Link>
-          <Link to="/order-list" className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10 2xl:w-auto 2xl:gap-4 2xl:px-3")} aria-label={cartCount ? `${t("nav.orderList")} (${cartCount})` : t("nav.orderList")}>
+          <Link to="/order-list" className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10")} aria-label={cartCount ? `${t("nav.orderList")} (${cartCount})` : t("nav.orderList")}>
             <span className="relative">
               <ShoppingBag size={19} strokeWidth={1.5} />
               {cartCount > 0 && (
                 <span key={cartCount} className="absolute -right-2 -top-1.5 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-primary px-1 text-2xs font-semibold leading-none tracking-normal tabular-nums text-on-primary ring-2 ring-bg">{cartCount > 99 ? "99+" : cartCount}</span>
               )}
             </span>
-            <span className="hidden 2xl:inline">{t("nav.orderList")}</span>
           </Link>
         </div>
       </div>
@@ -279,11 +280,20 @@ type ImageProduct = Pick<Card, "image" | "name" | "kind" | "color"> & {
 };
 
 /** Product photo, or an on-brand packshot illustration (shape by product type, real name on the label). */
-export function ProductImage({ product, className }: { product: ImageProduct; className?: string }) {
+export function ProductImage({ product, className, sizes = "(min-width: 1024px) 22vw, 45vw" }: { product: ImageProduct; className?: string; sizes?: string }) {
   if (product.image)
     return (
       <span className="relative block h-full w-full">
-        <img src={product.image} alt={product.name} loading="lazy" decoding="async" className={cn("absolute inset-0 h-full w-full object-contain", className)} />
+        <img
+          src={product.image}
+          // optimized images (job "images") come in 480 and 1200 px — the browser picks the right one
+          srcSet={/\/img\/[^/]+\.webp$/.test(product.image) ? `${product.image.replace(/\.webp$/, "-480.webp")} 480w, ${product.image} 1200w` : undefined}
+          sizes={sizes}
+          alt={product.name}
+          loading="lazy"
+          decoding="async"
+          className={cn("absolute inset-0 h-full w-full object-contain", className)}
+        />
       </span>
     );
   const producer = typeof product.producer === "string" ? product.producer : product.producer?.name;

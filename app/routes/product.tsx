@@ -70,7 +70,7 @@ export default function Product({ loaderData }: Route.ComponentProps) {
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16">
         <div className="relative lg:sticky lg:top-[calc(var(--header-h)+2rem)] lg:self-start">
           <div className="relative aspect-square overflow-hidden rounded-surface border border-border bg-media">
-            <div className="absolute inset-[8%]"><ProductImage product={c} /></div>
+            <div className="absolute inset-[8%]"><ProductImage product={c} sizes="(min-width: 1024px) 45vw, 90vw" /></div>
           </div>
           <div className="absolute left-4 top-4 flex flex-col gap-1.5">
             {c.promo && <Badge tone="outline">{t("shop.promo")}</Badge>}

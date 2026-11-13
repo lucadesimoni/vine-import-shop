@@ -18,8 +18,9 @@ import type { ShopContext } from "./.server/context";
 /** Routes requests to the right sales channel and domain (see lib/channel.ts). */
 function channelRedirect(request: Request, ctx: ShopContext) {
   const url = new URL(request.url);
-  const path = url.pathname;
-  if (/^\/(api|admin|cart|logout|set-locale|uploads|assets|demo)\b|\.\w+$/.test(path)) return;
+  // client-side navigations load "<path>.data" (single fetch) — route them like the page itself
+  const path = url.pathname.replace(/\.data$/, "") || "/";
+  if (/^\/(api|admin|cart|logout|set-locale|uploads|assets|demo)\b|\.\w+$/.test(path) || path === "/_root") return;
   const { mode, portal, canUsePortal } = ctx.channel;
   const { portalHost, shopHost } = ctx.shop.channels;
   const host = (request.headers.get("X-Forwarded-Host") ?? url.host).split(":")[0];
@@ -40,9 +41,9 @@ function channelRedirect(request: Request, ctx: ShopContext) {
   // Portal domain: every shop page leads into the portal (legal/content pages stay reachable).
   if (portalHost && host === portalHost && mode !== "shop-only" && (mapped || path === "/")) go(toPortal);
   if (mode === "portal-only" && mapped) go(toPortal, portalHost || undefined);
-  // Dedicated B2C domain: shop pages requested elsewhere (e.g. the portal domain) are handled above;
-  // in "separate" mode trade customers keep their own area in the portal.
-  if (mode === "separate" && canUsePortal && /^\/account(\/|$)/.test(path)) go(toPortal, portalHost || undefined);
+  // "separate": one login = one role. Approved trade customers shop, order and see their account only in the portal
+  // (their prices and conditions live there); the B2C shop's content pages and home page stay readable.
+  if (mode === "separate" && canUsePortal && mapped && path !== "/") go(toPortal, portalHost || undefined);
 }
 
 /** Resolves "follow the OS" before first paint (no flash) and tracks OS changes until the visitor picks a theme. */

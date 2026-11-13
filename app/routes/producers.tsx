@@ -133,7 +133,7 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
               </div>
               <div className={cn("flex w-full justify-center", showRegions && "lg:justify-start")}>
                 {showRegions ? (
-                  <RegionMap map={regionMap!} data={regionAreas.map((r) => ({ id: r.id, count: r.count }))} selected={selected?.type === "region" ? selected.id : null} href={regionLink} locale={locale} label={t("origin.mapLabel")} className="h-auto max-h-[calc(100vh-var(--header-h)-9rem)] w-full max-w-[560px]" />
+                  <RegionMap zoomable key={mapCountry} labels={{ zoomIn: t("origin.zoomIn"), zoomOut: t("origin.zoomOut"), reset: t("origin.zoomReset") }} map={regionMap!} data={regionAreas.map((r) => ({ id: r.id, count: r.count }))} selected={selected?.type === "region" ? selected.id : null} href={regionLink} locale={locale} label={t("origin.mapLabel")} className="h-auto max-h-[calc(100vh-var(--header-h)-9rem)] w-full max-w-[560px]" />
                 ) : (
                   <WorldDotMap zoomable labels={{ zoomIn: t("origin.zoomIn"), zoomOut: t("origin.zoomOut"), reset: t("origin.zoomReset"), europe: t("origin.europe") }} data={facets.countries.map((c) => ({ id: c.iso, count: c.count }))} selected={selected?.id} href={(iso) => link({ origin: iso, region: null })} locale={locale} label={t("origin.mapLabel")} />
                 )}
@@ -143,7 +143,7 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
                 <div className="grid gap-3 border-t border-border pt-5">
                   <p className="text-eyebrow text-2xs text-muted-fg">{t("origin.otherCountries")}</p>
                   <div className="flex flex-wrap gap-2">
-                    {otherCountries.map((c) => <Chip key={c.iso} to={link({ origin: c.iso, region: null })} active={selected?.id === c.iso} preventScrollReset>{countryName(c.iso, locale)} · {c.count}</Chip>)}
+                    {otherCountries.map((c) => <Chip key={c.iso} to={link({ origin: c.iso, region: null })} active={selected?.id === c.iso || mapCountry === c.iso} preventScrollReset>{countryName(c.iso, locale)} · {c.count}</Chip>)}
                   </div>
                 </div>
               )}
@@ -155,7 +155,7 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
                   <div className="grid gap-3">
                     <div className="flex items-center justify-between gap-4">
                       <Eyebrow className="text-label text-primary">{selected.type === "region" ? countryName(selected.country, locale) : t("origin.country")}</Eyebrow>
-                      <Link to={link({ region: null, origin: view === "world" && selected.type === "region" ? mapCountry : null })} preventScrollReset className="flex items-center gap-1.5 text-note text-muted-fg hover:text-fg"><X size={14} /> {t("origin.reset")}</Link>
+                      <Link to={link({ region: null, origin: selected.type === "region" && (view === "world" || mapCountry !== homeCountry) ? mapCountry : null })} preventScrollReset className="flex items-center gap-1.5 text-note text-muted-fg hover:text-fg"><X size={14} /> {t("origin.reset")}</Link>
                     </div>
                     <h2 className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-h1">
                       {areaName}
@@ -171,7 +171,7 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
               ) : (
                 <>
                   <div className="grid gap-3">
-                    <Eyebrow className="text-label text-primary">{mapCountry && view === "world" ? countryName(mapCountry, locale) : t("origin.overview")}</Eyebrow>
+                    <Eyebrow className="text-label text-primary">{mapCountry && (view === "world" || mapCountry !== homeCountry) ? countryName(mapCountry, locale) : t("origin.overview")}</Eyebrow>
                     <h2 className="text-h2">{t(showRegions ? "origin.regionsCount" : "origin.countriesCount", { n: listAreas.length })}</h2>
                     <p className="text-muted-fg">{t("origin.hint")}</p>
                   </div>

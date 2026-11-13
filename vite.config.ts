@@ -15,6 +15,6 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   ssr: {
     // Native / WASM packages stay external on the server.
-    external: ["@electric-sql/pglite", "postgres", "nodemailer"],
+    external: ["@electric-sql/pglite", "postgres", "nodemailer", "sharp"],
   },
 });

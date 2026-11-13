@@ -8,6 +8,11 @@ import { dirname, join } from "node:path";
 const root = process.cwd();
 const ALLOWED = /^(MIT|ISC|BSD-2-Clause|BSD-3-Clause|0BSD|Apache-2\.0|BlueOak-1\.0\.0|CC0-1\.0|CC-BY-4\.0|Unlicense|Python-2\.0|MPL-2\.0|WTFPL|MIT-0)$/;
 const check = process.argv.includes("--check");
+/**
+ * Reviewed exceptions: LGPL libraries that are shipped as separate, dynamically loaded binaries (replaceable by the
+ * licensee, LGPL §4) — compatible with a proprietary product. Listed in NOTICE.md.
+ */
+const REVIEWED = /^@img\/sharp-libvips-/;
 
 const pkgJson = (dir) => JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
 function resolve(name, from) {
@@ -39,10 +44,10 @@ while (queue.length) {
 
 const rows = [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
 const ok = (l) => l.split(/\s+OR\s+|\s+AND\s+|[()]/).map((x) => x.trim()).filter(Boolean).some((x) => ALLOWED.test(x));
-const bad = rows.filter((r) => !ok(r.license));
+const bad = rows.filter((r) => !ok(r.license) && !REVIEWED.test(r.name));
 if (check) {
   if (bad.length) { console.error(`✗ ${bad.length} dependencies with copyleft/unknown licences:\n` + bad.map((r) => `  ${r.name}@${r.version}: ${r.license}`).join("\n")); process.exit(1); }
-  console.log(`✓ ${rows.length} runtime dependencies, all permissive`);
+  console.log(`✓ ${rows.length} runtime dependencies, all permissive (or reviewed, see NOTICE.md)`);
   process.exit(0);
 }
 const byLicence = rows.reduce((m, r) => m.set(r.license, (m.get(r.license) ?? 0) + 1), new Map());

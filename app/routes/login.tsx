@@ -26,7 +26,9 @@ export async function action({ request, context }: Route.ActionArgs) {
     return data({ error: ctx.t("auth.failed") }, { status: 401 });
   }
   clearFailures(key);
-  const home = user.role !== "customer" ? "/admin" : ctx.channel.portal ? "/portal" : channelPath("/account", false);
+  // one login = one role: approved B2B customers go to the portal (unless shop and portal are one channel)
+  const b2b = user.tradeStatus === "approved" && ctx.channel.portalEnabled && ctx.channel.mode !== "combined";
+  const home = user.role !== "customer" ? "/admin" : ctx.channel.portal || b2b ? "/portal" : channelPath("/account", false);
   return login(request, user.id, safeRedirect(form.get("next"), home));
 }
 

@@ -42,6 +42,9 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 - **Admin › Einstellungen › Herkunftskarte › "Weltkarte anzeigen".** When it is off, the shop shows region maps (home country and every country with a map) and A–Z only.
 
 ### Changed
+- **One login, one role ("separate" channels):** approved B2B customers land in the portal after login, and every shop page (shop, product, order list, checkout, account) leads into the portal, including client-side navigation. Content pages stay readable, and the account icon points to the portal.
+- **Maps:** the mouse wheel zooms without a modifier key; at the zoom limit the page scrolls on. Resetting a region selection keeps the country. The country chip and the overview heading follow the map that is shown.
+- **Header:** the order list is icon-only (count badge, no text label).
 - **Dark mode is calmer.**
   - The lifted brand colour loses some saturation (no more neon). Text on buttons keeps ≥ 4.5 : 1 contrast.
   - The announcement bar is muted.
