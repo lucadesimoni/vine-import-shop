@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-13
+
 ### Added
 - **Payment methods per customer.** The most specific rule wins:
   1. **The customer's own setting** (Admin › Kunden › Zahlarten).
@@ -262,7 +264,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.3.0...v1.4.0
