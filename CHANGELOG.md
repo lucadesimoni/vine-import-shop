@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-13
+
 ### Added
 - **vinX: broader coverage of the Shop API v2.0.** The shop now uses 32 of 57 paths. `docs/VINX.md` lists every path and why the rest is not used.
   - Wine details from `BaseData/Wine`, `WineRating`, `Rating` and `Brand` appear on the product page: ratings with source and scale, character, vinification, terroir, recommendation, drinking temperature and ageing potential.
@@ -181,6 +183,7 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/lucadesimoni/vine-import-shop/releases/tag/v1.0.0
