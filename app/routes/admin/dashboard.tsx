@@ -61,11 +61,11 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
                 {days.map((d) => (
                   <div key={d.day} className="group relative flex h-full flex-1 items-end">
                     <div className={`w-full rounded-t-badge transition-colors ${d.total ? "bg-primary/75 group-hover:bg-primary" : "bg-border/70"}`} style={{ height: d.total ? `${Math.max(4, (d.total / max) * 100)}%` : "2px" }} />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-badge bg-fg px-2 py-1 text-[11px] text-bg group-hover:block">{new Date(d.day).toLocaleDateString("de-CH")} · {m(d.total)}</span>
+                    <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-badge bg-fg px-2 py-1 text-label text-bg group-hover:block">{new Date(d.day).toLocaleDateString("de-CH")} · {m(d.total)}</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-2 flex justify-between text-[11px] text-muted-fg tabular-nums">
+              <div className="mt-2 flex justify-between text-label text-muted-fg tabular-nums">
                 <span>{new Date(days[0].day).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit" })}</span>
                 <span>Heute</span>
               </div>
@@ -85,7 +85,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
         </Panel>
       </div>
 
-      <h2 className="mb-3 mt-10 font-sans text-[15px] font-semibold">Neueste Bestellungen</h2>
+      <h2 className="mb-3 mt-10 font-sans text-body font-semibold">Neueste Bestellungen</h2>
       <OrdersTable orders={recent} currency={currency} />
     </>
   );

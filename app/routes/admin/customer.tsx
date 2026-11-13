@@ -1,9 +1,10 @@
 import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
 import { data, Form, Link, redirect, useActionData } from "react-router";
-import { ArrowLeft, ArrowUpRight, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Mail, RefreshCw, Trash2 } from "lucide-react";
 import type { Route } from "./+types/customer";
 import { getDb, schema } from "~/.server/db";
 import { emit } from "~/.server/events";
+import { sendTokenMail } from "~/.server/password-reset";
 import { erpConnected } from "~/.server/erp-ownership";
 import { getSettings } from "~/.server/settings";
 import { LOCALE_LABELS, LOCALES } from "~/lib/localized";
@@ -28,7 +29,8 @@ export async function loader({ params }: Route.LoaderArgs) {
     erpConnected(),
     getSettings("shop"),
   ]);
-  const { passwordHash: _h, resetToken: _r, resetExpires: _e, ...c } = customer; // never send secrets to the browser
+  const { passwordHash, resetToken: _r, resetExpires: _e, ...rest } = customer; // never send secrets to the browser
+  const c = { ...rest, passwordSet: passwordHash.startsWith("scrypt$") };
   return { customer: c, groups, orders, stats, sync: outbox[0] ?? null, conditions: conditions.n, erp, currency: shop.currency, locales: shop.locales };
 }
 
@@ -43,6 +45,10 @@ export async function action({ request, params }: Route.ActionArgs) {
     if (n > 0) return data({ error: "Kunden mit Bestellungen können nicht gelöscht werden (Aufbewahrungspflicht) — B2B-Status auf „Abgelehnt“ setzen." }, { status: 400 });
     await db.delete(u).where(eq(u.id, id));
     return redirect("/admin/customers");
+  }
+  if (form.get("intent") === "invite") {
+    await sendTokenMail(id, "invite", new URL(request.url).origin);
+    return { ok: "Einladung gesendet — der Link ist 14 Tage gültig." };
   }
   if (form.get("intent") === "push") {
     await emit("customer.updated", { userId: id });
@@ -108,7 +114,7 @@ export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
               <Field label="B2B-Status">{(id) => <Select id={id} name="tradeStatus" defaultValue={c.tradeStatus ?? ""}><option value="">Privatkunde</option><option value="pending">Offen</option><option value="approved">Freigegeben</option><option value="rejected">Abgelehnt</option></Select>}</Field>
               <Field label="vinX-Adressnummer" hint={erp ? "Leer = wird beim nächsten Senden angelegt" : undefined}>{(id) => <Input id={id} name="erpId" defaultValue={c.erpId ?? ""} className="font-mono" />}</Field>
             </div>
-            <p className="mt-4 text-[13px] text-muted-fg">
+            <p className="mt-4 text-note text-muted-fg">
               {conditions} kundenspezifische Kondition{conditions === 1 ? "" : "en"} · <Link to="/admin/conditions" className="underline underline-offset-4">Konditionen verwalten</Link>
             </p>
           </Panel>
@@ -116,11 +122,14 @@ export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
         </Form>
 
         <div className="grid content-start gap-6">
+          <Panel title="Zugang" description={c.passwordSet ? "Der Kunde hat ein Passwort gesetzt." : "Noch kein Passwort — z. B. nach einem Import."}>
+            <Form method="post"><Button type="submit" name="intent" value="invite" variant="secondary" size="sm"><Mail size={13} /> {c.passwordSet ? "Link zum Zurücksetzen senden" : "Einladung senden"}</Button></Form>
+          </Panel>
           <Panel title="Kennzahlen">
             <dl className="grid grid-cols-2 gap-4">
-              <div><dt className="text-[12px] text-muted-fg">Bestellungen</dt><dd className="font-display text-2xl tabular-nums">{stats.n}</dd></div>
-              <div><dt className="text-[12px] text-muted-fg">Umsatz</dt><dd className="font-display text-2xl tabular-nums">{formatMoney(stats.revenue, currency, "de")}</dd></div>
-              <div className="col-span-2"><dt className="text-[12px] text-muted-fg">Letzte Bestellung</dt><dd className="text-sm">{stats.last ? new Date(stats.last).toLocaleDateString("de-CH") : "—"}</dd></div>
+              <div><dt className="text-xs text-muted-fg">Bestellungen</dt><dd className="font-display text-2xl tabular-nums">{stats.n}</dd></div>
+              <div><dt className="text-xs text-muted-fg">Umsatz</dt><dd className="font-display text-2xl tabular-nums">{formatMoney(stats.revenue, currency, "de")}</dd></div>
+              <div className="col-span-2"><dt className="text-xs text-muted-fg">Letzte Bestellung</dt><dd className="text-sm">{stats.last ? new Date(stats.last).toLocaleDateString("de-CH") : "—"}</dd></div>
             </dl>
           </Panel>
           {erp && (
@@ -128,8 +137,8 @@ export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
               {sync ? (
                 <div className="grid gap-2 text-sm">
                   <div className="flex items-center justify-between"><span className="text-muted-fg">Letzte Übertragung</span><Badge tone={sync.status === "sent" ? "success" : sync.status === "failed" ? "danger" : "warning"}>{label(sync.status)}</Badge></div>
-                  <div className="text-[12px] text-muted-fg tabular-nums">{new Date(sync.sentAt ?? sync.createdAt).toLocaleString("de-CH")} · {sync.attempts} Versuch{sync.attempts === 1 ? "" : "e"}</div>
-                  {sync.lastError && <p className="rounded-control bg-danger-soft p-2 text-[12px] text-danger">{sync.lastError}</p>}
+                  <div className="text-xs text-muted-fg tabular-nums">{new Date(sync.sentAt ?? sync.createdAt).toLocaleString("de-CH")} · {sync.attempts} Versuch{sync.attempts === 1 ? "" : "e"}</div>
+                  {sync.lastError && <p className="rounded-control bg-danger-soft p-2 text-xs text-danger">{sync.lastError}</p>}
                 </div>
               ) : (
                 <p className="text-sm text-muted-fg">Noch nicht übertragen.</p>
@@ -140,7 +149,7 @@ export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
           {!c.erpId && stats.n === 0 && (
             <Form method="post" onSubmit={(e) => !confirm("Kunde endgültig löschen?") && e.preventDefault()}>
               <input type="hidden" name="intent" value="delete" />
-              <button className="flex items-center gap-1.5 px-1 text-[12px] text-muted-fg hover:text-danger"><Trash2 size={13} /> Kunde löschen</button>
+              <button className="flex items-center gap-1.5 px-1 text-xs text-muted-fg hover:text-danger"><Trash2 size={13} /> Kunde löschen</button>
             </Form>
           )}
         </div>
@@ -148,7 +157,7 @@ export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
 
       {orders.length > 0 && (
         <section className="mt-8 grid gap-3">
-          <h2 className="font-sans text-[15px] font-semibold">Letzte Bestellungen</h2>
+          <h2 className="font-sans text-body font-semibold">Letzte Bestellungen</h2>
           <DataTable head={["Nummer", "Datum", "Status", "Total", ""]}>
             {orders.map((o) => (
               <tr key={o.id}>
@@ -156,7 +165,7 @@ export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
                 <td className="tabular-nums text-muted-fg">{new Date(o.createdAt).toLocaleDateString("de-CH")}</td>
                 <td><Badge tone={STATUS_TONE[o.status]}>{label(o.status)}</Badge></td>
                 <td className="tabular-nums">{o.kind === "request" ? "Anfrage" : formatMoney(o.totalGross, o.currency, "de")}</td>
-                <td className="text-right"><Link to={`/admin/orders/${o.id}`} className="inline-flex items-center gap-1 text-[13px] text-muted-fg hover:text-fg">Öffnen <ArrowUpRight size={12} /></Link></td>
+                <td className="text-right"><Link to={`/admin/orders/${o.id}`} className="inline-flex items-center gap-1 text-note text-muted-fg hover:text-fg">Öffnen <ArrowUpRight size={12} /></Link></td>
               </tr>
             ))}
           </DataTable>

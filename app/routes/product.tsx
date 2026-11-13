@@ -59,7 +59,7 @@ export default function Product({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="container-page page-top">
-      <nav aria-label="Breadcrumb" className="mb-8 flex flex-wrap items-center gap-1.5 text-[13px] text-muted-fg">
+      <nav aria-label="Breadcrumb" className="mb-8 flex flex-wrap items-center gap-1.5 text-note text-muted-fg">
         <Link to={to("/shop")} className="hover:text-fg">{t("nav.shop")}</Link>
         {c.category && <><ChevronRight size={13} /><Link to={to(`/shop?category=${c.category.slug}`)} className="hover:text-fg">{c.category.name}</Link></>}
         <ChevronRight size={13} /><span className="text-fg">{c.name}</span>
@@ -103,7 +103,7 @@ export default function Product({ loaderData }: Route.ComponentProps) {
           {/* Variant table */}
           <div className="overflow-hidden rounded-surface border border-border bg-surface">
             <div className="hidden gap-4 border-b border-border px-5 py-3 sm:grid sm:grid-cols-[1.1fr_0.7fr_0.9fr] 2xl:grid-cols-[1fr_0.6fr_0.8fr_auto]">
-              {[isVintage ? t("product.vintage") : t("product.variant"), t("product.format"), t("product.art")].map((h, i) => <span key={i} className="text-eyebrow text-[10px] text-muted-fg">{h}</span>)}
+              {[isVintage ? t("product.vintage") : t("product.variant"), t("product.format"), t("product.art")].map((h, i) => <span key={i} className="text-eyebrow text-2xs text-muted-fg">{h}</span>)}
             </div>
             {c.variants.map((v) => (
               <div key={v.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-3 border-b border-border px-4 py-4 last:border-0 sm:grid-cols-[1.1fr_0.7fr_0.9fr] sm:items-center sm:gap-4 sm:px-5 sm:py-5 2xl:grid-cols-[1fr_0.6fr_0.8fr_auto]">
@@ -113,12 +113,12 @@ export default function Product({ loaderData }: Route.ComponentProps) {
                     {isVintage && v.size && <span className="font-normal text-muted-fg sm:hidden"> · {v.size}</span>}
                   </span>
                   <StockLabel level={v.stock} qty={v.stockQty} />
-                  <span className="text-[12px] text-muted-fg tabular-nums sm:hidden">{t("product.art")} {v.sku}</span>
+                  <span className="text-xs text-muted-fg tabular-nums sm:hidden">{t("product.art")} {v.sku}</span>
                 </div>
                 <span className="hidden text-sm sm:block">{v.size ?? "—"}</span>
                 <div className="grid justify-items-end gap-0.5 sm:justify-items-start">
                   <span className="hidden text-sm tabular-nums sm:inline">{v.sku}</span>
-                  {v.price && <span className="font-semibold tabular-nums sm:text-[13px] sm:font-normal sm:text-muted-fg">{formatMoney(v.price.display, shop.currency, locale)}</span>}
+                  {v.price && <span className="font-semibold tabular-nums sm:text-note sm:font-normal sm:text-muted-fg">{formatMoney(v.price.display, shop.currency, locale)}</span>}
                 </div>
                 <div className="col-span-2 sm:col-span-3 2xl:col-span-1"><AddToList variantId={v.id} packSize={v.packSize} compact disabled={v.stock === "out"} /></div>
               </div>
@@ -127,11 +127,11 @@ export default function Product({ loaderData }: Route.ComponentProps) {
 
           {first?.price && first.price.tiers.length > 1 && (
             <div className="rounded-surface border border-border bg-surface p-5">
-              <p className="text-eyebrow mb-3 text-[10px] text-muted-fg">{t("price.tiers")} · {first.price.displayMode === "net" ? t("price.exclVat") : t("price.inclVat")}</p>
+              <p className="text-eyebrow mb-3 text-2xs text-muted-fg">{t("price.tiers")} · {first.price.displayMode === "net" ? t("price.exclVat") : t("price.inclVat")}</p>
               <dl className="grid grid-cols-3 gap-3">
                 {first.price.tiers.map((tier) => (
                   <div key={tier.minQty} className="rounded-control bg-muted px-3 py-2.5">
-                    <dt className="text-[12px] text-muted-fg">{t("price.from", { qty: tier.minQty })}</dt>
+                    <dt className="text-xs text-muted-fg">{t("price.from", { qty: tier.minQty })}</dt>
                     <dd className="font-semibold tabular-nums">{formatMoney(first.price!.displayMode === "net" ? tier.netCents : Math.round(tier.netCents * (1 + first.price!.taxRate / 100)), shop.currency, locale)}</dd>
                   </div>
                 ))}
@@ -142,13 +142,13 @@ export default function Product({ loaderData }: Route.ComponentProps) {
 
           {p.description && (
             <div className="grid gap-3">
-              <h2 className="text-eyebrow text-[11px] text-muted-fg">{t("product.details")}</h2>
+              <h2 className="text-eyebrow text-label text-muted-fg">{t("product.details")}</h2>
               <p className="text-lead whitespace-pre-line">{p.description}</p>
             </div>
           )}
           {p.pairing && (
             <div className="grid gap-3">
-              <h2 className="text-eyebrow text-[11px] text-muted-fg">{t("product.pairing")}</h2>
+              <h2 className="text-eyebrow text-label text-muted-fg">{t("product.pairing")}</h2>
               <p>{p.pairing}</p>
             </div>
           )}
@@ -156,8 +156,8 @@ export default function Product({ loaderData }: Route.ComponentProps) {
             <dl className="grid grid-cols-2 border-t border-border">
               {facts.map(([k, v]) => (
                 <div key={k} className="border-b border-border py-3.5 pr-4">
-                  <dt className="text-eyebrow text-[10px] text-muted-fg">{k}</dt>
-                  <dd className="mt-1 text-[14px]">{v}</dd>
+                  <dt className="text-eyebrow text-2xs text-muted-fg">{k}</dt>
+                  <dd className="mt-1 text-sm">{v}</dd>
                 </div>
               ))}
             </dl>

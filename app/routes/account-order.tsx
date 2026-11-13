@@ -48,7 +48,7 @@ export default function AccountOrder({ loaderData }: Route.ComponentProps) {
           <Eyebrow line>{t(request ? "account.request" : "account.order")} · {new Date(order.createdAt).toLocaleDateString(`${locale}-CH`)}</Eyebrow>
           <h1 className="text-h1">{order.number}</h1>
         </div>
-        <Badge tone={STATUS_TONE[order.status]} className="text-[11px]">{t(`status.${order.status}` as MessageKey)}</Badge>
+        <Badge tone={STATUS_TONE[order.status]} className="text-label">{t(`status.${order.status}` as MessageKey)}</Badge>
       </header>
       <div className="grid gap-10 lg:grid-cols-[220px_1fr]">
         <AccountNav />
@@ -57,7 +57,7 @@ export default function AccountOrder({ loaderData }: Route.ComponentProps) {
             {order.items.map((i) => (
               <div key={i.id} className="grid grid-cols-[3rem_1fr_auto] gap-3 px-5 py-4 text-sm">
                 <span className="text-muted-fg tabular-nums">{i.qty}×</span>
-                <span>{i.name}<span className="block text-[12px] text-muted-fg">{t("product.art")} {i.sku}</span></span>
+                <span>{i.name}<span className="block text-xs text-muted-fg">{t("product.art")} {i.sku}</span></span>
                 {!request && <span className="tabular-nums">{m(i.lineGross)}</span>}
               </div>
             ))}
@@ -67,11 +67,11 @@ export default function AccountOrder({ loaderData }: Route.ComponentProps) {
           </Card>
           <div className="grid gap-6 sm:grid-cols-2">
             <Card className="p-5 text-sm leading-relaxed">
-              <p className="text-eyebrow mb-2 text-[10px] text-muted-fg">{t("checkout.billing")}</p>
+              <p className="text-eyebrow mb-2 text-2xs text-muted-fg">{t("checkout.billing")}</p>
               {[order.billing.company, order.billing.name, order.billing.street, `${order.billing.zip} ${order.billing.city}`].filter(Boolean).map((l, i) => <p key={i}>{l}</p>)}
             </Card>
             <Card className="p-5 text-sm leading-relaxed">
-              <p className="text-eyebrow mb-2 text-[10px] text-muted-fg">{t("checkout.shipping")}</p>
+              <p className="text-eyebrow mb-2 text-2xs text-muted-fg">{t("checkout.shipping")}</p>
               <p>{order.shippingMethod}</p>
               {order.poNumber && <p className="text-muted-fg">{t("checkout.po")}: {order.poNumber}</p>}
               {order.deliveryDate && <p className="text-muted-fg">{t("checkout.deliveryDate")}: {order.deliveryDate}</p>}

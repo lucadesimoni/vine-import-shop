@@ -49,7 +49,7 @@ export default function PortalLayout({ loaderData }: Route.ComponentProps) {
   }
 
   const item = ({ isActive }: { isActive: boolean }) =>
-    cn("flex shrink-0 items-center gap-3 rounded-control px-3 py-2 text-[14px] transition-colors", isActive ? "bg-primary-soft font-medium text-primary" : "text-fg/75 hover:bg-muted hover:text-fg");
+    cn("flex shrink-0 items-center gap-3 rounded-control px-3 py-2 text-sm transition-colors", isActive ? "bg-primary-soft font-medium text-primary" : "text-fg/75 hover:bg-muted hover:text-fg");
   const shopHref = `${channel.shopUrl}/`;
 
   return (
@@ -64,16 +64,16 @@ export default function PortalLayout({ loaderData }: Route.ComponentProps) {
             </summary>
             <div className="absolute right-0 top-12 z-40 grid w-64 gap-1 rounded-surface border border-border bg-surface p-2 shadow-pop">
               <div className="grid gap-0.5 border-b border-border px-3 pb-3 pt-1">
-                <Eyebrow className="text-[9px]">{user?.groupName}</Eyebrow>
+                <Eyebrow className="text-2xs">{user?.groupName}</Eyebrow>
                 <p className="truncate text-sm font-medium">{user?.company || user?.name}</p>
-                <p className="truncate text-[12px] text-muted-fg">{user?.email}</p>
+                <p className="truncate text-xs text-muted-fg">{user?.email}</p>
               </div>
               {priceList && <a href="/account/price-list.csv" className={item({ isActive: false })}><FileSpreadsheet size={17} strokeWidth={1.6} /><span className="flex-1">{t("account.priceList")}</span></a>}
               {channel.mode !== "portal-only" && <a href={shopHref} className={item({ isActive: false })}><Store size={17} strokeWidth={1.6} /><span className="flex-1">{t("portal.toShop")}</span><ArrowUpRight size={14} className="text-muted-fg" /></a>}
               <div className="flex items-center justify-between border-t border-border px-1 pt-2">
                 <ThemeToggle className="h-9 w-9" />
                 {shop.locales.length > 1 && (
-                  <div className="flex gap-1 text-[12px] uppercase">
+                  <div className="flex gap-1 text-xs uppercase">
                     {shop.locales.map((l) => (
                       <Form key={l} method="post" action="/set-locale" className="contents">
                         <input type="hidden" name="locale" value={l} />
@@ -83,7 +83,7 @@ export default function PortalLayout({ loaderData }: Route.ComponentProps) {
                     ))}
                   </div>
                 )}
-                <Form method="post" action="/logout"><button className="flex h-9 items-center gap-2 px-2 text-[13px] text-muted-fg hover:text-fg"><LogOut size={14} /> {t("nav.logout")}</button></Form>
+                <Form method="post" action="/logout"><button className="flex h-9 items-center gap-2 px-2 text-note text-muted-fg hover:text-fg"><LogOut size={14} /> {t("nav.logout")}</button></Form>
               </div>
             </div>
           </details>
@@ -94,7 +94,7 @@ export default function PortalLayout({ loaderData }: Route.ComponentProps) {
               <n.icon size={17} strokeWidth={1.6} />
               <span className="flex-1">{t(n.key)}</span>
               {n.to === "/portal/order-list" && cartCount > 0 && (
-                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-on-primary tabular-nums">{cartCount}</span>
+                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-2xs font-semibold text-on-primary tabular-nums">{cartCount}</span>
               )}
             </NavLink>
           ))}
@@ -108,15 +108,15 @@ export default function PortalLayout({ loaderData }: Route.ComponentProps) {
         </nav>
         <div className="mt-auto hidden gap-3 border-t border-border px-2 pt-5 lg:grid">
           <div className="grid gap-0.5">
-            <Eyebrow className="text-[9px]">{user?.groupName}</Eyebrow>
+            <Eyebrow className="text-2xs">{user?.groupName}</Eyebrow>
             <p className="truncate text-sm font-medium">{user?.company || user?.name}</p>
-            <p className="truncate text-[12px] text-muted-fg">{user?.email}</p>
+            <p className="truncate text-xs text-muted-fg">{user?.email}</p>
           </div>
           <div className="flex items-center justify-between">
-            <Form method="post" action="/logout"><button className="flex items-center gap-2 text-[13px] text-muted-fg hover:text-fg"><LogOut size={14} /> {t("nav.logout")}</button></Form>
+            <Form method="post" action="/logout"><button className="flex items-center gap-2 text-note text-muted-fg hover:text-fg"><LogOut size={14} /> {t("nav.logout")}</button></Form>
             <ThemeToggle className="h-8 w-8" />
             {shop.locales.length > 1 && (
-              <div className="flex gap-2 text-[12px] uppercase">
+              <div className="flex gap-2 text-xs uppercase">
                 {shop.locales.map((l) => (
                   <Form key={l} method="post" action="/set-locale" className="contents">
                     <input type="hidden" name="locale" value={l} />
@@ -135,11 +135,11 @@ export default function PortalLayout({ loaderData }: Route.ComponentProps) {
       {/* phones: app-style tab bar */}
       <nav className="fixed inset-x-0 bottom-0 z-30 grid auto-cols-fr grid-flow-col border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label={t("portal.title")}>
         {NAV.filter((n) => !n.when || (n.when === "quickOrder" && quickOrder)).map((n) => (
-          <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => cn("relative flex h-16 flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-wide transition-colors", isActive ? "text-primary" : "text-muted-fg")}>
+          <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => cn("relative flex h-16 flex-col items-center justify-center gap-1 text-2xs font-medium tracking-wide transition-colors", isActive ? "text-primary" : "text-muted-fg")}>
             <n.icon size={20} strokeWidth={1.6} />
             <span className="max-w-full truncate px-1">{t(n.short)}</span>
             {n.to === "/portal/order-list" && cartCount > 0 && (
-              <span className="absolute left-1/2 top-2 ml-2 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] font-semibold text-on-primary tabular-nums">{cartCount}</span>
+              <span className="absolute left-1/2 top-2 ml-2 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-2xs font-semibold text-on-primary tabular-nums">{cartCount}</span>
             )}
           </NavLink>
         ))}

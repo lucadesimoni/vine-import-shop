@@ -33,6 +33,8 @@ export interface ErpClient {
   productInfo?(req: { customerId?: number | null; priceGroupId?: number | null; articles: { erpId: string; qty: number }[] }): Promise<Map<string, ProductInfo>>;
   /** Authoritative basket calculation (conditions, promotions, deposits, surcharges, freight). */
   calculateBasket?(basket: BasketRequest): Promise<BasketResult>;
+  /** Receipts (orders / delivery notes / invoices) changed since — vinX BaseData/Receipt; `shopId` = shop order number. */
+  receipts?(since?: Date | null): AsyncIterable<Raw>;
   /** Customer addresses changed since (vinX BaseData/Address) — pulled into linked shop customers. */
   addresses?(since?: Date | null): AsyncIterable<Raw>;
   pushOrder(payload: OrderPayload): Promise<string>;

@@ -46,13 +46,13 @@ export default function Account({ loaderData }: Route.ComponentProps) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left">
-                    {[t("account.number"), t("account.date"), t("account.status"), t("cart.total"), ""].map((h, i) => <th key={i} className="text-eyebrow px-5 py-3 text-[10px] font-semibold text-muted-fg">{h}</th>)}
+                    {[t("account.number"), t("account.date"), t("account.status"), t("cart.total"), ""].map((h, i) => <th key={i} className="text-eyebrow px-5 py-3 text-2xs font-semibold text-muted-fg">{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
                   {orders.map((o) => (
                     <tr key={o.id} className="border-b border-border last:border-0">
-                      <td className="px-5 py-4"><Link to={to(`/account/orders/${o.number}`)} className="font-medium hover:underline">{o.number}</Link><span className="block text-[12px] text-muted-fg">{t(o.kind === "request" ? "account.request" : "account.order")}</span></td>
+                      <td className="px-5 py-4"><Link to={to(`/account/orders/${o.number}`)} className="font-medium hover:underline">{o.number}</Link><span className="block text-xs text-muted-fg">{t(o.kind === "request" ? "account.request" : "account.order")}</span></td>
                       <td className="px-5 py-4 tabular-nums">{new Date(o.createdAt).toLocaleDateString(`${locale}-CH`)}</td>
                       <td className="px-5 py-4"><Badge tone={STATUS_TONE[o.status]}>{t(`status.${o.status}` as MessageKey)}</Badge></td>
                       <td className="px-5 py-4 tabular-nums">{o.kind === "request" ? "—" : formatMoney(o.totalGross, o.currency, locale)}</td>

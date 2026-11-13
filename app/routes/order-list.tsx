@@ -43,7 +43,7 @@ export default function OrderList({ loaderData }: Route.ComponentProps) {
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <Card>
           <div className="hidden grid-cols-[72px_minmax(0,1fr)_128px_104px_36px] gap-5 border-b border-border px-6 py-3 md:grid">
-            {["", t("cart.item"), t("cart.qty"), summary.isRequest ? "" : t("cart.total"), ""].map((h, i) => <span key={i} className="text-eyebrow text-[10px] text-muted-fg">{h}</span>)}
+            {["", t("cart.item"), t("cart.qty"), summary.isRequest ? "" : t("cart.total"), ""].map((h, i) => <span key={i} className="text-eyebrow text-2xs text-muted-fg">{h}</span>)}
           </div>
           <ul>
             {summary.lines.map((l) => <Line key={l.variantId} line={l} money={m} showPrice={!summary.isRequest} />)}
@@ -86,8 +86,8 @@ function Line({ line: l, money, showPrice }: { line: Route.ComponentProps["loade
       </Link>
       <div className="min-w-0">
         <Link to={to(`/product/${l.productSlug}`)} className="font-medium leading-snug hover:underline">{l.name}</Link>
-        <p className="mt-1 text-[13px] text-muted-fg">{[l.producer, l.vintage, l.size, `${t("product.art")}\u00a0${l.sku}`].filter(Boolean).join(" · ")}</p>
-        {showPrice && <p className="mt-1 text-[13px] text-muted-fg tabular-nums">{money(l.unitDisplay)}{l.conditions.length > 0 ? <span className="text-primary"> · {l.conditions.join(" · ")}</span> : l.tierApplied && <span className="text-primary"> · {t("price.tiers")}</span>}{l.freeUnits > 0 && <span className="text-success"> · {t("cond.free", { n: l.freeUnits })}</span>}</p>}
+        <p className="mt-1 text-note text-muted-fg">{[l.producer, l.vintage, l.size, `${t("product.art")}\u00a0${l.sku}`].filter(Boolean).join(" · ")}</p>
+        {showPrice && <p className="mt-1 text-note text-muted-fg tabular-nums">{money(l.unitDisplay)}{l.conditions.length > 0 ? <span className="text-primary"> · {l.conditions.join(" · ")}</span> : l.tierApplied && <span className="text-primary"> · {t("price.tiers")}</span>}{l.freeUnits > 0 && <span className="text-success"> · {t("cond.free", { n: l.freeUnits })}</span>}</p>}
       </div>
       <fetcher.Form method="post" action="/cart" onChange={(e) => fetcher.submit(e.currentTarget)} className="col-start-2 md:col-start-auto">
         <input type="hidden" name="intent" value="set" />

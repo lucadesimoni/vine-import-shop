@@ -148,7 +148,7 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
             <td className="w-14"><ProducerLogo name={p.name} logo={p.logo} size="sm" /></td>
             <td>
               <Link to={`/admin/producers/${p.id}`} className="font-medium hover:underline">{p.name}</Link>
-              {p.website && <span className="block truncate text-[12px] text-muted-fg">{p.website.replace(/^https?:\/\/(www\.)?/, "")}</span>}
+              {p.website && <span className="block truncate text-xs text-muted-fg">{p.website.replace(/^https?:\/\/(www\.)?/, "")}</span>}
             </td>
             <td className="text-muted-fg">{p.iso ? countryName(p.iso, "de") : p.country ?? "—"}</td>
             <td className="text-muted-fg">{p.region ?? "—"}</td>

@@ -1,6 +1,6 @@
 import { cn } from "~/lib/cn";
 
-const SIZES = { sm: "h-9 w-9 text-[13px]", md: "h-14 w-14 text-lg", lg: "h-24 w-24 text-3xl md:h-28 md:w-28" } as const;
+const SIZES = { sm: "h-9 w-9 text-note", md: "h-14 w-14 text-lg", lg: "h-24 w-24 text-3xl md:h-28 md:w-28" } as const;
 
 /** Producer / brand logo (maintained in Admin › Produzenten); sits on the light media stage in both themes; falls back to a token-styled monogram. */
 export function ProducerLogo({ name, logo, size = "md", className }: { name: string; logo: string | null | undefined; size?: keyof typeof SIZES; className?: string }) {

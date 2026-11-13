@@ -129,11 +129,11 @@ export default function Conditions({ loaderData, actionData }: Route.ComponentPr
           <DataTable head={["Art", "Gilt für", "Ziel", "Wert", "Bedingung", "Quelle", ""]} empty={!rules.length}>
             {rules.map((r) => (
               <tr key={r.id} className={r.active ? "" : "opacity-50"}>
-                <td><span className="font-medium">{TYPES[r.type]}</span><span className="block text-[12px] text-muted-fg">{r.label?.de}</span></td>
+                <td><span className="font-medium">{TYPES[r.type]}</span><span className="block text-xs text-muted-fg">{r.label?.de}</span></td>
                 <td className="text-muted-fg">{scopeName(r)}</td>
                 <td className="text-muted-fg">{targetName(r)}</td>
                 <td className="whitespace-nowrap tabular-nums">{valueText(r)}</td>
-                <td className="text-[12px] text-muted-fg">
+                <td className="text-xs text-muted-fg">
                   {[r.minQty ? `ab ${r.minQty} Stk.` : "", r.validTo ? `bis ${new Date(r.validTo).toLocaleDateString("de-CH")}` : "", r.onNetPrices ? "auch auf Nettopreise" : ""].filter(Boolean).join(" · ") || "—"}
                 </td>
                 <td><Badge tone={r.source === "platform" ? "neutral" : "soft"}>{r.source === "platform" ? "Plattform" : r.source}</Badge></td>
@@ -186,7 +186,7 @@ function NewRule({ groups, customers, categories, producers, discountGroups }: P
         )}
       </Field>
       <div className="grid gap-3 rounded-control bg-muted p-3">
-        <p className="text-[12px] text-muted-fg">Ziel-Wert (passend zur Auswahl oben)</p>
+        <p className="text-xs text-muted-fg">Ziel-Wert (passend zur Auswahl oben)</p>
         <Select name="target.discount_group" size="sm" aria-label="Rabattgruppe" defaultValue=""><option value="">Rabattgruppe …</option>{discountGroups.map((d) => <option key={d}>{d}</option>)}</Select>
         <Select name="target.category" size="sm" aria-label="Kategorie" defaultValue=""><option value="">Kategorie …</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select>
         <Select name="target.producer" size="sm" aria-label="Produzent" defaultValue=""><option value="">Produzent …</option>{producers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>

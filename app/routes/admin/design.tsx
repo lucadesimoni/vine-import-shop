@@ -90,8 +90,8 @@ export default function Design({ loaderData }: Route.ComponentProps) {
             <div className="grid gap-5 sm:grid-cols-3">
               {([["logo", "Logo (für hellen Grund)", brand.logoUrl, "bg-bg"], ["logoInverse", "Logo (für dunklen Grund)", brand.logoInverseUrl, "bg-inverse"], ["favicon", "Favicon", brand.faviconUrl, "bg-bg"]] as const).map(([k, label, url, bg]) => (
                 <div key={k} className="grid gap-2">
-                  <span className="text-[12px] font-medium uppercase tracking-[0.1em] text-muted-fg">{label}</span>
-                  <div className={`grid h-24 place-items-center rounded-control border border-border ${bg}`}>{url ? <img src={url} alt="" className="max-h-16 max-w-[80%]" /> : <span className="text-[12px] text-muted-fg">—</span>}</div>
+                  <span className="text-field-label">{label}</span>
+                  <div className={`grid h-24 place-items-center rounded-control border border-border ${bg}`}>{url ? <img src={url} alt="" className="max-h-16 max-w-[80%]" /> : <span className="text-xs text-muted-fg">—</span>}</div>
                   <input type="hidden" name={`${k}Url`} value={url} />
                   <Input type="file" name={`${k}File`} accept="image/png,image/webp,image/jpeg" aria-label={`${label} hochladen`} className="h-auto py-1.5 text-[0px] file:mr-0 file:w-full" />
                 </div>
@@ -106,7 +106,7 @@ export default function Design({ loaderData }: Route.ComponentProps) {
                   <input type="color" name={`colors.${key}`} defaultValue={brand.colors[key]} className="h-10 w-12 cursor-pointer rounded-control border border-border bg-surface p-1" />
                   <span className="grid">
                     <span className="text-sm font-medium">{label}</span>
-                    <span className="text-[12px] text-muted-fg">{hint || brand.colors[key]}</span>
+                    <span className="text-xs text-muted-fg">{hint || brand.colors[key]}</span>
                   </span>
                 </label>
               ))}
@@ -117,7 +117,7 @@ export default function Design({ loaderData }: Route.ComponentProps) {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Titelschrift">{(id) => <Select id={id} name="fonts.display" defaultValue={brand.fonts.display}>{DISPLAY_FONTS.map((f) => <option key={f}>{f}</option>)}</Select>}</Field>
               <Field label="Textschrift">{(id) => <Select id={id} name="fonts.body" defaultValue={brand.fonts.body}>{BODY_FONTS.map((f) => <option key={f}>{f}</option>)}</Select>}</Field>
-              <Field label={`Eckenradius · ${draft.radius}px`}>{(id) => <input id={id} type="range" name="radius" min={0} max={20} defaultValue={brand.radius} className="mt-3 w-full accent-[var(--t-primary)]" />}</Field>
+              <Field label={`Eckenradius · ${draft.radius}px`}>{(id) => <input id={id} type="range" name="radius" min={0} max={20} defaultValue={brand.radius} className="h-11 w-full accent-[var(--t-primary)]" />}</Field>
               <Field label="Buttons">{(id) => <Select id={id} name="buttonStyle" defaultValue={brand.buttonStyle}><option value="square">Eckig</option><option value="rounded">Abgerundet</option><option value="pill">Pille</option></Select>}</Field>
               <Field label="Button-Beschriftung">{(id) => <Select id={id} name="buttonCase" defaultValue={brand.buttonCase}><option value="normal">Normal</option><option value="upper">VERSALIEN, gesperrt</option></Select>}</Field>
               <Field label="Dunkelmodus" hint="Dunkle Farben werden aus der Marke abgeleitet (Kontrast ≥ 4.5:1).">{(id) => <Select id={id} name="darkMode" defaultValue={brand.darkMode}><option value="toggle">System + Umschalter für Besucher</option><option value="system">Folgt dem Betriebssystem</option><option value="off">Aus (immer hell)</option></Select>}</Field>
@@ -144,18 +144,18 @@ export default function Design({ loaderData }: Route.ComponentProps) {
 
         {/* Live preview — the same components, scoped to the draft tokens */}
         <aside className="xl:sticky xl:top-8 xl:self-start">
-          <p className="text-eyebrow mb-3 text-[10px] text-muted-fg">Live-Vorschau</p>
+          <p className="text-eyebrow mb-3 text-2xs text-muted-fg">Live-Vorschau</p>
           <div style={vars} className="overflow-hidden rounded-surface border border-border bg-bg text-fg font-sans shadow-card">
-            <div className="bg-primary px-4 py-1.5 text-center text-[10px] text-on-primary">Ankündigungsleiste</div>
+            <div className="bg-primary px-4 py-1.5 text-center text-2xs text-on-primary">Ankündigungsleiste</div>
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <div className="flex items-center gap-2.5">
                 {brand.logoUrl ? <img src={brand.logoUrl} alt="" className="h-8" /> : <span className="grid h-8 w-8 place-items-center rounded-full bg-primary text-on-primary">{draft.name[0]}</span>}
-                <span className="grid leading-none"><span className="font-display text-lg">{draft.name}</span><span className="text-eyebrow mt-1 text-[8px] text-muted-fg">{draft.claim}</span></span>
+                <span className="grid leading-none"><span className="font-display text-lg">{draft.name}</span><span className="text-eyebrow mt-1 text-2xs text-muted-fg">{draft.claim}</span></span>
               </div>
-              <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider"><ShoppingBag size={14} /> 3</span>
+              <span className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider"><ShoppingBag size={14} /> 3</span>
             </div>
             <div className="grid gap-4 p-6">
-              <p className="text-eyebrow text-[9px] text-muted-fg">Eyebrow · Kategorie</p>
+              <p className="text-eyebrow text-2xs text-muted-fg">Eyebrow · Kategorie</p>
               <h3 className="font-display text-4xl leading-none">Il gusto Italiano</h3>
               <p className="text-sm text-muted-fg">Fliesstext in der gewählten Textschrift mit gedämpften Metadaten.</p>
               <div className="flex flex-wrap gap-2">
@@ -167,15 +167,15 @@ export default function Design({ loaderData }: Route.ComponentProps) {
                 {["Rotwein", "Pasta"].map((x) => (
                   <div key={x} className="rounded-surface border border-border bg-surface p-3">
                     <div className="mb-3 aspect-[4/3] rounded-control bg-muted" />
-                    <p className="text-eyebrow text-[8px] text-muted-fg">{x}</p>
-                    <p className="text-[13px] font-medium">Produktname</p>
-                    <p className="mt-1 text-[12px] font-semibold">CHF 24.50</p>
+                    <p className="text-eyebrow text-2xs text-muted-fg">{x}</p>
+                    <p className="text-note font-medium">Produktname</p>
+                    <p className="mt-1 text-xs font-semibold">CHF 24.50</p>
                   </div>
                 ))}
               </div>
               <Input placeholder="Eingabefeld" className="h-9 text-sm" />
             </div>
-            <div className="bg-inverse px-6 py-5 text-[12px] text-on-inverse">Footer · {draft.name}</div>
+            <div className="bg-inverse px-6 py-5 text-xs text-on-inverse">Footer · {draft.name}</div>
           </div>
         </aside>
       </div>

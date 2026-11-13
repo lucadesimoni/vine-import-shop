@@ -120,9 +120,9 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16">
             <div className="grid content-start gap-6 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)]">
               <div className="flex items-center justify-between gap-4">
-                <p className="text-eyebrow text-[11px] text-muted-fg">{showRegions ? t("origin.chooseRegion") : t("origin.chooseCountry")}</p>
+                <p className="text-eyebrow text-label text-muted-fg">{showRegions ? t("origin.chooseRegion") : t("origin.chooseCountry")}</p>
                 {view === "world" && mapCountry && (
-                  <Link to={link({ origin: null, region: null })} preventScrollReset className="flex items-center gap-1.5 text-[13px] text-muted-fg hover:text-fg"><ArrowLeft size={14} /> {t("origin.backToWorld")}</Link>
+                  <Link to={link({ origin: null, region: null })} preventScrollReset className="flex items-center gap-1.5 text-note text-muted-fg hover:text-fg"><ArrowLeft size={14} /> {t("origin.backToWorld")}</Link>
                 )}
               </div>
               <div className={cn("flex w-full justify-center", showRegions && "lg:justify-start")}>
@@ -135,7 +135,7 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
               <Legend />
               {otherCountries.length > 0 && (
                 <div className="grid gap-3 border-t border-border pt-5">
-                  <p className="text-eyebrow text-[10px] text-muted-fg">{t("origin.otherCountries")}</p>
+                  <p className="text-eyebrow text-2xs text-muted-fg">{t("origin.otherCountries")}</p>
                   <div className="flex flex-wrap gap-2">
                     {otherCountries.map((c) => <Chip key={c.iso} to={link({ origin: c.iso, region: null })} active={selected?.id === c.iso} preventScrollReset>{countryName(c.iso, locale)} · {c.count}</Chip>)}
                   </div>
@@ -148,8 +148,8 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
                 <>
                   <div className="grid gap-3">
                     <div className="flex items-center justify-between gap-4">
-                      <Eyebrow className="text-[11px] text-primary">{selected.type === "region" ? countryName(selected.country, locale) : t("origin.country")}</Eyebrow>
-                      <Link to={link({ region: null, origin: view === "world" && selected.type === "region" ? mapCountry : null })} preventScrollReset className="flex items-center gap-1.5 text-[13px] text-muted-fg hover:text-fg"><X size={14} /> {t("origin.reset")}</Link>
+                      <Eyebrow className="text-label text-primary">{selected.type === "region" ? countryName(selected.country, locale) : t("origin.country")}</Eyebrow>
+                      <Link to={link({ region: null, origin: view === "world" && selected.type === "region" ? mapCountry : null })} preventScrollReset className="flex items-center gap-1.5 text-note text-muted-fg hover:text-fg"><X size={14} /> {t("origin.reset")}</Link>
                     </div>
                     <h2 className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-h1">
                       {areaName}
@@ -165,7 +165,7 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
               ) : (
                 <>
                   <div className="grid gap-3">
-                    <Eyebrow className="text-[11px] text-primary">{mapCountry && view === "world" ? countryName(mapCountry, locale) : t("origin.overview")}</Eyebrow>
+                    <Eyebrow className="text-label text-primary">{mapCountry && view === "world" ? countryName(mapCountry, locale) : t("origin.overview")}</Eyebrow>
                     <h2 className="text-h2">{t(showRegions ? "origin.regionsCount" : "origin.countriesCount", { n: listAreas.length })}</h2>
                     <p className="text-muted-fg">{t("origin.hint")}</p>
                   </div>
@@ -176,7 +176,7 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
                         <li key={a.id}>
                           <Link to={a.to} preventScrollReset className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 rounded-control px-3 py-2.5 transition-colors hover:bg-muted">
                             <span className="font-display text-lg leading-tight group-hover:text-primary">{a.name}</span>
-                            <span className="text-[13px] text-muted-fg tabular-nums">{t("origin.count", { products: a.count, producers: a.producers.length })}</span>
+                            <span className="text-note text-muted-fg tabular-nums">{t("origin.count", { products: a.count, producers: a.producers.length })}</span>
                             <span className="col-span-2 h-1 overflow-hidden rounded-full bg-muted"><span className="block h-full rounded-full bg-primary/70" style={{ width: `${Math.max(6, (a.count / max) * 100)}%` }} /></span>
                           </Link>
                         </li>
@@ -206,7 +206,7 @@ function ProducerList({ producers }: { producers: { slug: string; name: string; 
               <ProducerLogo name={p.name} logo={p.logo} size="sm" />
               <span className="truncate font-display text-lg leading-tight group-hover:text-primary">{p.name}</span>
             </span>
-            <span className="flex shrink-0 items-center gap-1 text-[12px] text-muted-fg tabular-nums">{p.count} <ArrowRight size={12} /></span>
+            <span className="flex shrink-0 items-center gap-1 text-xs text-muted-fg tabular-nums">{p.count} <ArrowRight size={12} /></span>
           </Link>
         </li>
       ))}
@@ -217,7 +217,7 @@ function ProducerList({ producers }: { producers: { slug: string; name: string; 
 function Legend() {
   const { t } = useI18n();
   return (
-    <div className="flex items-center gap-3 text-[12px] text-muted-fg">
+    <div className="flex items-center gap-3 text-xs text-muted-fg">
       <span>{t("origin.few")}</span>
       <span className="h-2 w-28 rounded-full" style={{ background: "linear-gradient(90deg, color-mix(in oklab, var(--t-primary) 22%, var(--t-card)), var(--t-primary))" }} />
       <span>{t("origin.many")}</span>
@@ -244,10 +244,10 @@ function AZ({ producers }: { producers: Route.ComponentProps["loaderData"]["prod
                   <ProducerLogo name={p.name} logo={p.logo} size="sm" />
                   <span className="grid">
                     <span className="font-display text-lg leading-tight group-hover:text-primary">{p.name}</span>
-                    {p.region && <span className="text-[12px] text-muted-fg">{p.region}</span>}
+                    {p.region && <span className="text-xs text-muted-fg">{p.region}</span>}
                   </span>
                   </span>
-                  <span className="flex shrink-0 items-center gap-1 text-[12px] text-muted-fg tabular-nums">{p.count} <ArrowRight size={12} /></span>
+                  <span className="flex shrink-0 items-center gap-1 text-xs text-muted-fg tabular-nums">{p.count} <ArrowRight size={12} /></span>
                 </Link>
               </li>
             ))}

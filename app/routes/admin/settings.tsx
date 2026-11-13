@@ -164,7 +164,7 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
               {(id) => <Input id={id} name="channels.portalHost" defaultValue={shop.channels.portalHost} placeholder="b2b.example.ch" />}
             </Field>
           </div>
-          <p className="mt-4 text-[13px] text-muted-fg">Beide Domains auf dieselbe Installation zeigen lassen. Für ein gemeinsames Login über Subdomains <code className="rounded-badge bg-muted px-1.5 py-0.5 text-[12px]">COOKIE_DOMAIN=.example.ch</code> setzen.</p>
+          <p className="mt-4 text-note text-muted-fg">Beide Domains auf dieselbe Installation zeigen lassen. Für ein gemeinsames Login über Subdomains <code className="rounded-badge bg-muted px-1.5 py-0.5 text-xs">COOKIE_DOMAIN=.example.ch</code> setzen.</p>
         </Panel>
         <Panel title="Herkunftskarte" description="Produzenten-Seite: Herkunft aus Lieferanten-/Produzentendaten (Region, Land), je Produkt übersteuerbar.">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -223,7 +223,7 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
 
         <Panel title="Kundengruppen" description="Preislisten & Staffeln kommen aus vinX (Preisgruppe ↔ vinX-Code). Rabatt gilt, wenn keine Listenpreise vorhanden sind." className="xl:col-span-2">
           <div className="grid gap-3">
-            <div className="hidden grid-cols-[1.5fr_1fr_1fr_1fr_auto] gap-3 text-[11px] uppercase tracking-wider text-muted-fg md:grid"><span>Name</span><span>Rabatt %</span><span>Mindestbestellung CHF netto</span><span>vinX-Preisgruppe</span><span>Netto-Anzeige</span></div>
+            <div className="hidden grid-cols-[1.5fr_1fr_1fr_1fr_auto] gap-3 text-label uppercase tracking-wider text-muted-fg md:grid"><span>Name</span><span>Rabatt %</span><span>Mindestbestellung CHF netto</span><span>vinX-Preisgruppe</span><span>Netto-Anzeige</span></div>
             {groups.map((g) => (
               <div key={g.id} className="grid grid-cols-2 items-center gap-3 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto]">
                 <Input name={`group.${g.id}.name`} defaultValue={g.name} size="sm" aria-label="Name" />
@@ -279,7 +279,7 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
         </Panel>
 
         <Panel title="Versandarten" description='Preise in Rappen. "rates": [[ab Einheiten, Preis]] · "audience": all | consumer | trade' className="xl:col-span-2">
-          <Textarea name="shippingJson" rows={14} spellCheck={false} defaultValue={JSON.stringify(shop.shipping, null, 2)} className="font-mono text-[12.5px]" />
+          <Textarea name="shippingJson" rows={14} spellCheck={false} defaultValue={JSON.stringify(shop.shipping, null, 2)} className="font-mono text-note" />
         </Panel>
       </div>
       <SaveBar saved={!!result && "ok" in result} />

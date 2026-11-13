@@ -54,17 +54,17 @@ export default function Contact({ actionData }: Route.ComponentProps) {
       </div>
       <aside className="grid content-start gap-10 lg:pt-36">
         <div className="grid gap-3">
-          <p className="text-eyebrow text-[11px] text-muted-fg">{t("contact.address")}</p>
+          <p className="text-eyebrow text-label text-muted-fg">{t("contact.address")}</p>
           <p className="flex gap-3 leading-relaxed"><MapPin size={18} strokeWidth={1.5} className="mt-0.5 shrink-0 text-primary" /><span>{brand.legalName || brand.name}<br />{c.street}<br />{c.zip} {c.city}, {c.country}</span></p>
         </div>
         <div className="grid gap-3">
-          <p className="text-eyebrow text-[11px] text-muted-fg">{t("contact.direct")}</p>
+          <p className="text-eyebrow text-label text-muted-fg">{t("contact.direct")}</p>
           {c.phone && <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="flex items-center gap-3 hover:text-primary"><Phone size={18} strokeWidth={1.5} className="text-primary" /> {c.phone}</a>}
           {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-3 hover:text-primary"><Mail size={18} strokeWidth={1.5} className="text-primary" /> {c.email}</a>}
         </div>
         {c.hours.length > 0 && (
           <div className="grid gap-3">
-            <p className="text-eyebrow text-[11px] text-muted-fg">{t("contact.hours")}</p>
+            <p className="text-eyebrow text-label text-muted-fg">{t("contact.hours")}</p>
             <dl className="grid gap-2">
               {c.hours.map((h, i) => <div key={i}><dt className="text-sm">{tl(h.label, locale)}</dt><dd className="text-sm text-muted-fg tabular-nums">{h.value}</dd></div>)}
             </dl>

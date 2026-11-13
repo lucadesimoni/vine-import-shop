@@ -52,7 +52,7 @@ export default function Producer({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="container-page page-top">
-      <Link to="/producers" className="mb-8 inline-flex items-center gap-1.5 text-[13px] text-muted-fg hover:text-fg"><ArrowLeft size={14} /> {t("producer.back")}</Link>
+      <Link to="/producers" className="mb-8 inline-flex items-center gap-1.5 text-note text-muted-fg hover:text-fg"><ArrowLeft size={14} /> {t("producer.back")}</Link>
 
       <header className="grid gap-10 border-b border-border pb-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-16">
         <div className="grid content-start gap-6">
@@ -63,7 +63,7 @@ export default function Producer({ loaderData }: Route.ComponentProps) {
               <h1 className="text-h1">{p.name}</h1>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[14px] text-muted-fg">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-fg">
             {place && <span className="flex items-center gap-1.5"><MapPin size={15} strokeWidth={1.6} /> {place}</span>}
             {p.website && (
               <a href={p.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 underline-offset-4 hover:text-fg hover:underline">
@@ -72,18 +72,18 @@ export default function Producer({ loaderData }: Route.ComponentProps) {
             )}
           </div>
           {p.descriptionHtml ? (
-            <div className="prose-shop max-w-2xl text-[15px] leading-relaxed" dangerouslySetInnerHTML={{ __html: p.descriptionHtml }} />
+            <div className="prose-shop max-w-2xl text-body leading-relaxed" dangerouslySetInnerHTML={{ __html: p.descriptionHtml }} />
           ) : (
             <dl className="flex flex-wrap gap-x-10 gap-y-4 border-t border-border pt-6">
-              <div className="grid gap-1"><dt className="text-eyebrow text-[10px] text-muted-fg">{t("producer.range")}</dt><dd className="font-display text-2xl tabular-nums">{products.total}</dd></div>
-              {categories.length > 0 && <div className="grid gap-1"><dt className="text-eyebrow text-[10px] text-muted-fg">{t("producer.categories")}</dt><dd className="text-[15px]">{categories.join(" · ")}</dd></div>}
+              <div className="grid gap-1"><dt className="text-eyebrow text-2xs text-muted-fg">{t("producer.range")}</dt><dd className="font-display text-2xl tabular-nums">{products.total}</dd></div>
+              {categories.length > 0 && <div className="grid gap-1"><dt className="text-eyebrow text-2xs text-muted-fg">{t("producer.categories")}</dt><dd className="text-body">{categories.join(" · ")}</dd></div>}
             </dl>
           )}
         </div>
 
         {mapEnabled && origin.iso && (
           <Link to={mapHref} className="group grid content-start gap-3 rounded-surface border border-border bg-card p-5 transition-colors hover:border-border-strong" aria-label={`${t("producer.onMap")}: ${place}`}>
-            <span className="flex items-center justify-between text-eyebrow text-[10px] text-muted-fg">{t("producer.origin")} <span className="flex items-center gap-1 normal-case tracking-normal group-hover:text-fg">{t("producer.onMap")} <ArrowRight size={12} /></span></span>
+            <span className="flex items-center justify-between text-eyebrow text-2xs text-muted-fg">{t("producer.origin")} <span className="flex items-center gap-1 normal-case tracking-normal group-hover:text-fg">{t("producer.onMap")} <ArrowRight size={12} /></span></span>
             <div className="pointer-events-none">
               {regionMap && origin.regionId ? (
                 <RegionMap map={regionMap} data={[{ id: origin.regionId, count: 1 }]} selected={origin.regionId} href={() => mapHref} locale={locale} label={place} markers={false} className="mx-auto h-auto max-h-60 w-full" />

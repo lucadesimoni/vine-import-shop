@@ -77,7 +77,7 @@ export function Header() {
     <>
     <header className={cn("sticky top-0 z-40 border-b bg-bg/90 backdrop-blur-md transition-[border-color,box-shadow] duration-300", scrolled ? "border-border shadow-bar" : "border-transparent")}>
       {announcement && (
-        <div className="bg-primary px-4 py-1.5 text-center text-[11px] tracking-wide text-on-primary">{announcement}</div>
+        <div className="bg-primary px-4 py-1.5 text-center text-label tracking-wide text-on-primary">{announcement}</div>
       )}
       <div className="container-page flex h-[var(--header-h)] items-center gap-2 sm:gap-6">
         <button className={buttonClass({ variant: "ghost", size: "icon" }, "-ml-2.5 max-sm:h-10 max-sm:w-10 lg:hidden")} onClick={() => setOpen(true)} aria-label={t("nav.menu")}>
@@ -92,7 +92,7 @@ export function Header() {
               end={n.end}
               className={({ isActive }) =>
                 cn(
-                  "relative px-3.5 py-2 text-[14px] text-fg/80 transition-colors hover:text-fg",
+                  "relative px-3.5 py-2 text-sm text-fg/80 transition-colors hover:text-fg",
                   "after:absolute after:inset-x-3.5 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 hover:after:scale-x-100",
                   isActive && "text-fg after:scale-x-100",
                 )
@@ -104,7 +104,7 @@ export function Header() {
         </nav>
         <div className="ml-auto flex items-center gap-0 sm:gap-1 lg:ml-0">
           {locales.length > 1 && (
-            <div className="mr-2 hidden items-center gap-1 text-[12px] font-medium tracking-wider sm:flex">
+            <div className="mr-2 hidden items-center gap-1 text-xs font-medium tracking-wider sm:flex">
               {locales.map((l, i) => (
                 <span key={l} className="flex items-center gap-1">
                   {i > 0 && <span className="text-border-strong">|</span>}
@@ -133,7 +133,7 @@ export function Header() {
             <span className="relative">
               <ShoppingBag size={19} strokeWidth={1.5} />
               {cartCount > 0 && (
-                <span key={cartCount} className="absolute -right-2 -top-1.5 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none tracking-normal tabular-nums text-on-primary ring-2 ring-bg">{cartCount > 99 ? "99+" : cartCount}</span>
+                <span key={cartCount} className="absolute -right-2 -top-1.5 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-primary px-1 text-2xs font-semibold leading-none tracking-normal tabular-nums text-on-primary ring-2 ring-bg">{cartCount > 99 ? "99+" : cartCount}</span>
               )}
             </span>
             <span className="hidden xl:inline">{t("nav.orderList")}</span>
@@ -166,7 +166,7 @@ export function Header() {
               {n.label}
             </NavLink>
           ))}
-          <NavLink to={user ? (user.role === "customer" ? "/account" : "/admin") : "/login"} className="flex items-center gap-3 border-b border-border py-4 text-[15px] text-fg/80">
+          <NavLink to={user ? (user.role === "customer" ? "/account" : "/admin") : "/login"} className="flex items-center gap-3 border-b border-border py-4 text-body text-fg/80">
             <User size={18} strokeWidth={1.5} /> {user ? t("nav.account") : t("nav.login")}
           </NavLink>
           {showPortal && (
@@ -246,7 +246,7 @@ export function Footer() {
         )}
       </div>
       <div className="border-t border-on-inverse/15">
-        <div className="container-page flex flex-wrap items-center justify-between gap-4 py-6 text-[12px] text-on-inverse/65">
+        <div className="container-page flex flex-wrap items-center justify-between gap-4 py-6 text-xs text-on-inverse/65">
           <span>© {new Date().getFullYear()} {brand.legalName || brand.name} · {t("footer.rights")}</span>
           <nav className="flex flex-wrap items-center gap-5">
             {footerPages.map((p) => (
@@ -299,13 +299,13 @@ export function PriceTag({ price, size = "md", className }: { price: PriceInfo |
   const { t, locale } = useI18n();
   const { shop } = useRootData();
   if (!price) {
-    return <p className={cn("text-eyebrow whitespace-nowrap text-[10px] text-fg", size === "lg" && "text-[12px]", className)}>{t("price.onRequest")}</p>;
+    return <p className={cn("text-eyebrow whitespace-nowrap text-2xs text-fg", size === "lg" && "text-xs", className)}>{t("price.onRequest")}</p>;
   }
   return (
     <div className={cn("flex flex-wrap items-baseline gap-x-2", className)}>
-      <span className={cn("font-semibold tabular-nums", size === "lg" ? "font-display text-3xl font-normal" : "text-[15px]")}>{formatMoney(price.display, shop.currency, locale)}</span>
-      {price.reduced && <s className="text-[13px] text-muted-fg tabular-nums">{formatMoney(price.displayMode === "net" ? price.listNet : price.listGross, shop.currency, locale)}</s>}
-      <span className="w-full text-[11px] text-muted-fg">{price.displayMode === "net" ? t("price.exclVat") : t("price.inclVat")}</span>
+      <span className={cn("font-semibold tabular-nums", size === "lg" ? "font-display text-3xl font-normal" : "text-body")}>{formatMoney(price.display, shop.currency, locale)}</span>
+      {price.reduced && <s className="text-note text-muted-fg tabular-nums">{formatMoney(price.displayMode === "net" ? price.listNet : price.listGross, shop.currency, locale)}</s>}
+      <span className="w-full text-label text-muted-fg">{price.displayMode === "net" ? t("price.exclVat") : t("price.inclVat")}</span>
       {price.applied && price.applied.length > 0 && (
         <span className="mt-1 flex w-full flex-wrap gap-1">
           {price.applied.map((a) => <Badge key={a.id} tone="soft">{a.label}</Badge>)}
@@ -326,7 +326,7 @@ export function StockLabel({ level, qty }: { level: StockLevel; qty?: number | n
   const { t } = useI18n();
   const s = STOCK_STYLE[level];
   return (
-    <span className="inline-flex items-center gap-2 whitespace-nowrap text-[12px] text-muted-fg">
+    <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs text-muted-fg">
       <span className="flex gap-0.5" aria-hidden>
         {[0, 1, 2].map((i) => <span key={i} className={cn("h-1 w-2.5 rounded-full", i < s.dots ? s.tone : "bg-border")} />)}
       </span>
@@ -353,17 +353,17 @@ export function ProductCard({ product, priority = false }: { product: Card; prio
         </div>
       </Link>
       <div className="flex flex-1 flex-col pt-4">
-        {label && <p className="text-eyebrow mb-1.5 text-[10px] text-muted-fg">{label}</p>}
-        <h3 className="text-[15px] font-medium leading-snug">
+        {label && <p className="text-eyebrow mb-1.5 text-2xs text-muted-fg">{label}</p>}
+        <h3 className="text-body font-medium leading-snug">
           <Link to={to(`/product/${product.slug}`)} className="after:absolute after:inset-0">{product.name}</Link>
         </h3>
-        <p className="mt-1 text-[13px] text-muted-fg">
+        <p className="mt-1 text-note text-muted-fg">
           {[product.producer?.name, v?.vintage, v?.size].filter(Boolean).join(" · ")}
         </p>
         {product.variants.length > 1 && (
-          <p className="mt-0.5 text-[12px] text-muted-fg">+ {product.variants.slice(1).map((x) => [x.vintage, x.size].filter(Boolean).join(" · ")).join(", ")}</p>
+          <p className="mt-0.5 text-xs text-muted-fg">+ {product.variants.slice(1).map((x) => [x.vintage, x.size].filter(Boolean).join(" · ")).join(", ")}</p>
         )}
-        {v && <p className="mt-1 text-[11px] text-muted-fg tabular-nums">{t("product.art")} {v.sku}</p>}
+        {v && <p className="mt-1 text-label text-muted-fg tabular-nums">{t("product.art")} {v.sku}</p>}
         <div className="mt-auto flex flex-wrap items-end justify-between gap-x-3 gap-y-2 pt-4">
           <PriceTag price={v?.price ?? null} />
           {v && <StockLabel level={v.stock} qty={v.stockQty} />}

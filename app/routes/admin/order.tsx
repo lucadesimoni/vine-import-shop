@@ -67,8 +67,8 @@ export default function AdminOrder({ loaderData }: Route.ComponentProps) {
           <dl className="grid grid-cols-[90px_1fr] gap-y-2.5 text-sm">
             <dt className="text-muted-fg">Bestellung</dt><dd><Badge tone={STATUS_TONE[o.status]}>{label(o.status)}</Badge></dd>
             <dt className="text-muted-fg">Zahlung</dt><dd className="flex items-center gap-2"><Badge tone={o.paymentStatus === "paid" ? "success" : "neutral"}>{label(o.paymentMethod)} · {label(o.paymentStatus)}</Badge>
-              {o.paymentStatus !== "paid" && o.kind === "order" && <Form method="post"><input type="hidden" name="intent" value="paid" /><button className="text-[12px] text-primary underline">als bezahlt</button></Form>}</dd>
-            <dt className="text-muted-fg">vinX</dt><dd><Badge tone={o.erpStatus === "transferred" ? "success" : o.erpStatus === "failed" ? "danger" : "warning"}>{label(o.erpStatus)}</Badge> <span className="text-[12px] text-muted-fg">{o.erpId}</span></dd>
+              {o.paymentStatus !== "paid" && o.kind === "order" && <Form method="post"><input type="hidden" name="intent" value="paid" /><button className="text-xs text-primary underline">als bezahlt</button></Form>}</dd>
+            <dt className="text-muted-fg">vinX</dt><dd><Badge tone={o.erpStatus === "transferred" ? "success" : o.erpStatus === "failed" ? "danger" : "warning"}>{label(o.erpStatus)}</Badge> <span className="text-xs text-muted-fg">{o.erpId}</span></dd>
           </dl>
         </Panel>
       </div>
@@ -77,7 +77,7 @@ export default function AdminOrder({ loaderData }: Route.ComponentProps) {
         <DataTable head={["Art.-Nr.", "Artikel", "Menge", "Netto", "Brutto", "MWST", "Total"]}>
           {o.items.map((i) => (
             <tr key={i.id}>
-              <td className="font-mono text-[13px]">{i.sku}</td><td>{i.name}</td><td className="tabular-nums">{i.qty}</td>
+              <td className="font-mono text-note">{i.sku}</td><td>{i.name}</td><td className="tabular-nums">{i.qty}</td>
               <td className="tabular-nums">{m(i.unitNet)}</td><td className="tabular-nums">{m(i.unitGross)}</td><td className="tabular-nums">{i.taxRate} %</td>
               <td className="text-right tabular-nums">{m(i.lineGross)}</td>
             </tr>
@@ -97,7 +97,7 @@ export default function AdminOrder({ loaderData }: Route.ComponentProps) {
               <li key={x.id} className="flex flex-wrap items-center gap-3">
                 <Badge tone={x.status === "sent" ? "success" : x.status === "failed" ? "danger" : "warning"}>{label(x.status)}</Badge>
                 <span className="text-muted-fg">{x.attempts} Versuch(e){x.sentAt ? ` · ${new Date(x.sentAt).toLocaleString("de-CH")}` : ""}</span>
-                {x.lastError && <code className="max-w-full truncate rounded-badge bg-muted px-2 py-0.5 text-[12px]">{x.lastError}</code>}
+                {x.lastError && <code className="max-w-full truncate rounded-badge bg-muted px-2 py-0.5 text-xs">{x.lastError}</code>}
                 {x.status !== "sent" && <Form method="post"><input type="hidden" name="intent" value="retry" /><input type="hidden" name="outboxId" value={x.id} /><Button type="submit" size="sm" variant="secondary"><RotateCw size={13} /> Erneut senden</Button></Form>}
               </li>
             ))}

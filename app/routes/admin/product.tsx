@@ -120,12 +120,12 @@ export default function AdminProduct({ loaderData }: Route.ComponentProps) {
               </div>
             ) : (
               <div className="grid gap-3">
-                <div className="hidden grid-cols-[1fr_1fr_1fr_1fr_1fr] gap-3 text-[11px] uppercase tracking-wider text-muted-fg sm:grid">
+                <div className="hidden grid-cols-[1fr_1fr_1fr_1fr_1fr] gap-3 text-label uppercase tracking-wider text-muted-fg sm:grid">
                   <span>Art.-Nr.</span><span>Jahrgang {owned("vintage") && <Lk />}</span><span>Format {owned("size") && <Lk />}</span><span>Preis CHF {owned("price") && <Lk />}</span><span>Lager {owned("stock") && <Lk />}</span>
                 </div>
                 {variants.map((v) => (
                   <div key={v.id} className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr]">
-                    <div className="flex h-9 items-center font-mono text-[13px]">{v.sku}{v.erpId && <Badge className="ml-2">vinX</Badge>}</div>
+                    <div className="flex h-9 items-center font-mono text-note">{v.sku}{v.erpId && <Badge className="ml-2">vinX</Badge>}</div>
                     <Input name={`variant.${v.id}.vintage`} defaultValue={v.vintage ?? ""} disabled={!!v.erpId && owned("vintage")} size="sm" aria-label="Jahrgang" />
                     <Input name={`variant.${v.id}.size`} defaultValue={v.size ?? ""} disabled={!!v.erpId && owned("size")} size="sm" aria-label="Format" />
                     <Input name={`variant.${v.id}.price`} defaultValue={(v.priceCents / 100).toFixed(2)} disabled={!!v.erpId && owned("price")} size="sm" className="tabular-nums" aria-label="Preis" />
@@ -177,7 +177,7 @@ export default function AdminProduct({ loaderData }: Route.ComponentProps) {
       </div>
       <SaveBar saved={!!result && "ok" in result} />
       {p && (
-        <div className="mt-4 flex items-center gap-3 text-[12px] text-muted-fg">
+        <div className="mt-4 flex items-center gap-3 text-xs text-muted-fg">
           {linked ? (
             <span className="flex items-center gap-1.5"><Lock size={12} /> Mit vinX verknüpft — Löschen und Stammdaten in vinX; hier Texte, Bilder und Sichtbarkeit.</span>
           ) : (

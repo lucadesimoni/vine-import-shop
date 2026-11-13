@@ -94,9 +94,9 @@ export default function System({ loaderData, actionData }: Route.ComponentProps)
                 {c.ok ? <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-success" /> : c.severity === "required" ? <AlertTriangle size={18} className="mt-0.5 shrink-0 text-warning" /> : <Circle size={18} className="mt-0.5 shrink-0 text-muted-fg" />}
                 <span className="grid flex-1 gap-0.5">
                   <span className={c.ok ? "text-muted-fg" : "font-medium"}>{c.label}</span>
-                  {!c.ok && <span className="text-[13px] text-muted-fg">{c.hint}</span>}
+                  {!c.ok && <span className="text-note text-muted-fg">{c.hint}</span>}
                 </span>
-                {!c.ok && c.to && <Link to={c.to} className="shrink-0 text-[13px] underline underline-offset-4">Beheben</Link>}
+                {!c.ok && c.to && <Link to={c.to} className="shrink-0 text-note underline underline-offset-4">Beheben</Link>}
               </li>
             ))}
           </ul>

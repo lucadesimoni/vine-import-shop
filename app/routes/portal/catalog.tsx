@@ -71,7 +71,7 @@ export default function PortalCatalog({ loaderData }: Route.ComponentProps) {
               <thead className="hidden md:table-header-group">
                 <tr className="border-b border-border text-left">
                   {["", t("cart.item"), t("product.art"), t("portal.stock"), t("portal.unitPrice"), t("cart.qty")].map((h, i) => (
-                    <th key={i} className={cn("text-eyebrow px-4 py-3 text-[10px] font-semibold text-muted-fg", i >= 4 && "text-right")}>{h}</th>
+                    <th key={i} className={cn("text-eyebrow px-4 py-3 text-2xs font-semibold text-muted-fg", i >= 4 && "text-right")}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -85,17 +85,17 @@ export default function PortalCatalog({ loaderData }: Route.ComponentProps) {
                           <>
                             <Link to={`/portal/product/${p.slug}`} className="font-medium hover:underline">{p.name}</Link>
                             {p.promo && <Badge tone="primary" className="ml-2 align-middle">{t("shop.promo")}</Badge>}
-                            <span className="block truncate text-[12px] text-muted-fg">{[p.producer?.name, v.vintage, v.size].filter(Boolean).join(" · ")}<span className="md:hidden"> · {v.sku}</span></span>
+                            <span className="block truncate text-xs text-muted-fg">{[p.producer?.name, v.vintage, v.size].filter(Boolean).join(" · ")}<span className="md:hidden"> · {v.sku}</span></span>
                           </>
                         ) : (
-                          <span className="block pl-0 text-[12px] text-muted-fg">{[v.vintage, v.size].filter(Boolean).join(" · ")}<span className="md:hidden"> · {v.sku}</span></span>
+                          <span className="block pl-0 text-xs text-muted-fg">{[v.vintage, v.size].filter(Boolean).join(" · ")}<span className="md:hidden"> · {v.sku}</span></span>
                         )}
                       </td>
-                      <td className="hidden px-4 py-2.5 font-mono text-[12px] text-muted-fg md:table-cell">{v.sku}</td>
+                      <td className="hidden px-4 py-2.5 font-mono text-xs text-muted-fg md:table-cell">{v.sku}</td>
                       <td className="col-start-2 row-start-2 md:px-4 md:py-2.5"><StockLabel level={v.stock} qty={v.stockQty} /></td>
                       <td className="col-start-3 row-start-1 text-right tabular-nums md:px-4 md:py-2.5">
                         {v.price ? formatMoney(v.price.display, shop.currency, locale) : "—"}
-                        {v.price?.applied?.length ? <span className="block text-[11px] text-primary">{v.price.applied.map((a) => a.label).join(" · ")}</span> : v.price && v.price.tiers.length > 0 && <span className="block text-[11px] text-primary">{t("price.tiers")}</span>}
+                        {v.price?.applied?.length ? <span className="block text-label text-primary">{v.price.applied.map((a) => a.label).join(" · ")}</span> : v.price && v.price.tiers.length > 0 && <span className="block text-label text-primary">{t("price.tiers")}</span>}
                       </td>
                       <td className="col-start-3 row-start-2 text-right md:w-28 md:px-4 md:py-2">
                         <Input name={`qty:${v.id}`} type="number" min={0} step={1} placeholder="0" aria-label={`${t("cart.qty")} ${p.name}`} size="sm" className="ml-auto w-20 text-right tabular-nums" disabled={v.stock === "out"} />
@@ -107,7 +107,7 @@ export default function PortalCatalog({ loaderData }: Route.ComponentProps) {
             </table>
           </Card>
           <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 -mx-4 flex items-center justify-between gap-4 border-t border-border bg-bg/90 px-4 py-3 backdrop-blur-md lg:bottom-0 lg:py-4">
-            <p className="hidden text-[13px] text-muted-fg sm:block">{t("portal.netHint")}</p>
+            <p className="hidden text-note text-muted-fg sm:block">{t("portal.netHint")}</p>
             <Button type="submit" disabled={busy} className="w-full sm:w-auto"><ClipboardList size={16} /> {t("portal.addSelected")}</Button>
           </div>
         </Form>

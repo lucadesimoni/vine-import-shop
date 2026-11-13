@@ -88,13 +88,13 @@ export default function QuickOrder({ loaderData, actionData }: Route.ComponentPr
           )}
           {frequent.length > 0 && (
             <Card className="overflow-x-auto">
-              <p className="text-eyebrow border-b border-border px-5 py-3 text-[10px] text-muted-fg">{t("quick.frequent")}</p>
+              <p className="text-eyebrow border-b border-border px-5 py-3 text-2xs text-muted-fg">{t("quick.frequent")}</p>
               <table className="w-full text-sm">
                 <tbody>
                   {frequent.map(({ card, variant, ordered }) => (
                     <tr key={variant.id} className="border-b border-border last:border-0">
-                      <td className="px-5 py-3 font-mono text-[13px] text-muted-fg">{variant.sku}</td>
-                      <td className="px-5 py-3"><span className="font-medium">{card.name}</span><span className="block text-[12px] text-muted-fg">{[variant.vintage, variant.size].filter(Boolean).join(" · ")} · Σ {ordered}</span></td>
+                      <td className="px-5 py-3 font-mono text-note text-muted-fg">{variant.sku}</td>
+                      <td className="px-5 py-3"><span className="font-medium">{card.name}</span><span className="block text-xs text-muted-fg">{[variant.vintage, variant.size].filter(Boolean).join(" · ")} · Σ {ordered}</span></td>
                       <td className="px-5 py-3"><StockLabel level={variant.stock} /></td>
                       <td className="px-5 py-3 text-right tabular-nums">{variant.price ? formatMoney(variant.price.display, shop.currency, locale) : ""}</td>
                       <td className="px-5 py-3 text-right"><Input name={`qty:${variant.id}`} type="number" min={0} defaultValue={0} aria-label={t("cart.qty")} size="sm" className="ml-auto w-20 text-right tabular-nums" /></td>
@@ -105,7 +105,7 @@ export default function QuickOrder({ loaderData, actionData }: Route.ComponentPr
             </Card>
           )}
           <Field label={t("quick.paste")} hint={t("quick.pasteHint")}>
-            {(id) => <Textarea id={id} name="paste" rows={8} className="font-mono text-[13px]" placeholder={"10679\t12\n10658;6\n7739 40"} />}
+            {(id) => <Textarea id={id} name="paste" rows={8} className="font-mono text-note" placeholder={"10679\t12\n10658;6\n7739 40"} />}
           </Field>
           <Button type="submit" size="lg" className="w-fit" disabled={busy}><Zap size={15} /> {t("quick.add")}</Button>
         </Form>

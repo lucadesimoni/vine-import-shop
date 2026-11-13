@@ -26,8 +26,8 @@ export function Panel({ title, description, children, className, actions }: { ti
       {(title || actions) && (
         <div className="mb-5 flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
           <div className="grid min-w-0 gap-1">
-            {title && <h2 className="font-sans text-[15px] font-semibold tracking-normal">{title}</h2>}
-            {description && <p className="text-[13px] text-muted-fg">{description}</p>}
+            {title && <h2 className="font-sans text-body font-semibold tracking-normal">{title}</h2>}
+            {description && <p className="text-note text-muted-fg">{description}</p>}
           </div>
           {actions}
         </div>
@@ -40,9 +40,9 @@ export function Panel({ title, description, children, className, actions }: { ti
 export function Stat({ label, value, hint, tone }: { label: string; value: ReactNode; hint?: ReactNode; tone?: "danger" | "warning" }) {
   return (
     <Card className={cn("grid gap-2 p-5", tone === "danger" && "border-danger/30 bg-danger-soft", tone === "warning" && "border-warning/30 bg-warning-soft")}>
-      <span className="text-eyebrow text-[10px] text-muted-fg">{label}</span>
+      <span className="text-eyebrow text-2xs text-muted-fg">{label}</span>
       <span className="font-display text-[1.9rem] leading-none tabular-nums">{value}</span>
-      {hint && <span className="text-[12px] text-muted-fg">{hint}</span>}
+      {hint && <span className="text-xs text-muted-fg">{hint}</span>}
     </Card>
   );
 }
@@ -75,7 +75,7 @@ export function DataTable({ head, children, empty, meta, bulk }: { head: Column[
               {head.map((h, i) => {
                 const c = h && typeof h === "object" && "label" in h ? h : { label: h as ReactNode };
                 return (
-                  <th key={i} aria-sort={meta && c.sort === meta.sort ? (meta.dir === "asc" ? "ascending" : "descending") : undefined} className={cn("text-eyebrow whitespace-nowrap px-4 py-3 text-[10px] font-semibold text-muted-fg", c.className)}>
+                  <th key={i} aria-sort={meta && c.sort === meta.sort ? (meta.dir === "asc" ? "ascending" : "descending") : undefined} className={cn("text-eyebrow whitespace-nowrap px-4 py-3 text-2xs font-semibold text-muted-fg", c.className)}>
                     {c.sort && meta ? <SortLink sort={c.sort} meta={meta}>{c.label}</SortLink> : c.label}
                   </th>
                 );
@@ -132,7 +132,7 @@ export function Pager({ meta }: { meta: ListMeta }) {
   const to = Math.min(meta.total, meta.page * meta.perPage);
   const link = (page: number) => withParams(params, { page: page === 1 ? null : String(page) });
   return (
-    <nav className="mt-4 flex items-center justify-between gap-4 text-[13px] text-muted-fg" aria-label="Seiten">
+    <nav className="mt-4 flex items-center justify-between gap-4 text-note text-muted-fg" aria-label="Seiten">
       <span className="tabular-nums">{from}–{to} von {meta.total}</span>
       <span className="flex items-center gap-1">
         <Link to={link(meta.page - 1)} preventScrollReset aria-disabled={meta.page <= 1} className={cn(buttonClass({ variant: "secondary", size: "sm" }), meta.page <= 1 && "pointer-events-none opacity-40")}><ChevronLeft size={14} /> Zurück</Link>
@@ -164,7 +164,7 @@ export function ListToolbar({ placeholder, children, meta, actions }: { placehol
         </div>
         {children}
         {["sort", "dir", "per"].map((k) => params.get(k) && <input key={k} type="hidden" name={k} value={params.get(k)!} />)}
-        {meta && <span className="text-[13px] text-muted-fg tabular-nums">{meta.total} {meta.total === 1 ? "Eintrag" : "Einträge"}</span>}
+        {meta && <span className="text-note text-muted-fg tabular-nums">{meta.total} {meta.total === 1 ? "Eintrag" : "Einträge"}</span>}
       </Form>
       {actions}
     </div>
@@ -177,8 +177,8 @@ export function LocalizedInput({ name, value, locales, multiline = false, rows =
   const [current, setCurrent] = useState(active[0]);
   return (
     <div className="grid content-start gap-1.5">
-      <div className="flex items-center justify-between gap-3">
-        {label && <span className="text-[12px] font-medium uppercase tracking-[0.1em] text-muted-fg">{label}</span>}
+      <div className="flex h-6 items-end justify-between gap-3">
+        {label && <span className="text-field-label truncate">{label}</span>}
         {active.length > 1 && (
           <div className="ml-auto flex rounded-control bg-muted p-0.5" role="tablist" aria-label="Sprache">
             {active.map((l) => (
@@ -188,7 +188,7 @@ export function LocalizedInput({ name, value, locales, multiline = false, rows =
                 role="tab"
                 aria-selected={current === l}
                 onClick={() => setCurrent(l)}
-                className={cn("relative rounded-badge px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors", current === l ? "bg-surface text-fg shadow-sm" : "text-muted-fg hover:text-fg")}
+                className={cn("relative rounded-badge px-2 py-0.5 text-2xs font-semibold uppercase tracking-wider transition-colors", current === l ? "bg-surface text-fg shadow-sm" : "text-muted-fg hover:text-fg")}
               >
                 {l}
                 {!value?.[l] && l !== active[0] && <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-warning" title="leer" />}
@@ -223,7 +223,7 @@ export function Toggle({ name, label, description, defaultChecked, disabled }: {
     <label className={cn("flex items-start justify-between gap-6 py-3", disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer")}>
       <span className="grid min-w-0 gap-0.5 [overflow-wrap:anywhere]">
         <span className="text-sm font-medium">{label}</span>
-        {description && <span className="text-[13px] text-muted-fg">{description}</span>}
+        {description && <span className="text-note text-muted-fg">{description}</span>}
       </span>
       <span className="relative mt-0.5 inline-flex shrink-0">
         <input type="checkbox" name={name} defaultChecked={defaultChecked} disabled={disabled} className="peer sr-only" />

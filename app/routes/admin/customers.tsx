@@ -1,14 +1,15 @@
 import { and, asc, desc, eq, ilike, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { Form, Link, useActionData, useSearchParams } from "react-router";
-import { Check, X } from "lucide-react";
+import { Check, Upload, X } from "lucide-react";
 import type { Route } from "./+types/customers";
 import { getDb, schema } from "~/.server/db";
 import { emit } from "~/.server/events";
+import { sendTokenMail } from "~/.server/password-reset";
 import { erpConnected } from "~/.server/erp-ownership";
 import { bulkIds, countAll, listParams } from "~/.server/admin-list";
 import { formatMoney } from "~/lib/money";
 import { getSetting } from "~/.server/settings";
-import { Badge, Button, Notice, Select } from "~/components/ui";
+import { Badge, Button, ButtonLink, Notice, Select } from "~/components/ui";
 import { DataTable, label, ListToolbar, PageHeader, Panel, RowCheck } from "~/components/admin";
 
 const u = schema.users;
@@ -74,6 +75,11 @@ export async function action({ request }: Route.ActionArgs) {
     for (const id of ids) await emit("customer.updated", { userId: id });
     return { message: `${ids.length} Kunden: Gruppe geändert.` };
   }
+  if (op === "invite") {
+    let n = 0;
+    for (const id of ids) if (await sendTokenMail(id, "invite", new URL(request.url).origin)) n++;
+    return { message: `${n} Einladung${n === 1 ? "" : "en"} gesendet.` };
+  }
   if (op === "push") {
     for (const id of ids) await emit("customer.updated", { userId: id });
     return { message: `${ids.length} Kunden an vinX übergeben (Outbox).` };
@@ -88,7 +94,7 @@ export default function Customers({ loaderData }: Route.ComponentProps) {
   const groupName = (id: number | null) => groups.find((g) => g.id === id)?.name ?? "—";
   return (
     <>
-      <PageHeader title="Kunden" subtitle={erp ? "B2B-Anträge freigeben, Kundengruppen zuordnen. Änderungen gehen an vinX, Adressänderungen aus vinX kommen automatisch zurück." : "B2B-Anträge freigeben und Kundengruppen zuordnen."} />
+      <PageHeader actions={<ButtonLink to="/admin/customers/import" variant="secondary" size="sm"><Upload size={14} /> Importieren</ButtonLink>} title="Kunden" subtitle={erp ? "B2B-Anträge freigeben, Kundengruppen zuordnen. Änderungen gehen an vinX, Adressänderungen aus vinX kommen automatisch zurück." : "B2B-Anträge freigeben und Kundengruppen zuordnen."} />
       {result?.message && <Notice tone="success" className="mb-5">{result.message}</Notice>}
       {inquiries.length > 0 && (
         <Panel title="Offene B2B-Anfragen ohne Konto" className="mb-6">
@@ -119,14 +125,14 @@ export default function Customers({ loaderData }: Route.ComponentProps) {
       <DataTable
         meta={list}
         empty={!customers.length}
-        bulk={[{ value: "approve", label: "B2B freigeben" }, ...groups.map((g) => ({ value: `group:${g.id}`, label: `→ ${g.name}` })), ...(erp ? [{ value: "push", label: "An vinX senden" }] : []), { value: "reject", label: "Ablehnen", tone: "danger" as const }]}
+        bulk={[{ value: "approve", label: "B2B freigeben" }, ...groups.map((g) => ({ value: `group:${g.id}`, label: `→ ${g.name}` })), { value: "invite", label: "Einladung senden" }, ...(erp ? [{ value: "push", label: "An vinX senden" }] : []), { value: "reject", label: "Ablehnen", tone: "danger" as const }]}
         head={[{ label: "Kunde", sort: "name" }, { label: "Firma", sort: "company" }, { label: "B2B", sort: "status" }, "Gruppe", { label: "Best.", sort: "orders", className: "text-right" }, { label: "Umsatz", sort: "revenue", className: "text-right" }, ""]}
       >
         {customers.map((c) => (
           <tr key={c.id} className={c.tradeStatus === "pending" ? "bg-warning-soft/50" : undefined}>
             <RowCheck id={c.id} label={c.name || c.email} />
-            <td><Link to={`/admin/customers/${c.id}`} className="font-medium hover:underline">{c.name || c.email}</Link><span className="block text-[12px] text-muted-fg">{c.email}</span></td>
-            <td>{c.company ?? "—"}<span className="block text-[12px] text-muted-fg">{[c.city, c.uid].filter(Boolean).join(" · ")}</span></td>
+            <td><Link to={`/admin/customers/${c.id}`} className="font-medium hover:underline">{c.name || c.email}</Link><span className="block text-xs text-muted-fg">{c.email}</span></td>
+            <td>{c.company ?? "—"}<span className="block text-xs text-muted-fg">{[c.city, c.uid].filter(Boolean).join(" · ")}</span></td>
             <td>{c.tradeStatus ? <Badge tone={c.tradeStatus === "approved" ? "success" : c.tradeStatus === "pending" ? "warning" : "danger"}>{label(c.tradeStatus)}</Badge> : <span className="text-muted-fg">Privat</span>}</td>
             <td className="whitespace-nowrap">{groupName(c.groupId)}{c.erpId && <Badge className="ml-2" title="vinX-Adressnummer">vinX {c.erpId}</Badge>}</td>
             <td className="text-right tabular-nums">{c.orders}</td>

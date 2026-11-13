@@ -175,7 +175,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
                 <Field label="Offertanfragen" hint="vinX kennt im Warenkorb nur calculate | order">{(id) => <Select id={id} name="requestsToErp" defaultValue={vinx.requestsToErp}><option value="skip">Im Shop bearbeiten (nicht senden)</option><option value="order">Als Bestellung mit Vermerk senden</option></Select>}</Field>
               </div>
               <Field label="Feld-Mapping (vinX → Shop)" hint="Geprüft gegen Shop API v2.0 (Swagger). Pfade mit «|» = Fallback; producer/region/country/category/filling/tradingUnit werden aufgelöst.">
-                {(id) => <Textarea id={id} name="mapping" rows={12} spellCheck={false} defaultValue={JSON.stringify(vinx.mapping, null, 2)} className="font-mono text-[12px]" />}
+                {(id) => <Textarea id={id} name="mapping" rows={12} spellCheck={false} defaultValue={JSON.stringify(vinx.mapping, null, 2)} className="font-mono text-xs" />}
               </Field>
               <Button type="submit" className="w-fit" disabled={running === "config"}>Speichern</Button>
             </div>
@@ -187,7 +187,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
             <ul className="divide-y divide-border text-sm">
               {extensions.map((e) => (
                 <li key={e.id} className="flex items-center justify-between gap-3 py-2.5">
-                  <span>{e.name}<span className="block font-mono text-[12px] text-muted-fg">{e.id}</span></span>
+                  <span>{e.name}<span className="block font-mono text-xs text-muted-fg">{e.id}</span></span>
                   {e.version && <Badge>{e.version}</Badge>}
                 </li>
               ))}
@@ -199,7 +199,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
               {(["articles", "stock", "prices"] as const).map((k) => (
                 <label key={k} className="grid grid-cols-[90px_1fr] items-center gap-3 text-sm">
                   <span className="text-muted-fg">{{ articles: "Artikel", stock: "Lager", prices: "Preise" }[k]}</span>
-                  <Input type="file" name={k} accept=".csv,text/csv" className="h-auto py-1.5 text-[12px]" />
+                  <Input type="file" name={k} accept=".csv,text/csv" className="h-auto py-1.5 text-xs" />
                 </label>
               ))}
               <Button type="submit" variant="secondary" size="sm" className="w-fit"><Upload size={13} /> Importieren</Button>
@@ -216,7 +216,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
                     <Badge tone={o.status === "failed" ? "danger" : "warning"}>{label(o.status)}</Badge>
                     <span>{o.type} #{o.refId}</span>
                     <span className="text-muted-fg">{o.attempts}×</span>
-                    {o.lastError && <code className="max-w-full truncate rounded-badge bg-muted px-2 py-0.5 text-[11px]">{o.lastError}</code>}
+                    {o.lastError && <code className="max-w-full truncate rounded-badge bg-muted px-2 py-0.5 text-label">{o.lastError}</code>}
                     <Form method="post" className="ml-auto"><input type="hidden" name="intent" value="retry" /><input type="hidden" name="id" value={o.id} /><Button type="submit" size="sm" variant="ghost"><RotateCw size={13} /> Retry</Button></Form>
                   </li>
                 ))}
@@ -225,7 +225,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
           </Panel>
 
           <Panel title="Endpunkte & Geheimnisse">
-            <dl className="grid gap-2 text-[13px]">
+            <dl className="grid gap-2 text-note">
               {[["POST /api/cron", secrets.cron ? "CRON_SECRET ✓" : "CRON_SECRET fehlt"], ["POST /api/vinx/import", "CSV-Upload (Bearer CRON_SECRET)"], ["POST /api/vinx/webhook", secrets.webhook ? "VINX_WEBHOOK_SECRET ✓" : "optional — VINX_WEBHOOK_SECRET"]].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4"><dt className="font-mono">{k}</dt><dd className="text-muted-fg">{v}</dd></div>
               ))}
@@ -234,7 +234,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
 
-      <h2 className="mb-3 mt-10 font-sans text-[15px] font-semibold">Protokoll</h2>
+      <h2 className="mb-3 mt-10 font-sans text-body font-semibold">Protokoll</h2>
       <DataTable head={["Job", "Start", "Status", "Einträge", "Info"]} empty={!logs.length}>
         {logs.map((l) => (
           <tr key={l.id}>

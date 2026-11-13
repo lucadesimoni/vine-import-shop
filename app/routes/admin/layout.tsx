@@ -60,34 +60,34 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
           {brand.logoUrl ? <img src={brand.logoUrl} alt="" className="h-8 w-auto" /> : <span className="grid h-8 w-8 place-items-center rounded-control bg-primary text-on-primary">{brand.name[0]}</span>}
           <div className="grid leading-tight">
             <span className="font-display text-lg">{brand.name}</span>
-            <span className="text-eyebrow text-[9px] text-muted-fg">Admin</span>
+            <span className="text-eyebrow text-2xs text-muted-fg">Admin</span>
           </div>
         </div>
         <nav className={cn("max-h-[calc(100dvh-4.5rem)] gap-1 overflow-y-auto pb-2 lg:grid lg:max-h-none lg:content-start lg:overflow-visible lg:pb-0", open ? "grid" : "hidden")}>
           {NAV.map((n, i) =>
             "section" in n ? (
-              <p key={i} className="text-eyebrow mt-4 px-3 text-[9px] text-muted-fg">{n.section}</p>
+              <p key={i} className="text-eyebrow mt-4 px-3 text-2xs text-muted-fg">{n.section}</p>
             ) : (
               <NavLink
                 key={n.to}
                 to={n.to}
                 end={"end" in n}
-                className={({ isActive }) => cn("flex shrink-0 items-center gap-3 rounded-control px-3 py-2 text-[14px] transition-colors", isActive ? "bg-primary-soft font-medium text-primary" : "text-fg/75 hover:bg-muted hover:text-fg")}
+                className={({ isActive }) => cn("flex shrink-0 items-center gap-3 rounded-control px-3 py-2 text-sm transition-colors", isActive ? "bg-primary-soft font-medium text-primary" : "text-fg/75 hover:bg-muted hover:text-fg")}
               >
                 <n.icon size={17} strokeWidth={1.6} />
                 <span className="flex-1">{n.label}</span>
-                {"badge" in n && badges[n.badge] > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-on-primary">{badges[n.badge]}</span>}
+                {"badge" in n && badges[n.badge] > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-2xs font-semibold text-on-primary">{badges[n.badge]}</span>}
               </NavLink>
             ),
           )}
         </nav>
-        <div className={cn("mt-auto gap-1 border-t border-border pt-4 text-[13px] lg:grid", open ? "grid" : "hidden")}>
+        <div className={cn("mt-auto gap-1 border-t border-border pt-4 text-note lg:grid", open ? "grid" : "hidden")}>
           <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-control px-3 py-2 text-fg/75 hover:bg-muted"><ExternalLink size={15} /> Shop ansehen</a>
           <Form method="post" action="/logout">
             <button className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-fg/75 hover:bg-muted"><LogOut size={15} /> Abmelden</button>
           </Form>
-          <p className="truncate px-3 pt-2 text-[12px] text-muted-fg">{user.email}</p>
-          <Link to="/admin/system" className="block px-3 pt-1 text-[11px] text-muted-fg tabular-nums hover:text-fg">v{loaderData.version}</Link>
+          <p className="truncate px-3 pt-2 text-xs text-muted-fg">{user.email}</p>
+          <Link to="/admin/system" className="block px-3 pt-1 text-label text-muted-fg tabular-nums hover:text-fg">v{loaderData.version}</Link>
         </div>
       </aside>
       <main className="min-w-0 px-4 py-6 sm:px-6 md:px-10 md:py-8">

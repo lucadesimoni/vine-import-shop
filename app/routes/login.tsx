@@ -49,6 +49,7 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
           <input type="hidden" name="next" value={params.get("next") ?? ""} />
           <Field label={t("form.email")}>{(id) => <Input id={id} name="email" type="email" autoComplete="email" required autoFocus />}</Field>
           <Field label={t("form.password")}>{(id) => <Input id={id} name="password" type="password" autoComplete="current-password" required />}</Field>
+          <Link to="/login/forgot" className="-mt-2 w-fit text-note text-muted-fg underline-offset-4 hover:text-fg hover:underline">{t("auth.forgot")}</Link>
           <Button type="submit" size="lg" disabled={busy}>{t("auth.login")}</Button>
         </Form>
         {!to.portal && <p className="text-sm text-muted-fg">{t("auth.noAccount")} <Link to="/register" className="text-fg underline underline-offset-4">{t("auth.register")}</Link></p>}
@@ -61,7 +62,7 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
         </div>
         {loaderData.demo && (
           <div className="grid gap-2 rounded-control border border-dashed border-border-strong p-5 text-sm">
-            <p className="text-eyebrow text-[10px] text-muted-fg">Demo</p>
+            <p className="text-eyebrow text-2xs text-muted-fg">Demo</p>
             <code>gastro@demo.ch · gastro-demo-1234</code>
             {!to.portal && <code>kunde@demo.ch · kunde-demo-1234</code>}
             {!to.portal && loaderData.demoAdmin && <code>admin@example.com · admin-demo-1234</code>}

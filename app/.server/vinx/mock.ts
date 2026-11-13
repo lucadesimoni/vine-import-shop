@@ -105,6 +105,16 @@ export class MockClient implements ErpClient {
     return payload.erpId ?? `${Math.floor(40000 + Math.random() * 9000)}`;
   }
 
+  /** BaseData/Receipt shape for orders handed to "vinX": status advances with the order's age (demo). */
+  async *receipts(): AsyncIterable<Raw> {
+    const db = await getDb();
+    for (const o of await db.select().from(schema.orders).where(isNotNull(schema.orders.erpId))) {
+      const hours = (Date.now() - o.createdAt.getTime()) / 3600e3;
+      const receiptStatus = hours > 72 ? "payed" : hours > 24 ? "done" : "inProgress";
+      yield { id: Number(o.erpId?.replace(/\D/g, "")) || o.id, shopId: o.number, orderNumber: o.erpId, receiptStatus, invoiceNumber: hours > 24 ? `R-${o.id}` : null, changedOn: new Date().toISOString() };
+    }
+  }
+
   /** BaseData/Address shape for every linked customer (unchanged data → the pull is a no-op, but runs end-to-end). */
   async *addresses(): AsyncIterable<Raw> {
     const db = await getDb();

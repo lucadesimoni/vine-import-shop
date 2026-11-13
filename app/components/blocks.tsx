@@ -65,7 +65,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
           )}
           {stats.length > 0 && (
             <dl className="flex gap-8 pt-2 md:hidden">
-              {stats.map((s, i) => <div key={i} className="grid"><dd className="font-display text-3xl leading-none">{s.value}</dd><dt className="text-eyebrow mt-1.5 text-[9px] text-on-inverse/75">{L(s.label)}</dt></div>)}
+              {stats.map((s, i) => <div key={i} className="grid"><dd className="font-display text-3xl leading-none">{s.value}</dd><dt className="text-eyebrow mt-1.5 text-2xs text-on-inverse/75">{L(s.label)}</dt></div>)}
             </dl>
           )}
         </div>
@@ -73,7 +73,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
           <dl className="container-page absolute inset-x-0 bottom-0 hidden justify-end gap-10 pb-8 md:flex">
             {stats.map((s, i) => (
               <div key={i} className="flex flex-col-reverse items-end border-l border-on-inverse/30 pl-10 first:border-0">
-                <dt className="text-eyebrow mt-2 text-[10px] text-on-inverse/75">{L(s.label)}</dt>
+                <dt className="text-eyebrow mt-2 text-2xs text-on-inverse/75">{L(s.label)}</dt>
                 <dd className="font-display text-5xl leading-none">{s.value}</dd>
               </div>
             ))}
@@ -89,7 +89,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     if (!cats.length) return null;
     return (
       <section className="container-page section-y">
-        <SectionHeading center title={L(b.data.title) || t("shop.title")} action={<Link to="/shop" className="text-eyebrow inline-flex items-center gap-2 text-[11px] text-fg/80 hover:text-fg">{t("common.showAll")} <ArrowUpRight size={14} /></Link>} />
+        <SectionHeading center title={L(b.data.title) || t("shop.title")} action={<Link to="/shop" className="text-eyebrow inline-flex items-center gap-2 text-label text-fg/80 hover:text-fg">{t("common.showAll")} <ArrowUpRight size={14} /></Link>} />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {cats.map((c) => (
             <Link key={c.id} to={`/shop?category=${c.slug}`} className="group grid gap-3 text-center">
@@ -163,7 +163,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
             {L(b.data.eyebrow) && <Eyebrow>{L(b.data.eyebrow)}</Eyebrow>}
             {L(b.data.title) && <h2 className="text-h1"><Lines text={L(b.data.title)} /></h2>}
             {b.res?.html ? <div className="prose-shop text-lead text-muted-fg" dangerouslySetInnerHTML={{ __html: String(b.res.html) }} /> : null}
-            {L(b.data.linkLabel) && d<string>(b, "linkHref") && <Link to={d<string>(b, "linkHref")} className="text-eyebrow inline-flex w-fit items-center gap-2 border-b border-fg pb-1 text-[11px]">{L(b.data.linkLabel)} <ArrowRight size={13} /></Link>}
+            {L(b.data.linkLabel) && d<string>(b, "linkHref") && <Link to={d<string>(b, "linkHref")} className="text-eyebrow inline-flex w-fit items-center gap-2 border-b border-fg pb-1 text-label">{L(b.data.linkLabel)} <ArrowRight size={13} /></Link>}
           </div>
         </div>
       </section>
@@ -227,7 +227,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
             {L(b.data.text) && <p className="text-lead text-muted-fg">{L(b.data.text)}</p>}
             {res.map && (
               <ul className="flex flex-wrap gap-2">
-                {res.regions.slice(0, 6).map((r) => <li key={r.id}><Link to={`/producers?region=${r.id}`} className="inline-flex h-8 items-center rounded-badge border border-border px-3 text-[13px] hover:border-fg">{r.name} <span className="ml-2 text-muted-fg tabular-nums">{r.count}</span></Link></li>)}
+                {res.regions.slice(0, 6).map((r) => <li key={r.id}><Link to={`/producers?region=${r.id}`} className="inline-flex h-8 items-center rounded-badge border border-border px-3 text-note hover:border-fg">{r.name} <span className="ml-2 text-muted-fg tabular-nums">{r.count}</span></Link></li>)}
               </ul>
             )}
             <ButtonLink to="/producers" variant="secondary" className="w-fit">{L(b.data.buttonLabel)} <ArrowRight size={14} /></ButtonLink>
@@ -272,7 +272,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     <section className="container-page max-w-4xl section-y text-center">
       <blockquote className="grid gap-6">
         <p className="font-display text-[clamp(1.5rem,3.5vw,2.5rem)] italic leading-snug">{L(b.data.text)}</p>
-        {d<string>(b, "author") && <footer className="text-eyebrow text-[11px] text-muted-fg">— {d<string>(b, "author")}</footer>}
+        {d<string>(b, "author") && <footer className="text-eyebrow text-label text-muted-fg">— {d<string>(b, "author")}</footer>}
       </blockquote>
     </section>
   ),
@@ -285,7 +285,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     return (
       <figure className="container-page grid gap-3 section-y-sm">
         {d<string>(b, "href") ? <Link to={d<string>(b, "href")}>{img}</Link> : img}
-        {L(b.data.caption) && <figcaption className="text-center text-[13px] text-muted-fg">{L(b.data.caption)}</figcaption>}
+        {L(b.data.caption) && <figcaption className="text-center text-note text-muted-fg">{L(b.data.caption)}</figcaption>}
       </figure>
     );
   },

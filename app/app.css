@@ -52,6 +52,19 @@
   --shadow-bar: 0 8px 24px -20px color-mix(in srgb, var(--t-shadow) 50%, transparent);
   --shadow-inset-btn: inset 0 -1px 0 color-mix(in srgb, var(--t-shadow) 12%, transparent);
 
+  /* Type scale for UI text (headings use text-display / text-h1…h3 / text-lead below).
+     2xs 10px: tags, tiny labels · label 11px: eyebrows in tables · xs 12px: meta, hints · note 13px: secondary text
+     sm 14px: controls, lists · body 15px: base copy — never hard-code font sizes in components. */
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 1.4;
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1.45;
+  --text-xs--line-height: 1.5;
+  --text-note: 0.8125rem;
+  --text-note--line-height: 1.5;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.6;
+
   --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
   --tracking-eyebrow: 0.2em;
 }
@@ -157,6 +170,16 @@
   letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
   @media (width < 40rem) { letter-spacing: calc(var(--tracking-eyebrow) * 0.75); }
+}
+/* Form & settings field labels */
+@utility text-field-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted-fg);
 }
 @utility text-lead {
   font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);

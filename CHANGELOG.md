@@ -13,6 +13,25 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 ## [Unreleased]
 
 ### Added
+- **Customer import** (Admin › Kunden › Importieren).
+  - Reads CSV (any delimiter), Excel (.xlsx) and XML.
+  - Columns are recognised automatically (DE / IT / FR / EN) and can be adjusted, with a preview.
+  - Customers are matched by customer number, then e-mail, and updated.
+  - B2B customers can be approved directly, invitations sent and records pushed to vinX.
+  - Invalid rows are listed by line number.
+- **Password reset and invitations.**
+  - "Passwort vergessen?" on the login.
+  - Invitation links for imported or ERP customers (single and bulk). Single-use tokens, stored hashed: reset links valid 2 hours, invitations 14 days.
+- **vinX: order status from receipts.** New job `orders:status` (BaseData/Receipt.shopId = shop order number).
+  - new → confirmed, inProgress → processing, done → shipped, payed → completed and paid.
+  - The status only moves forward.
+- **vinX: create shop accounts for all vinX customers.** Job `customers:import`: active addresses with an e-mail, without password until invited.
+- **Demo catalogue from the reference test site.**
+  - 1,356 products (1,779 articles), 124 producers, product photos and 28 brand logos. Vintages, formats and flavours are merged into variants.
+  - Producer names are cleaned (legal forms removed); the original stays as the ERP key.
+  - Demo prices (the source has none). Rebuild with `scripts/demo/build-catalog.py`.
+- **Design system: named type scale** (`2xs`, `label`, `xs`, `note`, `sm`, `body`) and a field-label utility instead of fixed pixel sizes. Spacing tokens `page-top` and `section-y` give one vertical rhythm, tighter on phones.
+- Compact pagination (‹ 1 … 4 5 6 … 57 ›) in the shop and the B2B portal.
 - **Page builder.** The home page, content pages and extras on the trade and story pages are built from blocks.
   - Admin › Inhalte: drag & drop (arrows on phones), show / hide, duplicate, delete, add from the block library, edit inline in every language, image upload.
   - Blocks: hero, categories, products (promotions, recommended, new, a category or a producer; carousel or grid), product spotlight, image & text, text (Markdown), call-to-action, producers / brands, origin map, values, quote, image, FAQ.
@@ -60,6 +79,11 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 - Language switch in the footer, so it is also reachable on phones. `npm run i18n:check` in CI keeps DE / IT / FR / EN complete.
 
 ### Fixed
+- **Phones.**
+  - Pages could be wider than the screen, so the browser zoomed out: the shop pagination with many pages, and the header on narrow phones (320–375 px).
+  - Overflow is now measured without clipping, on iPhone SE, Galaxy S9+, Pixel 7 and iPhone 14 Pro Max.
+- **Form alignment.** Every field label row has the same height and long labels are shortened with a tooltip, so inputs in one row always line up.
+- Admin on small phones: the save bar, panel headers, the dashboard list and long toggle labels no longer overflow.
 - `npm run jobs` and other Node scripts failed to start, because the region maps used a Vite-only import. They now fall back to reading from disk.
 - **Phones.**
   - The menu drawer was clipped to the header height and showed the page through it. It now renders outside the header.

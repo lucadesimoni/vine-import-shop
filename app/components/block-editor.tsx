@@ -55,7 +55,7 @@ export function BlockEditor({ name, initial, locales, options, only }: { name: s
   return (
     <div className="grid gap-3">
       <input type="hidden" name={name} value={JSON.stringify(blocks)} />
-      {dirty && <p className="flex items-center gap-2 text-[13px] text-warning"><span className="h-1.5 w-1.5 rounded-full bg-warning" /> Ungespeicherte Änderungen</p>}
+      {dirty && <p className="flex items-center gap-2 text-note text-warning"><span className="h-1.5 w-1.5 rounded-full bg-warning" /> Ungespeicherte Änderungen</p>}
 
       <ol className="grid gap-2" onDragOver={(e) => e.preventDefault()}>
         {blocks.map((b, i) => {
@@ -93,7 +93,7 @@ export function BlockEditor({ name, initial, locales, options, only }: { name: s
                   <span className="hidden h-8 w-8 shrink-0 place-items-center rounded-control bg-muted text-fg/80 min-[400px]:grid"><Icon name={def?.icon ?? "puzzle"} /></span>
                   <span className="grid min-w-0">
                     <span className="text-sm font-medium">{def?.label ?? b.type}</span>
-                    <span className="truncate text-[12px] text-muted-fg">{def?.summary?.(b.data) || def?.description}</span>
+                    <span className="truncate text-xs text-muted-fg">{def?.summary?.(b.data) || def?.description}</span>
                   </span>
                   <ChevronDown size={16} className={cn("ml-auto shrink-0 text-muted-fg transition-transform", expanded && "rotate-180")} />
                 </button>
@@ -131,7 +131,7 @@ export function BlockEditor({ name, initial, locales, options, only }: { name: s
             {defs.map((d) => (
               <button key={d.type} type="button" onClick={() => add(d)} className="group flex items-start gap-3 rounded-control border border-border p-3 text-left transition-colors hover:border-primary hover:bg-primary-soft/40">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-muted text-fg/80 group-hover:bg-primary group-hover:text-on-primary"><Icon name={d.icon} /></span>
-                <span className="grid gap-0.5"><span className="text-sm font-medium">{d.label}</span><span className="text-[12px] leading-snug text-muted-fg">{d.description}</span></span>
+                <span className="grid gap-0.5"><span className="text-sm font-medium">{d.label}</span><span className="text-xs leading-snug text-muted-fg">{d.description}</span></span>
               </button>
             ))}
           </div>
@@ -162,9 +162,9 @@ function Fields({ fields, data, onChange, locales, options }: { fields: Field[];
     <div className="grid gap-5 md:grid-cols-2">
       {fields.filter((f) => !f.when || f.when.is.includes(String(data[f.when.key]))).map((f) => (
         <div key={f.key} className={cn("grid content-start gap-1.5", wide(f) && "md:col-span-2")}>
-          {f.type !== "loc" && f.type !== "locText" && f.type !== "markdown" && <span className="text-[12px] font-medium uppercase tracking-[0.1em] text-muted-fg">{f.label}</span>}
+          {f.type !== "loc" && f.type !== "locText" && f.type !== "markdown" && <span className="text-field-label flex h-6 items-end truncate">{f.label}</span>}
           <FieldInput f={f} value={data[f.key]} onChange={(v) => set(f.key, v)} locales={locales} options={options} />
-          {f.hint && <span className="text-[12px] text-muted-fg">{f.hint}</span>}
+          {f.hint && <span className="text-xs text-muted-fg">{f.hint}</span>}
         </div>
       ))}
     </div>
@@ -199,12 +199,12 @@ function LocField({ label, value, onChange, locales, rows }: { label: string; va
   const [cur, setCur] = useState(active[0]);
   return (
     <div className="grid gap-1.5">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-[12px] font-medium uppercase tracking-[0.1em] text-muted-fg">{label}</span>
+      <div className="flex h-6 items-end justify-between gap-3">
+        <span className="text-field-label truncate">{label}</span>
         {active.length > 1 && (
           <div className="flex rounded-control bg-muted p-0.5" role="tablist" aria-label="Sprache">
             {active.map((l) => (
-              <button key={l} type="button" role="tab" aria-selected={cur === l} onClick={() => setCur(l)} className={cn("relative rounded-badge px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider", cur === l ? "bg-surface text-fg shadow-sm" : "text-muted-fg hover:text-fg")}>
+              <button key={l} type="button" role="tab" aria-selected={cur === l} onClick={() => setCur(l)} className={cn("relative rounded-badge px-2 py-0.5 text-2xs font-semibold uppercase tracking-wider", cur === l ? "bg-surface text-fg shadow-sm" : "text-muted-fg hover:text-fg")}>
                 {l}
                 {!value[l] && l !== active[0] && <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-warning" />}
               </button>
@@ -240,12 +240,12 @@ function ImageField({ value, onChange }: { value: string; onChange: (v: string) 
         {value ? <img src={value} alt="" className="h-full w-full object-cover" /> : <span className="grid h-full place-items-center text-muted-fg"><Image size={20} strokeWidth={1.4} /></span>}
       </div>
       <div className="grid gap-2">
-        <label className="flex h-9 w-fit cursor-pointer items-center gap-2 rounded-btn border border-border-strong px-3 text-[13px] hover:border-fg">
+        <label className="flex h-9 w-fit cursor-pointer items-center gap-2 rounded-btn border border-border-strong px-3 text-note hover:border-fg">
           {busy ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Bild hochladen
           <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
         </label>
         <Input size="sm" value={value} onChange={(e) => onChange(e.target.value)} placeholder="oder Bild-URL (https://…)" />
-        {error && <span className="text-[12px] text-danger">{error}</span>}
+        {error && <span className="text-xs text-danger">{error}</span>}
       </div>
     </div>
   );
@@ -258,7 +258,7 @@ function ListField({ f, value, onChange, locales, options }: { f: Field; value: 
       {value.map((item, i) => (
         <div key={i} className="grid gap-3 rounded-control border border-border bg-bg/50 p-3">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-medium text-muted-fg">{f.itemLabel} {i + 1}</span>
+            <span className="text-xs font-medium text-muted-fg">{f.itemLabel} {i + 1}</span>
             <span className="flex">
               <IconBtn label="Nach oben" disabled={i === 0} onClick={() => { const n = [...value]; [n[i - 1], n[i]] = [n[i], n[i - 1]]; onChange(n); }}><ArrowUp size={14} /></IconBtn>
               <IconBtn label="Entfernen" onClick={() => onChange(value.filter((_, j) => j !== i))}><Trash2 size={14} /></IconBtn>
@@ -268,7 +268,7 @@ function ListField({ f, value, onChange, locales, options }: { f: Field; value: 
         </div>
       ))}
       {(!f.max || value.length < f.max) && (
-        <button type="button" onClick={() => onChange([...value, blank()])} className="flex h-9 w-fit items-center gap-2 rounded-btn px-2 text-[13px] text-primary hover:underline">
+        <button type="button" onClick={() => onChange([...value, blank()])} className="flex h-9 w-fit items-center gap-2 rounded-btn px-2 text-note text-primary hover:underline">
           <Plus size={14} /> {f.itemLabel} hinzufügen
         </button>
       )}

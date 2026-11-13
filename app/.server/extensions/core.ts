@@ -2,7 +2,7 @@ import { defineExtension } from "./index";
 import { CsvClient } from "../vinx/csv";
 import { MockClient } from "../vinx/mock";
 import { Rest3Client } from "../vinx/rest";
-import { erpClient, processOutbox, syncArticles, syncPrices, syncSpecialPrices, syncStock, syncCustomers } from "../vinx/sync";
+import { erpClient, processOutbox, syncArticles, syncPrices, syncSpecialPrices, syncStock, syncCustomers, syncOrderStatus, importErpCustomers } from "../vinx/sync";
 
 /** Built-in capabilities, registered through the same API extensions use. */
 const vinx = defineExtension({
@@ -19,6 +19,8 @@ const vinx = defineExtension({
     api.registerJob({ id: "conditions", label: "Spezialpreise", scheduled: true, run: withClient(syncSpecialPrices) });
     api.registerJob({ id: "articles", label: "Artikel (Delta)", scheduled: true, run: withClient((c) => syncArticles(c)) });
     api.registerJob({ id: "customers", label: "Kundenadressen aus vinX", scheduled: true, run: withClient(syncCustomers) });
+    api.registerJob({ id: "orders:status", label: "Bestellstatus aus vinX (Belege)", scheduled: true, run: withClient(syncOrderStatus) });
+    api.registerJob({ id: "customers:import", label: "Alle vinX-Kunden als Shop-Konten anlegen", run: withClient(importErpCustomers) });
     api.registerJob({ id: "articles:full", label: "Artikel (Vollabgleich)", run: withClient((c) => syncArticles(c, true)) });
   },
 });

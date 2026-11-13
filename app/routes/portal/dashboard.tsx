@@ -133,7 +133,7 @@ export default function PortalDashboard({ loaderData }: Route.ComponentProps) {
                     <Link to={`/portal/product/${card.slug}`} className="relative h-14 w-11 shrink-0 rounded-badge bg-media p-1" tabIndex={-1}><ProductImage product={card} /></Link>
                     <div className="min-w-48 flex-1">
                       <Link to={`/portal/product/${card.slug}`} className="line-clamp-1 font-medium hover:underline">{card.name}</Link>
-                      <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[12px] text-muted-fg">
+                      <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-muted-fg">
                         <span>{[variant.vintage, variant.size, `${t("product.art")} ${variant.sku}`].filter(Boolean).join(" · ")}</span>
                         <StockLabel level={variant.stock} qty={variant.stockQty} />
                       </p>
@@ -150,25 +150,25 @@ export default function PortalDashboard({ loaderData }: Route.ComponentProps) {
         <aside className="grid content-start gap-4">
           {group && (
             <div className="grid gap-4 rounded-surface bg-inverse p-6 text-on-inverse">
-              <Eyebrow className="text-[10px] text-on-inverse/70">{t("portal.terms")}</Eyebrow>
+              <Eyebrow className="text-2xs text-on-inverse/70">{t("portal.terms")}</Eyebrow>
               <div className="grid gap-1">
                 <p className="font-display text-2xl">{group.name}</p>
-                <p className="text-[13px] text-on-inverse/75">{t("portal.netHint")}</p>
+                <p className="text-note text-on-inverse/75">{t("portal.netHint")}</p>
               </div>
               <dl className="grid grid-cols-2 gap-3 border-t border-on-inverse/15 pt-4 text-sm">
-                {group.discountPct > 0 && <div><dt className="text-[12px] text-on-inverse/70">{t("portal.discount")}</dt><dd className="font-medium tabular-nums">{group.discountPct}%</dd></div>}
-                {group.minOrderCents > 0 && <div><dt className="text-[12px] text-on-inverse/70">{t("portal.minOrderShort")}</dt><dd className="font-medium tabular-nums">{m(group.minOrderCents)}</dd></div>}
+                {group.discountPct > 0 && <div><dt className="text-xs text-on-inverse/70">{t("portal.discount")}</dt><dd className="font-medium tabular-nums">{group.discountPct}%</dd></div>}
+                {group.minOrderCents > 0 && <div><dt className="text-xs text-on-inverse/70">{t("portal.minOrderShort")}</dt><dd className="font-medium tabular-nums">{m(group.minOrderCents)}</dd></div>}
               </dl>
             </div>
           )}
           <Card className="grid gap-4 p-6">
-            <Eyebrow className="text-[10px]">{t("portal.contact")}</Eyebrow>
+            <Eyebrow className="text-2xs">{t("portal.contact")}</Eyebrow>
             {contact.phone && <a href={`tel:${contact.phone.replace(/\s/g, "")}`} className="flex items-center gap-3 text-sm hover:text-primary"><Phone size={15} className="text-muted-fg" /> {contact.phone}</a>}
             {contact.email && <a href={`mailto:${contact.email}`} className="flex items-center gap-3 text-sm hover:text-primary"><Mail size={15} className="text-muted-fg" /> {contact.email}</a>}
           </Card>
           {priceList && (
             <Card className="grid gap-4 p-6">
-              <Eyebrow className="text-[10px]">{t("portal.downloads")}</Eyebrow>
+              <Eyebrow className="text-2xs">{t("portal.downloads")}</Eyebrow>
               <a href="/account/price-list.csv" className="flex items-center gap-3 text-sm hover:text-primary"><FileSpreadsheet size={15} className="text-muted-fg" /> {t("account.priceList")}</a>
             </Card>
           )}
@@ -181,9 +181,9 @@ export default function PortalDashboard({ loaderData }: Route.ComponentProps) {
 function Kpi({ label, value, hint, to }: { label: string; value: string; hint?: string; to?: string }) {
   const body = (
     <Card className="grid h-full min-w-0 gap-2 p-4 transition-shadow hover:shadow-card sm:p-5">
-      <span className="text-eyebrow text-[10px] text-muted-fg">{label}</span>
+      <span className="text-eyebrow text-2xs text-muted-fg">{label}</span>
       <span className="truncate text-[1.3rem] font-medium leading-none tracking-tight tabular-nums sm:text-[1.6rem]">{value}</span>
-      {hint && <span className="text-[12px] text-muted-fg">{hint}</span>}
+      {hint && <span className="text-xs text-muted-fg">{hint}</span>}
     </Card>
   );
   return to ? <Link to={to}>{body}</Link> : body;

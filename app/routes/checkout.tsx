@@ -172,7 +172,7 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
               {summary.lines.map((l) => (
                 <li key={l.variantId} className="grid grid-cols-[2.25rem_1fr_auto] gap-2">
                   <span className="text-muted-fg tabular-nums">{l.qty}×</span>
-                  <span className="leading-snug">{l.name}<span className="block text-[12px] text-muted-fg">{[l.vintage, l.size, l.sku].filter(Boolean).join(" · ")}</span></span>
+                  <span className="leading-snug">{l.name}<span className="block text-xs text-muted-fg">{[l.vintage, l.size, l.sku].filter(Boolean).join(" · ")}</span></span>
                   {!summary.isRequest && <span className="tabular-nums">{m(l.lineDisplay)}</span>}
                 </li>
               ))}

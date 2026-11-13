@@ -84,13 +84,13 @@ export function Badge({ tone = "neutral", className, ...props }: ComponentProps<
     danger: "bg-danger-soft text-danger",
     inverse: "bg-surface/95 text-fg border border-border",
   };
-  return <span className={cn("inline-flex items-center gap-1 rounded-badge px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]", tones[tone], className)} {...props} />;
+  return <span className={cn("inline-flex items-center gap-1 rounded-badge px-2 py-0.5 text-2xs font-semibold uppercase tracking-[0.12em]", tones[tone], className)} {...props} />;
 }
 
 /* ── Forms ─────────────────────────────────────────────────────────────── */
 
 const control =
-  "file:mr-3 file:cursor-pointer file:rounded-badge file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-[13px] file:font-medium file:text-fg hover:file:bg-border w-full rounded-control border border-border-strong/70 bg-surface px-3.5 text-[15px] text-fg placeholder:text-muted-fg/70 transition-[border-color,box-shadow] duration-150 outline-none focus:border-fg focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--t-primary)_14%,transparent)] aria-[invalid=true]:border-danger disabled:bg-muted disabled:text-muted-fg";
+  "file:mr-3 file:cursor-pointer file:rounded-badge file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-note file:font-medium file:text-fg hover:file:bg-border w-full rounded-control border border-border-strong/70 bg-surface px-3.5 text-body text-fg placeholder:text-muted-fg/70 transition-[border-color,box-shadow] duration-150 outline-none focus:border-fg focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--t-primary)_14%,transparent)] aria-[invalid=true]:border-danger disabled:bg-muted disabled:text-muted-fg";
 
 const controlSizes = { sm: "h-9 px-3 text-sm", md: "h-11" } as const;
 type ControlSize = { size?: keyof typeof controlSizes };
@@ -124,12 +124,13 @@ export function Field({
   const id = htmlFor ?? auto;
   return (
     <div className={cn("grid content-start gap-1.5", className)}>
-      <label htmlFor={id} className="text-[12px] font-medium uppercase tracking-[0.1em] text-muted-fg">
-        {label}
-        {required && <span className="text-primary"> *</span>}
+      {/* fixed-height label row: controls in the same form row always line up */}
+      <label htmlFor={id} className="text-field-label flex h-6 min-w-0 items-end" title={typeof label === "string" ? label : undefined}>
+        <span className="truncate">{label}</span>
+        {required && <span className="text-primary">&nbsp;*</span>}
       </label>
       {children(id)}
-      {error ? <p className="text-[13px] text-danger">{error}</p> : hint ? <p className="text-[13px] text-muted-fg">{hint}</p> : null}
+      {error ? <p className="text-note text-danger">{error}</p> : hint ? <p className="text-note text-muted-fg">{hint}</p> : null}
     </div>
   );
 }
@@ -149,7 +150,7 @@ export function RadioCard({ label, description, aside, className, ...props }: Co
       <input type="radio" className="h-[18px] w-[18px] accent-[var(--t-primary)]" {...props} />
       <span className="grid flex-1 gap-0.5">
         <span className="text-sm font-medium">{label}</span>
-        {description && <span className="text-[13px] text-muted-fg">{description}</span>}
+        {description && <span className="text-note text-muted-fg">{description}</span>}
       </span>
       {aside && <span className="text-sm font-medium tabular-nums">{aside}</span>}
     </label>

@@ -136,9 +136,9 @@ export default function Products({ loaderData }: Route.ComponentProps) {
             <tr key={x.id}>
               <RowCheck id={x.id} label={x.name.de} />
               <td className="w-14"><div className="relative h-12 w-10 rounded-badge bg-media p-0.5"><ProductImage product={{ image: x.image, name: x.name.de ?? "", kind: x.kind, color: x.color }} /></div></td>
-              <td><Link to={`/admin/products/${x.id}`} className="font-medium hover:underline">{x.name.de ?? Object.values(x.name)[0]}</Link><span className="block text-[12px] text-muted-fg">{x.producer}</span></td>
+              <td><Link to={`/admin/products/${x.id}`} className="font-medium hover:underline">{x.name.de ?? Object.values(x.name)[0]}</Link><span className="block text-xs text-muted-fg">{x.producer}</span></td>
               <td className="text-muted-fg">{x.category?.de}</td>
-              <td className="font-mono text-[12px] text-muted-fg">{x.variants.map((v) => v.sku).join(", ")}</td>
+              <td className="font-mono text-xs text-muted-fg">{x.variants.map((v) => v.sku).join(", ")}</td>
               <td className="whitespace-nowrap tabular-nums">{x.variants[0] ? formatMoney(Math.min(...x.variants.map((v) => v.price)), currency, "de") : "—"}</td>
               <td className={stock <= 0 ? "text-danger tabular-nums" : "tabular-nums"}>{stock}</td>
               <td className="space-x-1 whitespace-nowrap">

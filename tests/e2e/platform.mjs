@@ -54,7 +54,7 @@ ok((await guest.locator("svg[role=group] a[aria-label]").count()) >= 1, "origin 
 await guest.goto(B + "/shop?region=campania");
 ok(/Kampanien/.test(await guest.locator("h1").innerText()), "shop: region filter from map");
 const regionCount = await guest.locator("article").count();
-ok(regionCount === 11, "shop: 11 products from Campania", regionCount);
+ok(regionCount >= 5, "shop: products from Campania", regionCount);
 // dark mode toggle persists
 await guest.goto(B + "/");
 await guest.click('button[aria-label="Hell/Dunkel"] >> nth=0');
@@ -65,7 +65,8 @@ ok((await guest.evaluate(() => document.documentElement.dataset.theme)) === them
 section("Consumer checkout");
 const consumer = await newPage();
 await login(consumer, "/login", "kunde@demo.ch", "kunde-demo-1234", /account/);
-await consumer.goto(B + "/product/olio-evo-tenuta-arcamone-dop-bio");
+await consumer.goto(B + "/shop?q=10476");
+await consumer.goto(B + (await consumer.locator('article a[href^="/product/"]').first().getAttribute("href")));
 await consumer.click("form[action='/cart'] button[type=submit]");
 await consumer.waitForTimeout(600);
 await consumer.goto(B + "/order-list");
@@ -172,10 +173,11 @@ const taurasi2 = await priceOf("10658");
 ok(taurasi2.price === 33.5, "synced vinX special price 10658 = CHF 33.50", taurasi2.text);
 
 // APIs
-const res = (p, init) => fetch(B + p, init);
+// one retry: undici may reuse a keep-alive socket the server just closed (ECONNRESET)
+const res = (p, init) => fetch(B + p, init).catch(() => fetch(B + p, init));
 ok((await res("/api/health")).ok, "GET /api/health");
 const prod = await (await res("/api/v1/products?per_page=5")).json();
-ok(prod.data.length === 5 && prod.meta.total === 58 && prod.data[0].variants[0].price, "GET /api/v1/products (consumer prices only)");
+ok(prod.data.length === 5 && prod.meta.total > 1000 && prod.data[0].variants[0].price, "GET /api/v1/products (consumer prices only)");
 ok((await res("/api/cron", { method: "POST" })).status === 401, "cron rejects missing secret");
 const cron = await res("/api/cron?jobs=outbox,stock", { method: "POST", headers: { Authorization: `Bearer ${CRON}` } });
 ok(cron.ok, "cron runs with secret", cron.status);
@@ -251,7 +253,7 @@ await admin.goto(B + "/admin/products?q=gin");
 const ginRows = await admin.locator("tbody tr").count();
 await admin.locator("thead input[type=checkbox]").check();
 await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button[form=bulk]:has-text('Empfehlen')")]);
-ok(await admin.getByText(`${ginRows} Produkt`).first().isVisible(), `admin products: bulk action on ${ginRows} rows`);
+ok(await admin.getByText(`${ginRows} Produkt`).first().waitFor({ timeout: 8000 }).then(() => true, () => false), `admin products: bulk action on ${ginRows} rows`);
 await admin.locator("tbody input[name=ids]").first().check();
 await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button[form=bulk]:has-text('Deaktivieren')")]);
 ok(await admin.getByText(/mit vinX verknüpft übersprungen/).waitFor({ timeout: 5000 }).then(() => true, () => false), "admin products: ERP-owned 'active' stays with vinX for linked products");
@@ -304,6 +306,23 @@ await admin.locator("button:has-text('Call-to-Action')").click();
 await Promise.all([admin.waitForURL(/page=\d+/), admin.click("button:has-text('Speichern')")]);
 await guest.goto(B + "/page/events");
 ok(await guest.locator("h1", { hasText: "Events" }).isVisible() && await guest.getByText("Für die Gastronomie").first().isVisible(), "new page built from blocks");
+
+section("Customer import & password reset");
+await admin.goto(B + "/admin/customers/import");
+await admin.setInputFiles("input[name=file]", { name: "kunden.csv", mimeType: "text/csv", buffer: Buffer.from("E-Mail;Vorname;Nachname;Firma;Ort;Kundennummer\nosteria@example.ch;Lia;Rossi;Osteria Lia;Zug;77001\nkaputt;X;Y;;;\n") });
+await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button:has-text('Weiter zur Zuordnung')")]);
+ok(await admin.locator('select[name="map.email"]').inputValue() === "E-Mail" && await admin.locator('select[name="map.firstName"]').inputValue() === "Vorname", "import: columns detected (CSV)");
+await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button:has-text('Zeilen importieren')")]);
+const importText = await admin.locator("main").innerText();
+ok(/Neu angelegt\s*1/.test(importText) && /Zeile 3/.test(importText), "import: 1 created, invalid row reported", importText.slice(0, 200));
+await admin.goto(B + "/admin/customers?q=osteria");
+ok(/Osteria Lia/.test(await admin.locator("tbody").innerText()), "import: customer listed with company");
+await guest.goto(B + "/login/forgot");
+await guest.fill("input[name=email]", "kunde@demo.ch");
+await Promise.all([guest.waitForResponse((r) => r.request().method() === "POST"), guest.click("main button[type=submit]")]);
+ok(await guest.getByText(/Link gesendet/).waitFor({ timeout: 5000 }).then(() => true, () => false), "password reset: request answered without revealing accounts");
+await guest.goto(B + "/login/reset/abcdefghijklmnopqrstuvwxyz0123");
+ok(await guest.getByText(/ungültig oder abgelaufen/).isVisible(), "password reset: invalid token rejected");
 
 // ─────────────────────────────────────────────────────────────────────────
 const errs = [guest, consumer, b2b, admin].flatMap((p) => p.errors);

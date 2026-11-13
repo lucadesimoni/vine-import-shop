@@ -21,7 +21,7 @@ export function OrdersTable({ orders, currency, meta, bulk }: { orders: (typeof 
           {bulk && <RowCheck id={o.id} label={o.number} />}
           <td><Link to={`/admin/orders/${o.id}`} className="font-medium hover:underline">{o.number}</Link>{o.isTrade && <Badge tone="primary" className="ml-2">B2B</Badge>}{o.kind === "request" && <Badge className="ml-1">Anfrage</Badge>}</td>
           <td className="whitespace-nowrap tabular-nums text-muted-fg">{new Date(o.createdAt).toLocaleString("de-CH", { dateStyle: "short", timeStyle: "short" })}</td>
-          <td>{o.billing.company || o.billing.name}<span className="block text-[12px] text-muted-fg">{o.email}</span></td>
+          <td>{o.billing.company || o.billing.name}<span className="block text-xs text-muted-fg">{o.email}</span></td>
           <td><Badge tone={STATUS_TONE[o.status]}>{label(o.status)}</Badge></td>
           <td><Badge tone={o.paymentStatus === "paid" ? "success" : "neutral"}>{label(o.paymentMethod)}</Badge></td>
           <td><Badge tone={o.erpStatus === "transferred" ? "success" : o.erpStatus === "failed" ? "danger" : "warning"}>{label(o.erpStatus)}</Badge></td>

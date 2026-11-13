@@ -328,6 +328,77 @@ export async function syncCustomers(client: ErpClient) {
   });
 }
 
+/**
+ * vinX → shop: order status from receipts (BaseData/Receipt.shopId = shop order number).
+ * new → confirmed · inProgress → processing · done → shipped · payed / archived → completed (+ paid) · cancelled → cancelled.
+ * A status only moves forward (or to cancelled); customers are notified by the normal status events.
+ */
+const RECEIPT_STATUS = { new: "confirmed", inProgress: "processing", done: "shipped", payed: "completed", archived: "completed", cancelled: "cancelled" } as const;
+const RANK = ["new", "confirmed", "processing", "shipped", "completed"];
+
+export async function syncOrderStatus(client: ErpClient) {
+  return job("orders:status", async () => {
+    if (!client.receipts) return { items: 0, message: "driver has no receipts feed" };
+    const db = await getDb();
+    const { setOrderStatus, markPaid } = await import("../orders");
+    let updated = 0, unknown = 0;
+    for await (const r of client.receipts(await lastSuccess("orders:status"))) {
+      const number = String(r.shopId ?? "");
+      const order = number ? await db.query.orders.findFirst({ where: eq(schema.orders.number, number) }) : undefined;
+      if (!order) { unknown++; continue; }
+      const next = RECEIPT_STATUS[String(r.receiptStatus) as keyof typeof RECEIPT_STATUS];
+      if (r.orderNumber && !order.erpId) await db.update(schema.orders).set({ erpId: String(r.orderNumber), erpStatus: "transferred" }).where(eq(schema.orders.id, order.id));
+      if ((r.receiptStatus === "payed" || r.receiptStatus === "archived") && order.paymentStatus !== "paid") await markPaid(order.id, `vinx:${r.invoiceNumber ?? r.id}`);
+      if (!next || order.status === "cancelled" || order.status === next) continue;
+      if (next !== "cancelled" && RANK.indexOf(next) <= RANK.indexOf(order.status)) continue;
+      await setOrderStatus(order.id, next);
+      updated++;
+    }
+    return { items: updated, message: `${updated} orders updated from vinX receipts${unknown ? `, ${unknown} receipts without shop order` : ""}` };
+  });
+}
+
+/**
+ * vinX → shop: create shop accounts for vinX customers that have an e-mail (BaseData/Address, active).
+ * Accounts have no usable password; send invitations from Admin › Kunden (bulk action) when ready.
+ */
+export async function importErpCustomers(client: ErpClient) {
+  return job("customers:import", async () => {
+    if (!client.addresses) return { items: 0, message: "driver has no address feed" };
+    const cfg = await getSetting("vinx");
+    const db = await getDb();
+    const groups = await db.select().from(schema.customerGroups);
+    const { randomBytes } = await import("node:crypto");
+    let created = 0, existing = 0, skipped = 0;
+    for await (const a of client.addresses(null)) {
+      const email = String(a.eMail ?? "").trim().toLowerCase();
+      const erpId = String(a.id ?? a.addressNumber ?? "");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || a.isActive === false) { skipped++; continue; }
+      const found = (await db.query.users.findFirst({ where: eq(schema.users.erpId, erpId) })) ?? (await db.query.users.findFirst({ where: sql`lower(${schema.users.email}) = ${email}` }));
+      if (found) {
+        if (!found.erpId) await db.update(schema.users).set({ erpId }).where(eq(schema.users.id, found.id));
+        existing++;
+        continue;
+      }
+      const str = (v: unknown) => (v == null || v === "" ? undefined : String(v));
+      const name = [str(a.firstName), str(a.name)].filter(Boolean).join(" ") || str(a.companyName) || email;
+      const groupCode = a.priceGroupId != null ? cfg.groupMap[String(a.priceGroupId)] : undefined;
+      const company = str(a.companyName) ?? null;
+      const lang = String(a.language ?? "").toLowerCase();
+      await db.insert(schema.users).values({
+        email, name, company, phone: str(a.phoneBusiness) ?? str(a.mobile) ?? null, erpId, role: "customer",
+        passwordHash: `invite$${randomBytes(18).toString("base64url")}`,
+        groupId: groups.find((g) => g.code === groupCode)?.id ?? groups.find((g) => g.code === (company ? "trade" : "consumer"))?.id ?? null,
+        tradeStatus: company ? "approved" : null,
+        locale: ["de", "it", "fr", "en"].includes(lang) ? lang : "de",
+        billing: { name, company: company ?? undefined, street: str(a.street) ?? "", zip: str(a.zipCode) ?? "", city: str(a.city) ?? "", country: str((a.country as Raw | undefined)?.isoCode) ?? "CH" },
+      });
+      created++;
+    }
+    return { items: created, message: `${created} customers created from vinX, ${existing} already present, ${skipped} without e-mail / inactive` };
+  });
+}
+
 export async function customerPayload(userId: number): Promise<CustomerPayload | null> {
   const db = await getDb();
   const u = await db.query.users.findFirst({ where: eq(schema.users.id, userId) });

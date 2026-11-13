@@ -129,7 +129,7 @@ export default function Content({ loaderData }: Route.ComponentProps) {
           </Form>
           <Form method="post" className="mt-2" onSubmit={(e) => !confirm("Startseite auf die Standard-Bausteine zurücksetzen?") && e.preventDefault()}>
             <input type="hidden" name="intent" value="home-reset" />
-            <button className="text-[12px] text-muted-fg underline underline-offset-4 hover:text-fg">Auf Standard zurücksetzen</button>
+            <button className="text-xs text-muted-fg underline underline-offset-4 hover:text-fg">Auf Standard zurücksetzen</button>
           </Form>
         </>
       )}
@@ -156,7 +156,7 @@ export default function Content({ loaderData }: Route.ComponentProps) {
                 <li key={p.id}>
                   <Link to={`?tab=pages&page=${p.id}`} className={cn("flex items-start gap-2 rounded-control px-3 py-2 hover:bg-muted", editPage === String(p.id) && "bg-primary-soft font-medium text-primary")}>
                     <FileText size={14} className="mt-0.5 shrink-0" />
-                    <span className="grid">{p.title.de ?? p.slug}<span className="text-[12px] font-normal text-muted-fg">/page/{p.slug}{p.blocks?.length ? " · Bausteine" : ""}</span></span>
+                    <span className="grid">{p.title.de ?? p.slug}<span className="text-xs font-normal text-muted-fg">/page/{p.slug}{p.blocks?.length ? " · Bausteine" : ""}</span></span>
                   </Link>
                 </li>
               ))}
@@ -184,7 +184,7 @@ function PageEditor({ page, locales, options }: { page?: Route.ComponentProps["l
             {!page && <Field label="Adresse (URL)" hint="z. B. aktionen → /page/aktionen">{(id) => <Input id={id} name="slug" size="sm" />}</Field>}
             <LocalizedInput label="Titel" name="title" value={page?.title} locales={locales} />
             <Toggle name="showInFooter" label="Im Footer verlinken" defaultChecked={page?.showInFooter ?? false} />
-            <div className="flex w-fit rounded-control bg-muted p-0.5 text-[13px]" role="tablist" aria-label="Inhalt">
+            <div className="flex w-fit rounded-control bg-muted p-0.5 text-note" role="tablist" aria-label="Inhalt">
               {(["blocks", "text"] as const).map((m) => (
                 <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={cn("rounded-badge px-3 py-1.5", mode === m ? "bg-surface font-medium shadow-sm" : "text-muted-fg")}>{m === "blocks" ? "Bausteine" : "Einfacher Text"}</button>
               ))}
@@ -204,7 +204,7 @@ function PageEditor({ page, locales, options }: { page?: Route.ComponentProps["l
         <Form method="post" onSubmit={(e) => !confirm(`Seite „${page.title.de ?? page.slug}“ löschen?`) && e.preventDefault()}>
           <input type="hidden" name="intent" value="page-delete" />
           <input type="hidden" name="id" value={page.id} />
-          <button className="flex items-center gap-1.5 text-[12px] text-muted-fg hover:text-danger"><Trash2 size={13} /> Seite löschen</button>
+          <button className="flex items-center gap-1.5 text-xs text-muted-fg hover:text-danger"><Trash2 size={13} /> Seite löschen</button>
         </Form>
       )}
     </div>
@@ -214,13 +214,13 @@ function PageEditor({ page, locales, options }: { page?: Route.ComponentProps["l
 function JsonEditor({ settingKey, value }: { settingKey: "trade" | "story"; value: unknown }) {
   return (
     <details className="group rounded-surface border border-border bg-surface">
-      <summary className="cursor-pointer list-none px-6 py-4 text-[15px] font-semibold">
-        Texte & Listen der Seite <span className="text-[13px] font-normal text-muted-fg">— strukturiert (JSON), wird vor dem Speichern geprüft</span>
+      <summary className="cursor-pointer list-none px-6 py-4 text-body font-semibold">
+        Texte & Listen der Seite <span className="text-note font-normal text-muted-fg">— strukturiert (JSON), wird vor dem Speichern geprüft</span>
       </summary>
       <Form method="post" className="grid gap-4 px-6 pb-6">
         <input type="hidden" name="intent" value="json" />
         <input type="hidden" name="key" value={settingKey} />
-        <Textarea name="json" defaultValue={JSON.stringify(value, null, 2)} rows={24} spellCheck={false} className="font-mono text-[12.5px] leading-relaxed" />
+        <Textarea name="json" defaultValue={JSON.stringify(value, null, 2)} rows={24} spellCheck={false} className="font-mono text-note leading-relaxed" />
         <Button type="submit" className="w-fit">Speichern</Button>
       </Form>
     </details>

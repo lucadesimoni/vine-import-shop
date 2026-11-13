@@ -67,8 +67,8 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
   const Facets = (
     <div className="grid gap-10">
       <div>
-        <p className="text-eyebrow mb-4 text-[11px] text-muted-fg">{t("shop.categories")}</p>
-        <ul className="grid gap-0.5 text-[14px]">
+        <p className="text-eyebrow mb-4 text-label text-muted-fg">{t("shop.categories")}</p>
+        <ul className="grid gap-0.5 text-sm">
           <li>
             <Link to={link({ category: null })} className={cn("flex justify-between rounded-control px-2 py-1.5 hover:bg-muted", !params.category && "font-semibold")}>
               <span>{t("common.all")}</span><span className="text-muted-fg tabular-nums">{total}</span>
@@ -83,7 +83,7 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
                 <ul className="ml-3 mt-0.5 grid gap-0.5 border-l border-border pl-2">
                   {categories.filter((c) => c.parentId === r.id && c.total > 0).map((c) => (
                     <li key={c.id}>
-                      <Link to={link({ category: c.slug })} className={cn("flex justify-between rounded-control px-2 py-1 text-[13px] hover:bg-muted", params.category === c.slug && "font-semibold text-primary")}>
+                      <Link to={link({ category: c.slug })} className={cn("flex justify-between rounded-control px-2 py-1 text-note hover:bg-muted", params.category === c.slug && "font-semibold text-primary")}>
                         <span>{c.name}</span><span className="text-muted-fg tabular-nums">{c.total}</span>
                       </Link>
                     </li>
@@ -95,8 +95,8 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
         </ul>
       </div>
       <div>
-        <p className="text-eyebrow mb-4 text-[11px] text-muted-fg">{t("shop.producers")}</p>
-        <ul className="grid gap-0.5 text-[14px]">
+        <p className="text-eyebrow mb-4 text-label text-muted-fg">{t("shop.producers")}</p>
+        <ul className="grid gap-0.5 text-sm">
           {producers.map((p) => (
             <li key={p.slug}>
               <Link to={link({ producer: params.producer === p.slug ? null : p.slug })} className={cn("flex justify-between gap-3 rounded-control px-2 py-1.5 hover:bg-muted", params.producer === p.slug && "font-semibold text-primary")}>
@@ -105,12 +105,12 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
             </li>
           ))}
         </ul>
-        <Link to="/producers" className="mt-3 inline-block px-2 text-[13px] text-muted-fg underline-offset-4 hover:text-fg hover:underline">{t("common.showAll")}</Link>
+        <Link to="/producers" className="mt-3 inline-block px-2 text-note text-muted-fg underline-offset-4 hover:text-fg hover:underline">{t("common.showAll")}</Link>
       </div>
       {origins.regions.length > 0 && (
         <div>
-          <p className="text-eyebrow mb-4 text-[11px] text-muted-fg">{t("shop.origin")}</p>
-          <ul className="grid gap-0.5 text-[14px]">
+          <p className="text-eyebrow mb-4 text-label text-muted-fg">{t("shop.origin")}</p>
+          <ul className="grid gap-0.5 text-sm">
             {origins.regions.map((r) => (
               <li key={r.id}>
                 <Link to={link({ region: params.region === r.id ? null : r.id, origin: null })} className={cn("flex justify-between gap-3 rounded-control px-2 py-1.5 hover:bg-muted", params.region === r.id && "font-semibold text-primary")}>
@@ -119,7 +119,7 @@ export default function Shop({ loaderData }: Route.ComponentProps) {
               </li>
             ))}
           </ul>
-          {mapEnabled && <Link to="/producers" className="mt-3 inline-flex items-center gap-1.5 px-2 text-[13px] text-muted-fg underline-offset-4 hover:text-fg hover:underline"><MapIcon size={13} /> {t("shop.onMap")}</Link>}
+          {mapEnabled && <Link to="/producers" className="mt-3 inline-flex items-center gap-1.5 px-2 text-note text-muted-fg underline-offset-4 hover:text-fg hover:underline"><MapIcon size={13} /> {t("shop.onMap")}</Link>}
         </div>
       )}
     </div>
