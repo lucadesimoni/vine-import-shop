@@ -36,12 +36,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   // Which views make sense: region map of the home country (if a map exists and it has products), world map, A–Z
   const home = facets.countries.find((c) => c.iso === cfg.country);
   const canRegions = hasRegionMap(cfg.country) && !!home && facets.regions.some((r) => r.country === cfg.country);
-  const auto = canRegions && home!.count / Math.max(1, facets.total) >= 0.6 ? "regions" : "world";
-  const preferred = cfg.mode === "auto" ? auto : cfg.mode === "regions" && !canRegions ? "world" : cfg.mode;
+  // the world map can be switched off in the admin: then region maps (home country, or any country with a map) and A–Z remain
+  const world = cfg.world;
+  const auto = canRegions && (!world || home!.count / Math.max(1, facets.total) >= 0.6) ? "regions" : world ? "world" : "az";
+  const preferred = cfg.mode === "auto" ? auto : cfg.mode === "regions" && !canRegions ? (world ? "world" : "az") : cfg.mode === "world" && !world ? auto : cfg.mode;
   const asked = q.get("view");
-  const view: "regions" | "world" | "az" = cfg.mode === "off" || asked === "az" ? "az" : asked === "world" ? "world" : asked === "regions" && canRegions ? "regions" : (preferred as "regions" | "world");
-  // Drill-down: a country picked on the world map that has its own region map shows its regions
-  const mapCountry = view === "regions" ? cfg.country : view === "world" && origin && hasRegionMap(origin) && facets.regions.some((r) => r.country === origin) ? origin : null;
+  const view: "regions" | "world" | "az" =
+    cfg.mode === "off" || asked === "az" ? "az" : asked === "world" && world ? "world" : asked === "regions" && canRegions ? "regions" : (preferred as "regions" | "world" | "az");
+  // Drill-down: a country picked on the world map (or as a chip) that has its own region map shows its regions
+  const hasRegions = (iso: string | null) => !!iso && hasRegionMap(iso) && facets.regions.some((r) => r.country === iso);
+  const mapCountry = view !== "az" && hasRegions(origin) ? origin : view === "regions" ? cfg.country : null;
   const regionMap = mapCountry ? await loadRegionMap(mapCountry) : null;
 
   const selRegion = region ? facets.regions.find((r) => r.id === region && (!mapCountry || r.country === mapCountry)) ?? null : null;
@@ -52,7 +56,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   return {
     view, kind, homeCountry: cfg.country, mapCountry, regionMap,
-    views: (cfg.mode === "off" ? ["az"] : canRegions ? ["regions", "world", "az"] : ["world", "az"]) as ("regions" | "world" | "az")[],
+    views: (cfg.mode === "off" ? ["az"] : [...(canRegions ? ["regions"] : []), ...(world ? ["world"] : []), "az"]) as ("regions" | "world" | "az")[],
     kinds: kindRows.filter((k) => k.n > 0).map((k) => k.kind),
     facets,
     selected: selRegion
@@ -82,11 +86,13 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
   };
   const shopLink = (extra: Record<string, string>) => `/shop?${new URLSearchParams({ ...(kind ? { kind } : {}), ...extra })}`;
   const showRegions = !!regionMap && !!mapCountry;
+  // keep the country in the URL when its regions are shown away from the home country (world drill-down, country chips)
+  const regionLink = (id: string) => link({ region: id, origin: view === "regions" && mapCountry === homeCountry ? null : mapCountry });
   const regionAreas = showRegions ? facets.regions.filter((r) => r.country === mapCountry) : [];
   const areaName = selected ? (selected.type === "region" ? selected.name : countryName(selected.id, locale)) : "";
   const otherCountries = view === "regions" ? facets.countries.filter((c) => c.iso !== homeCountry) : [];
   const listAreas = showRegions
-    ? regionAreas.map((r) => ({ id: r.id, name: r.name, count: r.count, producers: r.producers, to: link({ region: r.id, ...(view === "regions" ? { origin: null } : {}) }) }))
+    ? regionAreas.map((r) => ({ id: r.id, name: r.name, count: r.count, producers: r.producers, to: regionLink(r.id) }))
     : facets.countries.map((c) => ({ id: c.iso, name: countryName(c.iso, locale), count: c.count, producers: c.producers, to: link({ origin: c.iso, region: null }) }));
   const viewLabel = { regions: t("origin.viewRegions"), world: t("origin.viewWorld"), az: t("origin.az") };
 
@@ -121,15 +127,15 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
             <div className="grid content-start gap-6 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)]">
               <div className="flex items-center justify-between gap-4">
                 <p className="text-eyebrow text-label text-muted-fg">{showRegions ? t("origin.chooseRegion") : t("origin.chooseCountry")}</p>
-                {view === "world" && mapCountry && (
-                  <Link to={link({ origin: null, region: null })} preventScrollReset className="flex items-center gap-1.5 text-note text-muted-fg hover:text-fg"><ArrowLeft size={14} /> {t("origin.backToWorld")}</Link>
+                {mapCountry && (view === "world" || mapCountry !== homeCountry) && (
+                  <Link to={link({ origin: null, region: null })} preventScrollReset className="flex items-center gap-1.5 text-note text-muted-fg hover:text-fg"><ArrowLeft size={14} /> {view === "world" ? t("origin.backToWorld") : countryName(homeCountry, locale)}</Link>
                 )}
               </div>
               <div className={cn("flex w-full justify-center", showRegions && "lg:justify-start")}>
                 {showRegions ? (
-                  <RegionMap map={regionMap!} data={regionAreas.map((r) => ({ id: r.id, count: r.count }))} selected={selected?.type === "region" ? selected.id : null} href={(id) => link({ region: id, ...(view === "regions" ? { origin: null } : {}) })} locale={locale} label={t("origin.mapLabel")} className="h-auto max-h-[calc(100vh-var(--header-h)-9rem)] w-full max-w-[560px]" />
+                  <RegionMap map={regionMap!} data={regionAreas.map((r) => ({ id: r.id, count: r.count }))} selected={selected?.type === "region" ? selected.id : null} href={regionLink} locale={locale} label={t("origin.mapLabel")} className="h-auto max-h-[calc(100vh-var(--header-h)-9rem)] w-full max-w-[560px]" />
                 ) : (
-                  <WorldDotMap data={facets.countries.map((c) => ({ id: c.iso, count: c.count }))} selected={selected?.id} href={(iso) => link({ origin: iso, region: null })} locale={locale} label={t("origin.mapLabel")} />
+                  <WorldDotMap zoomable labels={{ zoomIn: t("origin.zoomIn"), zoomOut: t("origin.zoomOut"), reset: t("origin.zoomReset"), europe: t("origin.europe") }} data={facets.countries.map((c) => ({ id: c.iso, count: c.count }))} selected={selected?.id} href={(iso) => link({ origin: iso, region: null })} locale={locale} label={t("origin.mapLabel")} />
                 )}
               </div>
               <Legend />

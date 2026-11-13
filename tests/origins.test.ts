@@ -18,17 +18,34 @@ describe("origin resolution (supplier / ERP free text → map areas)", () => {
   it("maps administrative and localised region names", () => {
     expect(regionId("IT", "Südtirol")).toBe("trentino-alto-adige");
     expect(regionId("IT", "Toskana")).toBe("toscana");
-    expect(regionId("CH", "Wallis")).toBe("valais");
-    expect(regionId("CH", "Tessin")).toBe("ticino");
+    expect(regionId("CH", "Wallis")).toBe("wallis");
+    expect(regionId("CH", "Valais")).toBe("wallis");
+    expect(regionId("CH", "Ticino")).toBe("tessin");
     expect(regionId("AT", "Niederösterreich")).toBe("niederosterreich");
   });
 
+  it("draws FR, PT, CH and AT as wine regions; units and appellations resolve to them", () => {
+    expect(regionId("FR", "Bordeaux")).toBe("bordeaux");
+    expect(regionId("FR", "Gironde")).toBe("bordeaux");
+    expect(regionId("FR", "Saint-Émilion")).toBe("bordeaux");
+    expect(regionId("FR", "Champagne")).toBe("champagne");
+    expect(regionId("FR", "Alsace")).toBe("elsass");
+    expect(regionId("FR", "Châteauneuf-du-Pape")).toBe("rhone");
+    expect(regionId("FR", "Normandie")).toBe("normandie"); // non-wine areas keep their region (cider, Calvados)
+    expect(regionId("PT", "Douro")).toBe("douro");
+    expect(regionId("PT", "Porto")).toBe("douro");
+    expect(regionId("PT", "Minho")).toBe("vinho-verde");
+    expect(regionId("CH", "Graubünden")).toBe("deutschschweiz");
+    expect(regionId("CH", "Neuenburg")).toBe("drei-seen-land");
+    expect(regionId("CH", "Lavaux")).toBe("waadt");
+    expect(regionId("AT", "Wachau")).toBe("niederosterreich");
+    expect(regionId("AT", "Südsteiermark")).toBe("steiermark");
+    expect(regionId("AT", "Tirol")).toBe("bergland");
+  });
+
   it("maps wine regions to their administrative region", () => {
-    expect(regionId("FR", "Bordeaux")).toBe("nouvelle-aquitaine");
-    expect(regionId("FR", "Champagne")).toBe("grand-est");
     expect(regionId("ES", "Rioja Alta")).toBe("la-rioja");
     expect(regionId("ES", "Ribera del Duero")).toBe("castilla-y-leon");
-    expect(regionId("PT", "Douro")).toBe("norte");
     expect(regionId("DE", "Mosel")).toBe("rheinland-pfalz");
     expect(regionId("US", "Napa Valley")).toBe("california");
     expect(regionId("NZ", "Marlborough")).toBe("south-island");

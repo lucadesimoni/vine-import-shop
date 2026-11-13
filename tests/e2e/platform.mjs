@@ -220,12 +220,33 @@ await guest.goto(B + "/producers?view=world");
 ok((await guest.locator('svg[role=group] a[aria-label^="Italien"]').count()) === 1, "world map: Italy clickable");
 await guest.goto(B + "/producers?view=world&origin=IT");
 ok((await guest.locator("svg[role=group] path").count()) >= 20, "world map: drill-down into Italy's regions");
+// world map zoom (buttons) → country outlines; wine-region maps for the other countries
+await guest.goto(B + "/producers?view=world");
+await guest.getByRole("button", { name: "Vergrössern" }).click();
+ok(await guest.locator("svg[role=group] a[aria-label^='Schweiz'] path").first().waitFor({ timeout: 5000 }).then(() => true, () => false), "world map: zoomed in → country outlines");
+await guest.getByRole("button", { name: "Ganze Welt" }).click();
+ok(await guest.locator("svg[role=group] circle").first().isVisible(), "world map: reset to the whole world");
+for (const [iso, area, label] of [["CH", "deutschschweiz", "Switzerland: Deutschschweiz"], ["AT", "niederosterreich", "Austria: Niederösterreich"], ["FR", "champagne", "France: Champagne"], ["ES", "la-rioja", "Spain: La Rioja"]]) {
+  await guest.goto(B + `/producers?view=world&origin=${iso}`);
+  ok((await guest.locator(`svg[role=group] a[href*="region=${area}"]`).count()) >= 1, `wine-region map ${label}`);
+}
 await guest.goto(B + "/producers?region=sicilia");
 await Promise.all([guest.waitForURL(/\/producers\/[a-z0-9-]+$/), guest.locator('a[href^="/producers/"]').first().click()]);
 ok(await guest.locator("h1").isVisible() && (await guest.locator("article").count()) > 0, "producer page: portrait + products", guest.url());
 const productHref = await guest.locator('article a[href^="/product/"]').first().getAttribute("href");
 await guest.goto(B + productHref);
 ok((await guest.locator('main a[href^="/producers/"]').count()) >= 1, "product page links to the producer page");
+// admin: world map can be switched off → only region maps + A–Z
+await admin.goto(B + "/admin/settings");
+await admin.locator('input[name="originMap.world"]').uncheck({ force: true });
+await Promise.all([admin.waitForResponse((r) => r.url().includes("/admin/settings") && r.request().method() === "POST"), admin.getByRole("button", { name: "Speichern" }).last().click()]);
+await guest.goto(B + "/producers");
+ok(!(await guest.locator('nav a:has-text("Welt")').count()) && (await guest.locator('nav a:has-text("Regionen")').count()) === 1, "admin toggle: world map hidden");
+await guest.goto(B + "/producers?view=regions&origin=CH");
+ok((await guest.locator('svg[role=group] a[href*="region=deutschschweiz"]').count()) >= 1, "world map off: other countries still open their region map");
+await admin.goto(B + "/admin/settings");
+await admin.locator('input[name="originMap.world"]').check({ force: true });
+await Promise.all([admin.waitForResponse((r) => r.url().includes("/admin/settings") && r.request().method() === "POST"), admin.getByRole("button", { name: "Speichern" }).last().click()]);
 // admin: producer search / sort / logo upload (SVG guard)
 await admin.goto(B + "/admin/producers?q=buscema");
 ok((await admin.locator("tbody tr").count()) === 1, "admin producers: search");

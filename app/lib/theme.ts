@@ -28,6 +28,13 @@ const ensure = (fg: string, bg: string, min: number) => {
   for (let l = l0; l <= 0.92 && contrast(c, bg) < min; l += 0.025) c = fromHsl([h, Math.min(1, s * 1.04), l]);
   return c;
 };
+/** Like ensure(), but the colour loses a little saturation per step — a lifted brand colour on dark grounds reads calm, not neon. */
+const lift = (fg: string, bg: string, min: number) => {
+  let [h, s, l] = toHsl(fg);
+  let c = fg;
+  while (l <= 0.92 && contrast(c, bg) < min) { l += 0.025; s *= 0.97; c = fromHsl([h, s, l]); }
+  return c;
+};
 const readableOn = (bg: string, light = "#ffffff", dark = "#141012") => (contrast(light, bg) >= contrast(dark, bg) ? light : dark);
 
 export type Palette = {
@@ -69,8 +76,8 @@ export function darkPalette(brand: Brand): Palette {
   const bg = o.background ?? mix(c.foreground, "#000000", 0.38);
   const card = o.card ?? mix(bg, "#ffffff", 0.045);
   const fg = o.foreground ?? mix(c.background, bg, 0.06);
-  const primary = o.primary ?? ensure(c.primary, card, 3.6);
-  const accent = o.accent ?? ensure(c.accent, card, 3);
+  const primary = o.primary ?? lift(c.primary, card, 3.45);
+  const accent = o.accent ?? lift(c.accent, card, 3);
   const inverse = o.inverse ?? mix(c.inverse, "#000000", 0.35);
   return {
     bg, fg, card, primary,
@@ -80,7 +87,8 @@ export function darkPalette(brand: Brand): Palette {
     accent,
     border: o.border ?? mix(bg, "#ffffff", 0.13),
     inverse, onInverse: o.inverseForeground ?? readableOn(inverse, c.inverseForeground),
-    media: c.card, // packshots keep their light stage so white-background photos blend seamlessly
+    // packshots keep a light stage so white-background photos blend in; slightly dimmed (with the photo, see app.css) so it doesn't glare
+    media: mix(c.card, bg, 0.1),
     scrim: "#000000", shadow: "#000000",
     success: ensure("#a3b896", card, 4.5), successSoft: mix(card, "#a3b896", 0.12), warning: ensure("#d6b16e", card, 4.5), warningSoft: mix(card, "#d6b16e", 0.12),
     danger: ensure("#e09a88", card, 4.5), dangerSoft: mix(card, "#e09a88", 0.12), onDanger: "#1a0d0d",

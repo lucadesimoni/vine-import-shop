@@ -250,7 +250,7 @@ const de = {
   "origin.az": "A–Z",
   "origin.viewRegions": "Regionen",
   "origin.viewWorld": "Welt",
-  "origin.backToWorld": "Weltkarte",
+  "origin.backToWorld": "Weltkarte", "origin.zoomIn": "Vergrössern", "origin.zoomOut": "Verkleinern", "origin.zoomReset": "Ganze Welt", "origin.europe": "Europa",
   "producer.eyebrow": "Produzent",
   "producer.products": "Produkte von {name}",
   "producer.website": "Website",

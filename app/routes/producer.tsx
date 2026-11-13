@@ -31,7 +31,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     },
     origin: { iso, regionId: rid, regionName: iso && rid ? regionNameOf(iso, rid, ctx.locale) : producer.region },
     regionMap: iso && rid && ctx.shop.originMap.mode !== "off" ? await loadRegionMap(iso) : null,
-    mapEnabled: ctx.shop.originMap.mode !== "off",
+    mapEnabled: ctx.shop.originMap.mode !== "off" && (ctx.shop.originMap.world || !!(iso && rid)),
     products,
   };
 }

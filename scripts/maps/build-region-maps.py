@@ -21,12 +21,12 @@ OUT = Path(__file__).resolve().parents[2] / "app/lib/maps/regions"
 # group: "name" (one area per admin-1 unit) or "region" (merge units by their region field)
 # exclude: overseas / remote parts that would shrink the mainland; tol: simplification in projected units
 COUNTRIES = {
-    "CH": {"group": "name"},
-    "AT": {"group": "name"},
+    "CH": {"group": "wine"},
+    "AT": {"group": "wine"},
     "DE": {"group": "name"},
-    "FR": {"group": "region", "exclude": ["Guyane française", "Martinique", "Guadeloupe", "La Réunion", "Mayotte"]},
+    "FR": {"group": "wine", "fallback": "region", "exclude": ["Guyane française", "Martinique", "Guadeloupe", "La Réunion", "Mayotte"]},
     "ES": {"group": "region", "exclude": ["Canary Is.", "Ceuta", "Melilla"]},
-    "PT": {"group": "region", "exclude": ["Azores", "Madeira"]},
+    "PT": {"group": "wine", "exclude": ["Azores", "Madeira"]},
     "GR": {"group": "name"},
     "HU": {"group": "region"},
     "SI": {"group": "region"},
@@ -39,19 +39,72 @@ COUNTRIES = {
     "NZ": {"group": "region", "exclude": ["New Zealand Outlying Islands", "Chatham Islands"]},
 }
 
+# group "wine": admin-1 units (départements, districts, cantons, Länder) merged into wine regions, the way a wine list
+# names them. Units not listed fall back to their administrative region ("fallback": "region") or their own name.
+# value: wine region name (de) · names for it/fr/en in WINE_NAMES
+WINE = {
+    "FR": {
+        "Bas-Rhin": "Elsass", "Haute-Rhin": "Elsass", "Haut-Rhin": "Elsass",
+        "Marne": "Champagne", "Aube": "Champagne", "Aisne": "Champagne",
+        "Yonne": "Burgund", "Côte-d'Or": "Burgund", "Saône-et-Loire": "Burgund",
+        "Rhône": "Beaujolais",
+        "Jura": "Jura",
+        "Savoie": "Savoyen", "Haute-Savoie": "Savoyen", "Ain": "Savoyen",
+        "Drôme": "Rhône", "Ardèche": "Rhône", "Vaucluse": "Rhône", "Gard": "Rhône",
+        "Bouches-du-Rhône": "Provence", "Var": "Provence", "Alpes-Maritimes": "Provence", "Alpes-de-Haute-Provence": "Provence", "Hautes-Alpes": "Provence",
+        "Hérault": "Languedoc-Roussillon", "Aude": "Languedoc-Roussillon", "Pyrénées-Orientales": "Languedoc-Roussillon",
+        "Gironde": "Bordeaux",
+        "Charente": "Cognac", "Charente-Maritime": "Cognac",
+        "Gers": "Südwesten", "Lot": "Südwesten", "Tarn": "Südwesten", "Tarn-et-Garonne": "Südwesten", "Haute-Garonne": "Südwesten", "Pyrénées-Atlantiques": "Südwesten",
+        "Landes": "Südwesten", "Lot-et-Garonne": "Südwesten", "Dordogne": "Südwesten", "Aveyron": "Südwesten", "Hautes-Pyrénées": "Südwesten",
+        "Loire-Atlantique": "Loire", "Maine-et-Loire": "Loire", "Indre-et-Loire": "Loire", "Loir-et-Cher": "Loire", "Cher": "Loire", "Nièvre": "Loire",
+        "Loiret": "Loire", "Indre": "Loire", "Vienne": "Loire", "Deux-Sèvres": "Loire", "Vendée": "Loire", "Sarthe": "Loire",
+        "Haute-Corse": "Korsika", "Corse-du-Sud": "Korsika",
+    },
+    "PT": {
+        "Viana do Castelo": "Vinho Verde", "Braga": "Vinho Verde", "Porto": "Vinho Verde",
+        "Vila Real": "Douro", "Bragança": "Douro",
+        "Viseu": "Dão", "Aveiro": "Bairrada", "Coimbra": "Bairrada", "Guarda": "Beira Interior", "Castelo Branco": "Beira Interior",
+        "Lisboa": "Lisboa", "Leiria": "Lisboa", "Santarém": "Tejo", "Setúbal": "Setúbal",
+        "Évora": "Alentejo", "Portalegre": "Alentejo", "Beja": "Alentejo", "Faro": "Algarve",
+    },
+    "CH": {
+        "Valais": "Wallis", "Vaud": "Waadt", "Genève": "Genf", "Ticino": "Tessin",
+        "Neuchâtel": "Drei-Seen-Land", "Fribourg": "Drei-Seen-Land", "Jura": "Drei-Seen-Land", "Bern": "Drei-Seen-Land",
+        "*": "Deutschschweiz",
+    },
+    "AT": {"Niederösterreich": "Niederösterreich", "Burgenland": "Burgenland", "Steiermark": "Steiermark", "Wien": "Wien", "*": "Bergland"},
+}
+WINE_NAMES = {  # it / fr / en where they differ from the German name
+    "Elsass": {"it": "Alsazia", "fr": "Alsace", "en": "Alsace"}, "Burgund": {"it": "Borgogna", "fr": "Bourgogne", "en": "Burgundy"},
+    "Savoyen": {"it": "Savoia", "fr": "Savoie & Bugey", "en": "Savoie"}, "Rhône": {"it": "Valle del Rodano", "fr": "Vallée du Rhône", "en": "Rhône Valley"},
+    "Südwesten": {"it": "Sud-Ovest", "fr": "Sud-Ouest", "en": "South West"}, "Korsika": {"it": "Corsica", "fr": "Corse", "en": "Corsica"},
+    "Loire": {"it": "Valle della Loira", "fr": "Val de Loire", "en": "Loire Valley"}, "Champagne": {"it": "Champagne"},
+    "Wallis": {"it": "Vallese", "fr": "Valais", "en": "Valais"}, "Waadt": {"it": "Vaud", "fr": "Vaud", "en": "Vaud"}, "Genf": {"it": "Ginevra", "fr": "Genève", "en": "Geneva"},
+    "Tessin": {"it": "Ticino", "fr": "Tessin", "en": "Ticino"}, "Drei-Seen-Land": {"it": "Regione dei Tre Laghi", "fr": "Trois-Lacs", "en": "Three Lakes"},
+    "Deutschschweiz": {"it": "Svizzera tedesca", "fr": "Suisse alémanique", "en": "German-speaking Switzerland"},
+    "Niederösterreich": {"it": "Bassa Austria", "fr": "Basse-Autriche", "en": "Lower Austria"}, "Steiermark": {"it": "Stiria", "fr": "Styrie", "en": "Styria"},
+    "Wien": {"it": "Vienna", "fr": "Vienne", "en": "Vienna"}, "Bergland": {"it": "Bergland", "en": "Bergland"},
+    "Setúbal": {"en": "Setúbal Peninsula", "fr": "Péninsule de Setúbal", "it": "Penisola di Setúbal"}, "Lisboa": {"de": "Lissabon", "en": "Lisbon", "fr": "Lisbonne", "it": "Lisbona"},
+}
+
 # Wine & speciality regions → administrative region (so ERP/supplier values like "Bordeaux" or "Rioja Alta" land on the map),
 # plus German names for merged regions. Keys are region ids, values are free-text names (slugified when matching).
 EXTRA = {
     "FR": {
-        "nouvelle-aquitaine": ["Bordeaux", "Médoc", "Saint-Émilion", "Pomerol", "Graves", "Sauternes", "Cognac", "Bergerac", "Jurançon"],
-        "bourgogne-franche-comte": ["Bourgogne", "Burgund", "Burgundy", "Chablis", "Côte d'Or", "Côte de Beaune", "Côte de Nuits", "Mâconnais", "Jura"],
-        "grand-est": ["Champagne", "Alsace", "Elsass", "Lorraine"],
-        "auvergne-rhone-alpes": ["Rhône", "Rhône Nord", "Côtes du Rhône", "Beaujolais", "Savoie", "Savoyen"],
-        "provence-alpes-cote-d-azur": ["Provence", "Côtes de Provence", "Bandol", "Châteauneuf-du-Pape", "Vallée du Rhône Sud"],
-        "occitanie": ["Languedoc", "Roussillon", "Languedoc-Roussillon", "Cahors", "Armagnac"],
-        "pays-de-la-loire": ["Loire", "Muscadet", "Anjou", "Saumur"],
-        "centre-val-de-loire": ["Sancerre", "Touraine", "Vouvray", "Pouilly-Fumé"],
-        "corse": ["Korsika", "Corsica"],
+        "bordeaux": ["Médoc", "Haut-Médoc", "Saint-Émilion", "Pomerol", "Graves", "Pessac-Léognan", "Sauternes", "Entre-Deux-Mers"],
+        "burgund": ["Bourgogne", "Burgundy", "Chablis", "Côte d'Or", "Côte de Beaune", "Côte de Nuits", "Mâconnais", "Côte Chalonnaise"],
+        "champagne": ["Montagne de Reims", "Côte des Blancs", "Vallée de la Marne"],
+        "elsass": ["Alsace", "Alsazia"],
+        "rhone": ["Côtes du Rhône", "Rhône Nord", "Rhône Sud", "Vallée du Rhône", "Châteauneuf-du-Pape", "Hermitage", "Crozes-Hermitage", "Côte-Rôtie", "Gigondas", "Tavel"],
+        "provence": ["Côtes de Provence", "Bandol", "Cassis", "Provence-Alpes-Côte d'Azur"],
+        "languedoc-roussillon": ["Languedoc", "Roussillon", "Corbières", "Minervois", "Pic Saint-Loup"],
+        "sudwesten": ["Sud-Ouest", "Cahors", "Madiran", "Jurançon", "Bergerac", "Gaillac", "Armagnac", "Gascogne"],
+        "loire": ["Muscadet", "Anjou", "Saumur", "Sancerre", "Touraine", "Vouvray", "Chinon", "Pouilly-Fumé", "Val de Loire"],
+        "savoyen": ["Savoie", "Bugey"],
+        "beaujolais": ["Morgon", "Fleurie", "Moulin-à-Vent"],
+        "korsika": ["Corse", "Corsica", "Patrimonio"],
+        "cognac": ["Pineau des Charentes"],
     },
     "ES": {
         "la-rioja": ["Rioja", "Rioja Alta", "Rioja Alavesa", "Rioja Oriental"],
@@ -66,9 +119,10 @@ EXTRA = {
         "murcia": ["Jumilla", "Yecla", "Bullas"],
         "islas-baleares": ["Mallorca", "Balearen", "Balearic Islands"],
     },
-    "PT": {"norte": ["Douro", "Porto", "Vinho Verde", "Trás-os-Montes"], "centro": ["Dão", "Bairrada"], "lisbon": ["Lisboa", "Lissabon", "Setúbal", "Tejo"], "alentejo": ["Alentejano"]},
+    "PT": {"douro": ["Porto", "Port", "Portwein", "Trás-os-Montes", "Douro Valley"], "vinho-verde": ["Minho"], "alentejo": ["Alentejano"], "setubal": ["Península de Setúbal", "Moscatel de Setúbal"], "tejo": ["Ribatejo"], "lisboa": ["Lissabon", "Colares", "Bucelas"]},
+    "CH": {"wallis": ["Sion", "Visp", "Salgesch"], "waadt": ["Lavaux", "La Côte", "Chablais", "Dézaley"], "tessin": ["Mendrisiotto", "Sottoceneri", "Sopraceneri"], "drei-seen-land": ["Neuenburg", "Bielersee", "Vully", "Twann"], "deutschschweiz": ["Bündner Herrschaft", "Zürichsee", "Ostschweiz", "Fläsch", "Jenins", "Malans", "Maienfeld"]},
     "DE": {"rheinland-pfalz": ["Mosel", "Pfalz", "Rheinhessen", "Nahe", "Ahr", "Mittelrhein"], "hessen": ["Rheingau", "Hessische Bergstrasse"], "bayern": ["Franken"], "baden-wurttemberg": ["Baden", "Württemberg"], "sachsen": ["Meissen"], "sachsen-anhalt": ["Saale-Unstrut"]},
-    "AT": {"niederosterreich": ["Wachau", "Kamptal", "Kremstal", "Weinviertel", "Thermenregion", "Carnuntum", "Wagram", "Traisental"], "burgenland": ["Neusiedlersee", "Mittelburgenland", "Leithaberg"], "steiermark": ["Südsteiermark", "Vulkanland", "Weststeiermark"]},
+    "AT": {"bergland": ["Weinland Bergland", "Kärnten", "Tirol", "Vorarlberg", "Salzburg", "Oberösterreich"], "niederosterreich": ["Wachau", "Kamptal", "Kremstal", "Weinviertel", "Thermenregion", "Carnuntum", "Wagram", "Traisental"], "burgenland": ["Neusiedlersee", "Mittelburgenland", "Leithaberg"], "steiermark": ["Südsteiermark", "Vulkanland", "Weststeiermark"]},
     "US": {"california": ["Napa", "Napa Valley", "Sonoma", "Paso Robles", "Central Coast", "Santa Barbara", "Kalifornien"], "oregon": ["Willamette Valley"], "washington": ["Columbia Valley", "Walla Walla"], "new-york": ["Finger Lakes"]},
     "AR": {"mendoza": ["Uco Valley", "Valle de Uco", "Luján de Cuyo"], "salta": ["Cafayate"]},
     "CL": {"libertador-general-bernardo-o-higgins": ["Colchagua", "Cachapoal", "Rapel"], "valparaiso": ["Casablanca", "Aconcagua", "San Antonio"], "maule": ["Curicó"]},
@@ -109,9 +163,13 @@ def to_path(geom, tx):
 def build(features, iso, cfg):
     fs = [f for f in features if f["properties"]["iso_a2"] == iso and f["properties"]["name"] not in cfg.get("exclude", []) and (f["properties"].get("region") or "") not in cfg.get("exclude", [])]
     groups = {}
+    wine = WINE.get(iso, {})
     for f in fs:
         p = f["properties"]
-        key = (p.get("region") or p["name"]) if cfg["group"] == "region" else p["name"]
+        if cfg["group"] == "wine":
+            key = wine.get(p["name"]) or wine.get("*") or ((p.get("region") or p["name"]) if cfg.get("fallback") == "region" else p["name"])
+        else:
+            key = (p.get("region") or p["name"]) if cfg["group"] == "region" else p["name"]
         g = groups.setdefault(key, {"geoms": [], "props": []})
         geom = shape(f["geometry"])
         if "minlon" in cfg:  # drop far-off islands
@@ -137,10 +195,15 @@ def build(features, iso, cfg):
         parts = [p for p in parts if p.area >= min_area] or [max(parts, key=lambda p: p.area)]
         geom = MultiPolygon(parts).simplify(0.012 * (maxx - minx) / 10, preserve_topology=True)
         props = groups[key]["props"]
-        single = cfg["group"] == "name"
+        single = cfg["group"] == "name" or (cfg["group"] == "wine" and len(props) == 1 and props[0]["name"] == key)
         p0 = props[0]
-        names = {l: clean(p0.get(f"name_{l}")) for l in ("de", "it", "fr", "en")} if single else {}
+        names = {l: clean(p0.get(f"name_{l}")) for l in ("de", "it", "fr", "en")} if single else dict(WINE_NAMES.get(key, {}))
         aliases = set()
+        if cfg["group"] == "wine" and not single:
+            # the merged units (e.g. Gironde, Vaud) and their admin regions still resolve to this wine region
+            for p in props:
+                aliases.update(a for a in [p["name"], *[clean(p.get(f"name_{l}")) for l in ("de", "it", "fr", "en")]] if a)
+            aliases.update(WINE_NAMES.get(key, {}).values())
         for p in props if single else []:
             aliases.update(clean(a) for a in (p.get("name_alt") or "").split("|") if a)
             aliases.update(v for v in names.values() if v)
@@ -158,8 +221,11 @@ def build(features, iso, cfg):
             "aliases": sorted({slug(a) for a in aliases if a} - {slug(name)}),
             "d": to_path(geom, tx),
         })
+    extra = {rid: {slug(a) for a in names} for rid, names in EXTRA.get(iso, {}).items()}
     for r in regions:
-        r["aliases"] = sorted(set(r["aliases"]) | {slug(a) for a in EXTRA.get(iso, {}).get(r["id"], [])})
+        # an explicit EXTRA alias wins over the same name on another region (e.g. "Porto" = port wine → Douro)
+        claimed = set().union(*[v for k, v in extra.items() if k != r["id"]]) if extra else set()
+        r["aliases"] = sorted((set(r["aliases"]) - claimed) | extra.get(r["id"], set()))
         if NAMES_DE.get(iso, {}).get(r["id"]):
             r["names"]["de"] = NAMES_DE[iso][r["id"]]
     unknown = [k for k in EXTRA.get(iso, {}) if k not in {r["id"] for r in regions}]

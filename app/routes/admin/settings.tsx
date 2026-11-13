@@ -5,6 +5,7 @@ import { getDb, schema } from "~/.server/db";
 import { getSettings, saveSetting } from "~/.server/settings";
 import { listPriceSources } from "~/.server/price-sources";
 import { LOCALES, LOCALE_LABELS } from "~/lib/localized";
+import { REGION_MAP_COUNTRIES } from "~/lib/maps/regions";
 import { PRESETS, PRODUCER_TERMS, TRADE_TERMS } from "~/lib/settings";
 import { parseMoneyInput } from "~/lib/money";
 import { Button, Checkbox, Field, Input, Notice, RadioCard, Select, Textarea } from "~/components/ui";
@@ -59,6 +60,7 @@ export async function action({ request }: Route.ActionArgs) {
     originMap: {
       mode: ["auto", "regions", "world", "off"].includes(o.originMap?.mode) ? o.originMap.mode : shop.originMap.mode,
       country: /^[A-Za-z]{2}$/.test(o.originMap?.country ?? "") ? String(o.originMap.country).toUpperCase() : shop.originMap.country,
+      world: form.has("originMap.world"),
     },
     modules: {
       producers: form.has("modules.producers"), story: form.has("modules.story"), trade: form.has("modules.trade"),
@@ -178,9 +180,12 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
                 </Select>
               )}
             </Field>
-            <Field label="Heimatland (ISO)" hint="Regionenkarte verfügbar: IT">
+            <Field label="Heimatland (ISO)" hint={`Regionenkarten: ${REGION_MAP_COUNTRIES.join(", ")}`}>
               {(id) => <Input id={id} name="originMap.country" defaultValue={shop.originMap.country} maxLength={2} className="uppercase" />}
             </Field>
+          </div>
+          <div className="mt-2 divide-y divide-border">
+            <Toggle name="originMap.world" label="Weltkarte anzeigen" description="Zoombare Weltkarte als eigene Ansicht; Länder mit Regionenkarte (z. B. IT, FR, CH, AT, DE, ES, PT) öffnen ihre Regionen. Aus: nur Regionenkarten und A–Z." defaultChecked={shop.originMap.world} />
           </div>
         </Panel>
         <Panel title="Verkaufsmodell" description="B2B-only, B2C oder beides — mit Preisanzeige je Kundengruppe.">

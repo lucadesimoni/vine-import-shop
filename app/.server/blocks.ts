@@ -106,7 +106,9 @@ export async function resolveBlocks(ctx: ShopContext, blocks: Block[]): Promise<
           const f = await originFacets(ctx);
           const iso = ctx.shop.originMap.country;
           const regions = f.regions.filter((r) => r.country === iso);
-          const map = hasRegionMap(iso) && regions.length && ctx.shop.originMap.mode !== "world" ? await loadRegionMap(iso) : null;
+          const om = ctx.shop.originMap;
+          const map = hasRegionMap(iso) && regions.length && (om.mode !== "world" || !om.world) ? await loadRegionMap(iso) : null;
+          if (!map && !om.world) return { ...b, enabled: false };
           return { ...b, res: { map, regions: regions.map((r) => ({ id: r.id, name: r.name, count: r.count })), countries: f.countries.map((c) => ({ id: c.iso, count: c.count })), producers: new Set(f.countries.flatMap((c) => c.producers.map((p) => p.slug))).size } };
         }
         case "text": return { ...b, res: { html: md(d.body) } };

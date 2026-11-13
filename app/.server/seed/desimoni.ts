@@ -222,6 +222,15 @@ export async function seedDeSimoniDemo(db: DB) {
     const hit = LOGOS.find((l) => s === l || s.startsWith(`${l}-`) || s.includes(l) || (l.split("-").length > 1 && l.split("-").every((w) => s.includes(w))));
     return hit ? `${D}/marchi/${hit}.webp` : null;
   };
+  // The test-site export has no region for producers outside Italy; their (public) wine region, so the maps drill down
+  const REGION_OF: Record<string, string> = {
+    "Georg Schlegel": "Bündner Herrschaft", "Weingut Roman Hermann": "Bündner Herrschaft", "Weingut Familie Hansruedi Adank": "Bündner Herrschaft",
+    "Weingut Sprecher von Bernegg": "Bündner Herrschaft", "Weingut Erich Meier": "Zürichsee", "Weingut Bisang": "Luzern",
+    "Il Cavaliere": "Tessin", "Tenuta San Giorgio": "Tessin", "Caves de Chambleau": "Neuenburg",
+    "Gerhard Markowitsch": "Carnuntum", "Weingut Alzinger": "Wachau", "Domäne Wachau": "Wachau", "Tement": "Südsteiermark",
+    "Encry": "Champagne", "Bodegas Altanza": "Rioja", "Bodegas y Viñedos Neo": "Ribera del Duero",
+  };
+  for (const p of catalog) if (!p.region && REGION_OF[p.producer]) p.region = REGION_OF[p.producer];
   const prodInfo = new Map<string, { region: string | null; country: string; curated: boolean; erp: string }>();
   for (const p of catalog) {
     const cur = prodInfo.get(p.producer);

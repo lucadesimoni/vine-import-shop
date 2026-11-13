@@ -77,14 +77,14 @@ export function Header() {
     <>
     <header className={cn("sticky top-0 z-40 border-b bg-bg/90 backdrop-blur-md transition-[border-color,box-shadow] duration-300", scrolled ? "border-border shadow-bar" : "border-transparent")}>
       {announcement && (
-        <div className="bg-primary px-4 py-1.5 text-center text-label tracking-wide text-on-primary">{announcement}</div>
+        <div className="bg-primary px-4 py-1.5 text-center text-label tracking-wide text-on-primary dark:bg-[color-mix(in_oklab,var(--t-primary)_45%,var(--t-bg))] dark:text-fg">{announcement}</div>
       )}
       <div className="container-page flex h-[var(--header-h)] items-center gap-2 sm:gap-6">
-        <button className={buttonClass({ variant: "ghost", size: "icon" }, "-ml-2.5 max-sm:h-10 max-sm:w-10 lg:hidden")} onClick={() => setOpen(true)} aria-label={t("nav.menu")}>
+        <button className={buttonClass({ variant: "ghost", size: "icon" }, "-ml-2.5 max-sm:h-10 max-sm:w-10 xl:hidden")} onClick={() => setOpen(true)} aria-label={t("nav.menu")}>
           <Menu size={20} strokeWidth={1.5} />
         </button>
         <Logo />
-        <nav className="mx-auto hidden items-center gap-1 lg:flex" aria-label="Main">
+        <nav className="mx-auto hidden min-w-0 items-center xl:flex 2xl:gap-1" aria-label="Main">
           {nav.map((n) => (
             <NavLink
               key={n.to}
@@ -92,8 +92,8 @@ export function Header() {
               end={n.end}
               className={({ isActive }) =>
                 cn(
-                  "relative px-3.5 py-2 text-sm text-fg/80 transition-colors hover:text-fg",
-                  "after:absolute after:inset-x-3.5 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 hover:after:scale-x-100",
+                  "relative whitespace-nowrap px-2.5 py-2 text-sm text-fg/80 transition-colors hover:text-fg 2xl:px-3.5",
+                  "after:absolute after:inset-x-2.5 2xl:after:inset-x-3.5 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 hover:after:scale-x-100",
                   isActive && "text-fg after:scale-x-100",
                 )
               }
@@ -102,7 +102,7 @@ export function Header() {
             </NavLink>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-0 sm:gap-1 lg:ml-0">
+        <div className="ml-auto flex items-center gap-0 sm:gap-1 xl:ml-0">
           {locales.length > 1 && (
             <div className="mr-2 hidden items-center gap-1 text-xs font-medium tracking-wider sm:flex">
               {locales.map((l, i) => (
@@ -118,8 +118,8 @@ export function Header() {
             </div>
           )}
           {showPortal && (
-            <a href={`${channel.portalUrl}/portal`} className={buttonClass({ variant: "secondary", size: "sm" }, "mr-2 hidden md:inline-flex")}>
-              <Building2 size={15} strokeWidth={1.6} /> {t("portal.title")}
+            <a href={`${channel.portalUrl}/portal`} className={buttonClass({ variant: "secondary", size: "sm" }, "mr-2 hidden md:inline-flex xl:max-2xl:w-9 xl:max-2xl:px-0")} aria-label={t("portal.title")} title={t("portal.title")}>
+              <Building2 size={15} strokeWidth={1.6} /> <span className="xl:max-2xl:sr-only">{t("portal.title")}</span>
             </a>
           )}
           <ThemeToggle className="hidden sm:inline-flex" />
@@ -129,14 +129,14 @@ export function Header() {
           <Link to={user ? (user.role === "customer" ? "/account" : "/admin") : "/login"} className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10 max-[359px]:hidden")} aria-label={user ? t("nav.account") : t("nav.login")}>
             <User size={19} strokeWidth={1.5} />
           </Link>
-          <Link to="/order-list" className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10 xl:w-auto xl:gap-4 xl:px-3")} aria-label={cartCount ? `${t("nav.orderList")} (${cartCount})` : t("nav.orderList")}>
+          <Link to="/order-list" className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10 2xl:w-auto 2xl:gap-4 2xl:px-3")} aria-label={cartCount ? `${t("nav.orderList")} (${cartCount})` : t("nav.orderList")}>
             <span className="relative">
               <ShoppingBag size={19} strokeWidth={1.5} />
               {cartCount > 0 && (
                 <span key={cartCount} className="absolute -right-2 -top-1.5 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-primary px-1 text-2xs font-semibold leading-none tracking-normal tabular-nums text-on-primary ring-2 ring-bg">{cartCount > 99 ? "99+" : cartCount}</span>
               )}
             </span>
-            <span className="hidden xl:inline">{t("nav.orderList")}</span>
+            <span className="hidden 2xl:inline">{t("nav.orderList")}</span>
           </Link>
         </div>
       </div>
@@ -154,7 +154,7 @@ export function Header() {
     </header>
 
       {/* Mobile navigation — outside <header>: its backdrop-filter would become the containing block of position:fixed */}
-      <div className={cn("fixed inset-0 z-50 lg:hidden", open ? "visible" : "invisible delay-300")} aria-hidden={!open}>
+      <div className={cn("fixed inset-0 z-50 xl:hidden", open ? "visible" : "invisible delay-300")} aria-hidden={!open}>
         <div className={cn("absolute inset-0 bg-fg/40 transition-opacity duration-300", open ? "opacity-100" : "opacity-0")} onClick={() => setOpen(false)} />
         <nav className={cn("absolute inset-y-0 left-0 flex w-[min(360px,88vw)] flex-col bg-bg px-6 pb-8 pt-5 shadow-pop transition-transform duration-300 ease-out", open ? "translate-x-0" : "-translate-x-full")}>
           <div className="mb-6 flex items-center justify-between">

@@ -128,6 +128,8 @@ export const shopSchema = z.object({
     .object({
       mode: z.enum(["auto", "regions", "world", "off"]).default("auto"),
       country: z.string().length(2).default("IT"),
+      /** world map view (zoomable) on the producers page and as fallback in blocks; off = region maps + A–Z only */
+      world: z.boolean().default(true),
     })
     .prefault({}),
   /** Who sees prices in the storefront (the portal always shows trade prices). Hidden prices turn checkout into a quote request. */

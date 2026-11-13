@@ -12,6 +12,23 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Wine-region maps** for France (25 areas: Bordeaux, Burgund, Champagne, Elsass, Loire, Rhône …), Portugal (Douro, Vinho Verde, Dão, Alentejo …), Switzerland (Wallis, Waadt, Genf, Drei-Seen-Land, Tessin, Deutschschweiz) and Austria (Niederösterreich, Burgenland, Steiermark, Wien, Bergland).
+  - The maps are built from départements, districts and cantons. Appellations and administrative names both resolve to the right area ("Saint-Émilion", "Gironde" → Bordeaux; "Graubünden" → Deutschschweiz).
+  - Spain and Germany keep their autonomous communities and federal states, with wine-region aliases.
+  - Demo: the Swiss, Austrian, French and Spanish producers have their region, so each country drills down like Italy.
+- **Zoomable world map.**
+  - Controls: zoom buttons, "Europa", ctrl/⌘ + scroll or trackpad pinch, touch pinch, drag, double click.
+  - When zoomed in, real country outlines (Natural Earth) replace the dot grid. They are loaded only on demand.
+  - The map opens on the countries that have products.
+- **Admin › Einstellungen › Herkunftskarte › "Weltkarte anzeigen".** When it is off, the shop shows region maps (home country and every country with a map) and A–Z only.
+
+### Changed
+- **Dark mode is calmer.**
+  - The lifted brand colour loses some saturation (no more neon). Text on buttons keeps ≥ 4.5 : 1 contrast.
+  - The announcement bar is muted.
+  - Packshots and their stage are slightly dimmed, so white photos no longer glare.
+- **Header:** the full navigation shows from 1280 px; below that the menu takes over. The B2B-portal button is icon-only up to 1536 px, and the order-list label appears from 1536 px. The header no longer runs past the screen at 1024–1440 px.
 ## [1.2.0] - 2026-11-13
 
 ### Added

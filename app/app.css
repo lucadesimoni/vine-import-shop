@@ -110,6 +110,8 @@
 }
 
 @layer base {
+  /* dark mode: photos on the light media stage are dimmed to the stage tone (white packshot background ≈ --t-media) */
+  [data-theme="dark"] .bg-media img { filter: brightness(0.9); }
   /* Grid items may shrink below their content width (default min-width:auto lets one long word or a
      nowrap row blow a single-column phone layout wider than the screen). */
   :where(.grid, .inline-grid) > * {

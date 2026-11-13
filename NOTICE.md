@@ -7,7 +7,7 @@ Third-party open-source packages: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES
 
 | Files | Source | Terms |
 |---|---|---|
-| `app/lib/maps/world.json` and `app/lib/maps/regions/*.json` (except `it.json`) | [Natural Earth](https://www.naturalearthdata.com/), admin-0 / admin-1 boundaries, simplified (`scripts/maps/build-region-maps.py`) | Public domain |
+| `app/lib/maps/world.json`, `world-shapes.json` (`scripts/maps/build-world-shapes.py`) and `app/lib/maps/regions/*.json` (except `it.json`) | [Natural Earth](https://www.naturalearthdata.com/), admin-0 / admin-1 boundaries, simplified (`scripts/maps/build-region-maps.py`) | Public domain |
 | `app/lib/maps/regions/it.json` | Italian regions from [openpolis/geojson-italy](https://github.com/openpolis/geojson-italy) (ISTAT boundaries), simplified | Attribution: © ISTAT, openpolis — check the licence stated in the source repository before redistributing; replace with the Natural Earth build (`build-region-maps.py … IT`) if in doubt |
 
 Map shading and the dot-matrix world map are the platform's own rendering of these data.
