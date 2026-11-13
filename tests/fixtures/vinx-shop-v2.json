@@ -1,6 +1,6 @@
 {
  "source": "I-AG Standard Shop API v2.0 2.0 — https://vinxapi.i-ag.ch/swagger/Shopv20/swagger.json (extract: field names & enums only)",
- "fetched": "2026-11-12",
+ "fetched": "2026-11-13",
  "paths": [
   "/api/v2.0/Core/VinX/Shop/BaseData/Address",
   "/api/v2.0/Core/VinX/Shop/BaseData/Address({id})/ChangeShopUsername",
@@ -190,6 +190,170 @@
     "history",
     "historyRtf",
     "id"
+   ]
+  },
+  "Wine": {
+   "fields": [
+    "acidity",
+    "characteristic",
+    "characteristicRtf",
+    "classificationId",
+    "consumptionAdvice",
+    "consumptionAdviceRtf",
+    "designation",
+    "drinkingTemperature",
+    "hasActiveArticles",
+    "history",
+    "historyRtf",
+    "id",
+    "maximalDrinkingTemperature",
+    "maximalStoragePeriod",
+    "minimalDrinkingTemperature",
+    "ratingPoints",
+    "ratingText",
+    "ratingTextRtf",
+    "residualSugar",
+    "searchTerm",
+    "storagePeriod",
+    "terroir",
+    "terroirRtf",
+    "vinification",
+    "vinificationRtf"
+   ]
+  },
+  "WineRating": {
+   "fields": [
+    "id",
+    "points",
+    "ratingDate",
+    "ratingId",
+    "ratingText",
+    "vintage",
+    "wineId"
+   ]
+  },
+  "Rating": {
+   "fields": [
+    "designation",
+    "id",
+    "maximalRating",
+    "minimalRating",
+    "unit"
+   ]
+  },
+  "Brand": {
+   "fields": [
+    "description",
+    "designation",
+    "history",
+    "historyRtf",
+    "id",
+    "producerId",
+    "website"
+   ]
+  },
+  "DocumentInfo": {
+   "fields": [
+    "Id",
+    "addressId",
+    "documentDescription",
+    "receiptId"
+   ]
+  },
+  "OrderProposal": {
+   "fields": [
+    "addressId",
+    "articleId",
+    "articleNumber",
+    "categoryDesignation",
+    "numberOfOrders",
+    "onlineUserName",
+    "quantityOrdered"
+   ]
+  },
+  "ArticleSelectionCode": {
+   "fields": [
+    "articleId",
+    "id",
+    "selectionId"
+   ]
+  },
+  "Address": {
+   "fields": [
+    "additionalLine1",
+    "additionalLine2",
+    "addressNumber",
+    "billingAddressId",
+    "birthday",
+    "bonusRevenue",
+    "chainId",
+    "changedOn",
+    "city",
+    "companyAdditionalName",
+    "companyName",
+    "contactPersonId",
+    "countryId",
+    "createdDate",
+    "currency",
+    "customerCategoryId",
+    "deliveryConditionId",
+    "deliveryDayId",
+    "distributionChannelId",
+    "eMail",
+    "faxBusiness",
+    "firstName",
+    "id",
+    "isActive",
+    "language",
+    "letterSalutation",
+    "mobile",
+    "name",
+    "paymentConditionId",
+    "phoneBusiness",
+    "phoneDirect",
+    "phonePrivate",
+    "priceGroupId",
+    "promotionAllowed",
+    "salesRepresentativeId",
+    "salutationId",
+    "searchTerm",
+    "selectionCodeId",
+    "shopUserPwd",
+    "shopUsername",
+    "street",
+    "title",
+    "tourId",
+    "zipCode"
+   ]
+  },
+  "Receipt": {
+   "fields": [
+    "addressId",
+    "changedOn",
+    "collectiveInvoiceId",
+    "createdDate",
+    "deliveryAddressId",
+    "deliveryNoteDate",
+    "deliveryNoteNumber",
+    "dueDate",
+    "id",
+    "invoiceNumber",
+    "invoicingDate",
+    "orderDate",
+    "orderNumber",
+    "positions",
+    "pricingDate",
+    "receiptDate",
+    "receiptNumber",
+    "receiptStatus",
+    "receiptTypeId",
+    "shopId",
+    "totalContainer",
+    "totalDiscount",
+    "totalGoods",
+    "totalNet",
+    "totalPayed",
+    "totalVat"
    ]
   },
   "StockDataHead": {

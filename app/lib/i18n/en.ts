@@ -56,7 +56,7 @@ const en: Partial<Messages> = {
   "portal.toShop": "To the shop", "portal.toPortal": "To the B2B portal", "portal.welcome": "Welcome back, {name}",
   "portal.kpi.ordersYear": "Orders {year}", "portal.kpi.revenueYear": "Revenue {year}", "portal.kpi.open": "In progress", "portal.kpi.list": "Order list",
   "portal.minOrder": "Minimum order {amount} · {group} terms", "portal.recent": "Recent orders", "portal.frequent": "Frequently ordered",
-  "portal.contact": "Your contact", "portal.downloads": "Downloads", "portal.allOrders": "All orders", "portal.addSelected": "Add selected to list",
+  "portal.contact": "Your contact", "portal.downloads": "Downloads", "product.years": "years", "product.ratings": "Ratings", "product.drinkTemp": "Serving temperature", "product.storage": "Ageing potential", "product.characteristic": "Character", "product.vinification": "Vinification", "product.terroir": "Terroir", "product.advice": "Recommendation", "portal.documents": "Documents", "portal.allOrders": "All orders", "portal.addSelected": "Add selected to list",
   "portal.results": "{n} items", "portal.noAccess": "No access to the B2B portal",
   "portal.noAccessText": "The portal is open to approved trade customers. Apply for a trade account.",
   "portal.pendingText": "Your trade account is being reviewed.", "portal.loginTitle": "Trade customer login",

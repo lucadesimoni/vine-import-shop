@@ -68,9 +68,12 @@ export async function syncArticles(client: ErpClient, full = false) {
     const producerCache = new Map<string, number>();
     const categoryCache = new Map<string, number | null>();
 
+    // optional e-commerce assortment (vinX ArticleSelectionCode): articles outside it are not offered online
+    const assortment = cfg.selectionCodeId && client.assortment ? await client.assortment(cfg.selectionCodeId) : null;
     for await (const raw of client.articles(since)) {
       const a = mapArticle(raw, mappingFor(cfg, client));
       if (!a.sku) { skipped++; continue; }
+      if (assortment && !assortment.has(String(a.variant.erpId ?? a.sku))) a.variant.active = false;
 
       let producerId: number | undefined;
       if (a.producer) {
@@ -80,6 +83,15 @@ export async function syncArticles(client: ErpClient, full = false) {
           const found = (await db.query.producers.findFirst({ where: eq(schema.producers.erpId, a.producer) })) ?? (await db.query.producers.findFirst({ where: eq(schema.producers.name, a.producer) }));
           producerId = found?.id ?? (await db.insert(schema.producers).values({ name: a.producer, erpId: a.producer, slug: await uniqueSlug("producers", slugify(a.producer)), country: a.product.country, region: a.product.region }).returning())[0].id;
           if (found && !found.erpId) await db.update(schema.producers).set({ erpId: a.producer }).where(eq(schema.producers.id, found.id));
+          // producer portrait / website from vinX only while the shop has none (shop texts win)
+          const info = a.producerInfo;
+          const target = found ?? (await db.query.producers.findFirst({ where: eq(schema.producers.id, producerId) }));
+          if (info && target) {
+            const patch: Partial<typeof schema.producers.$inferInsert> = {};
+            if (info.description && !Object.values(target.description ?? {}).some(Boolean)) patch.description = { de: info.description };
+            if (info.website && !target.website && /^https?:\/\//.test(info.website)) patch.website = info.website;
+            if (Object.keys(patch).length) await db.update(schema.producers).set(patch).where(eq(schema.producers.id, target.id));
+          }
           // origin from supplier master data: fill producer region/country once known
           if (found && !found.region && a.product.region) await db.update(schema.producers).set({ region: a.product.region, country: found.country ?? a.product.country }).where(eq(schema.producers.id, found.id));
           producerCache.set(a.producer, producerId);
@@ -109,6 +121,11 @@ export async function syncArticles(client: ErpClient, full = false) {
         const pPatch: Partial<typeof schema.products.$inferInsert> = { updatedAt: new Date() };
         if (owned.has("taxClass") && a.product.taxClass) pPatch.taxClass = a.product.taxClass;
         if (owned.has("name") && Object.keys(a.names).length) pPatch.name = a.names;
+        if (a.details) pPatch.erpDetails = a.details;
+        if (a.text) {
+          const cur = await db.query.products.findFirst({ where: eq(schema.products.id, existing.productId), columns: { description: true } });
+          if (!Object.values(cur?.description ?? {}).some(Boolean)) pPatch.description = { de: a.text };
+        }
         await db.update(schema.products).set(pPatch).where(eq(schema.products.id, existing.productId));
         updated++;
         continue;
@@ -135,6 +152,8 @@ export async function syncArticles(client: ErpClient, full = false) {
             color: a.product.color as "red" | undefined,
             taxClass: a.product.taxClass ?? (kind === "food" ? "reduced" : "standard"),
             ageRestricted: kind !== "food",
+            erpDetails: a.details ?? null,
+            ...(a.text ? { description: { de: a.text } } : {}),
           })
           .returning();
       }
@@ -423,8 +442,12 @@ export async function processOutbox(client?: ErpClient, limit = 50) {
           const erpId = await client.pushOrder(row.payload as OrderPayload);
           await db.update(schema.orders).set({ erpId: erpId || null, erpStatus: "transferred" }).where(eq(schema.orders.id, row.refId));
         } else {
-          const erpId = await client.pushCustomer(row.payload as CustomerPayload);
+          const payload = row.payload as CustomerPayload;
+          const erpId = await client.pushCustomer(payload);
           if (erpId) await db.update(schema.users).set({ erpId }).where(eq(schema.users.id, row.refId));
+          // login e-mail changed → keep the vinX shop username in step (BaseData/Address/ChangeShopUsername)
+          const addressId = erpId || payload.erpId;
+          if (payload.previousEmail && addressId && client.changeShopUsername) await client.changeShopUsername(addressId, payload.email);
         }
         await db.update(schema.erpOutbox).set({ status: "sent", sentAt: new Date(), attempts: row.attempts + 1, lastError: null }).where(eq(schema.erpOutbox.id, row.id));
         sent++;

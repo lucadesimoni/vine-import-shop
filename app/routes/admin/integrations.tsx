@@ -20,7 +20,11 @@ export async function loader() {
   ]);
   const ext = await import("~/.server/extensions");
   await ext.bootExtensions();
+  // reference data for the condition / price-group mappings (best effort, never blocks the page)
+  const ref = await erpClient(vinx).then((c) => c.referenceData ? Promise.race([c.referenceData(), new Promise<null>((r) => setTimeout(() => r(null), 4000))]) : null).catch(() => null);
+  const pick = (rows: Record<string, unknown>[] = []) => rows.slice(0, 40).map((r) => ({ id: String(r.Id ?? r.id ?? ""), name: String(r.designation ?? r.description ?? r.name ?? "") }));
   return {
+    reference: ref ? { delivery: pick(ref.deliveryConditions), payment: pick(ref.paymentConditions), priceGroups: pick(ref.priceGroups) } : null,
     vinx, logs, outbox, counts, last,
     secrets: { password: !!process.env.VINX_PASSWORD, cron: !!process.env.CRON_SECRET, webhook: !!process.env.VINX_WEBHOOK_SECRET },
     drivers: [...ext.erpDrivers.values()].map((d) => ({ id: d.id, label: d.label })),
@@ -46,6 +50,7 @@ export async function action({ request }: Route.ActionArgs) {
       username: String(form.get("username") ?? ""), livePrices: form.has("livePrices"), liveBasket: form.has("liveBasket"),
       pushOrders: form.has("pushOrders"), pushCustomers: form.has("pushCustomers"), pullCustomers: form.has("pullCustomers"),
       promoArticleId: Number(form.get("promoArticleId")) || null,
+      selectionCodeId: String(form.get("selectionCodeId") ?? "").trim(),
       clientId: String(form.get("clientId") ?? "").trim() || "Integrated",
       defaultDeliveryConditionId: Number(form.get("defaultDeliveryConditionId")) || null,
       defaultPaymentConditionId: Number(form.get("defaultPaymentConditionId")) || null,
@@ -108,7 +113,7 @@ const JOBS = [
 ] as const;
 
 export default function Integrations({ loaderData }: Route.ComponentProps) {
-  const { vinx, logs, outbox, counts, last, secrets, drivers, extraJobs, extensions } = loaderData;
+  const { vinx, logs, outbox, counts, last, secrets, drivers, extraJobs, extensions, reference } = loaderData;
   const result = useActionData<typeof action>();
   const nav = useNavigation();
   const running = nav.state === "submitting" ? nav.formData?.get("intent") : null;
@@ -167,6 +172,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
                 <Field label="Benutzer">{(id) => <Input id={id} name="username" defaultValue={vinx.username} autoComplete="off" />}</Field>
                 <Field label="Passwort" hint={secrets.password ? "VINX_PASSWORD gesetzt" : "Umgebungsvariable VINX_PASSWORD fehlt"}>{(id) => <Input id={id} disabled value="••••••••" readOnly />}</Field>
                 <Field label="Aktionsartikel (Gutscheine)" hint="vinX-Artikel-ID für Rabattpositionen">{(id) => <Input id={id} name="promoArticleId" defaultValue={vinx.promoArticleId ?? ""} inputMode="numeric" />}</Field>
+                <Field label="Online-Sortiment" hint="ArticleSelectionCode selectionId — leer: alle Artikel">{(id) => <Input id={id} name="selectionCodeId" defaultValue={vinx.selectionCodeId} inputMode="numeric" />}</Field>
                 <Field label="Client-ID (Token)">{(id) => <Input id={id} name="clientId" defaultValue={vinx.clientId} />}</Field>
                 <Field label="Lieferbedingung (Standard)" hint="BaseData/DeliveryCondition id — Pflicht im Warenkorb">{(id) => <Input id={id} name="defaultDeliveryConditionId" defaultValue={vinx.defaultDeliveryConditionId ?? ""} inputMode="numeric" />}</Field>
                 <Field label="Zahlungskondition (Standard)" hint="BaseData/PaymentCondition id — Pflicht im Warenkorb">{(id) => <Input id={id} name="defaultPaymentConditionId" defaultValue={vinx.defaultPaymentConditionId ?? ""} inputMode="numeric" />}</Field>
@@ -223,6 +229,21 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
               </ul>
             )}
           </Panel>
+
+          {reference && (
+            <Panel title="Stammdaten aus vinX" description="IDs für Lieferbedingung, Zahlungskondition und Preisgruppe">
+              <div className="grid gap-4 sm:grid-cols-3">
+                {([["Lieferbedingungen", reference.delivery], ["Zahlungskonditionen", reference.payment], ["Preisgruppen", reference.priceGroups]] as const).map(([t, rows]) => (
+                  <div key={t} className="min-w-0">
+                    <h3 className="text-field-label mb-1.5">{t}</h3>
+                    {rows.length ? (
+                      <ul className="grid gap-1 text-note">{rows.map((r) => <li key={r.id} className="flex gap-2"><code className="tabular-nums text-muted-fg">{r.id}</code><span className="truncate">{r.name}</span></li>)}</ul>
+                    ) : <p className="text-note text-muted-fg">—</p>}
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
 
           <Panel title="Endpunkte & Geheimnisse">
             <dl className="grid gap-2 text-note">

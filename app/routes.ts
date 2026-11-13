@@ -43,6 +43,7 @@ export default [
   route("logout", "routes/resources/logout.ts"),
   route("set-locale", "routes/resources/set-locale.ts"),
   route("account/price-list.csv", "routes/resources/price-list.ts"),
+  route("account/documents/:id", "routes/resources/erp-document.ts"),
   route("sitemap.xml", "routes/resources/sitemap.ts"),
   route("robots.txt", "routes/resources/robots.ts"),
   route("uploads/*", "routes/resources/uploads.ts"),

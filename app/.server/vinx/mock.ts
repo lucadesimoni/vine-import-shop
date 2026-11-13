@@ -1,4 +1,4 @@
-import { eq, isNotNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { mkdir, writeFile } from "node:fs/promises";
 import { getDb, schema } from "../db";
 import type { CustomerPayload, ErpClient, OrderPayload, ProductInfo, Raw } from "./client";
@@ -127,4 +127,71 @@ export class MockClient implements ErpClient {
       };
     }
   }
+
+  /** BaseData/DocumentInfo: one invoice per transferred order older than a day (demo). */
+  async documents(addressId: string) {
+    const db = await getDb();
+    const user = await db.query.users.findFirst({ where: eq(schema.users.erpId, addressId) });
+    if (!user) return [];
+    const rows = await db.select().from(schema.orders).where(and(eq(schema.orders.userId, user.id), isNotNull(schema.orders.erpId)));
+    return rows
+      .filter((o) => Date.now() - o.createdAt.getTime() > 24 * 3600e3)
+      .map((o) => ({ id: String(o.id), receiptId: o.erpId, title: `Rechnung R-${o.id} · ${o.number}` }));
+  }
+
+  /** BaseData/Document: a small generated PDF (demo — vinX returns the archived original). */
+  async document(id: string) {
+    const db = await getDb();
+    const o = await db.query.orders.findFirst({ where: eq(schema.orders.id, Number(id)) });
+    if (!o) return null;
+    const chf = (c: number) => (c / 100).toFixed(2);
+    const pdf = minimalPdf([`Rechnung R-${o.id}`, `Bestellung ${o.number} vom ${o.createdAt.toLocaleDateString("de-CH")}`, `${o.billing.name}`, `Total CHF ${chf(o.totalGross)}`, "", "Demo-Dokument (vinX Mock)"]);
+    return { body: pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer, type: "application/pdf", name: `rechnung-R-${o.id}.pdf` };
+  }
+
+  /** Calculated/OrderProposal: articles the customer ordered, most frequent first. */
+  async orderProposal(addressId: string) {
+    const db = await getDb();
+    const user = await db.query.users.findFirst({ where: eq(schema.users.erpId, addressId) });
+    if (!user) return [];
+    const ids = (await db.select({ id: schema.orders.id }).from(schema.orders).where(eq(schema.orders.userId, user.id))).map((r) => r.id);
+    if (!ids.length) return [];
+    const agg = new Map<string, { quantity: number; orders: Set<number> }>();
+    for (const i of await db.select().from(schema.orderItems).where(inArray(schema.orderItems.orderId, ids))) {
+      const a = agg.get(i.sku) ?? { quantity: 0, orders: new Set<number>() };
+      a.quantity += i.qty; a.orders.add(i.orderId); agg.set(i.sku, a);
+    }
+    return [...agg].map(([sku, a]) => ({ articleId: sku, articleNumber: sku, quantity: a.quantity, orders: a.orders.size })).sort((x, y) => y.orders - x.orders || y.quantity - x.quantity).slice(0, 24);
+  }
+
+  async referenceData() {
+    return {
+      deliveryConditions: [{ id: 1, designation: "Post / Paketversand" }, { id: 2, designation: "Eigene Auslieferung" }, { id: 4, designation: "Abholung Lager" }],
+      paymentConditions: [{ id: 1, designation: "Vorauskasse" }, { id: 2, designation: "Rechnung 30 Tage netto" }, { id: 7, designation: "Online-Zahlung" }],
+      priceGroups: (await this.priceGroups()).map((g) => ({ id: g.id, designation: g.name })),
+    };
+  }
+
+  async changeShopUsername() {
+    // demo: nothing to change remotely
+  }
+}
+
+/** A one-page PDF with Helvetica text lines (valid xref, no dependencies). */
+export function minimalPdf(lines: string[]): Uint8Array {
+  const esc = (t: string) => t.normalize("NFKD").replace(/[^\x20-\x7e]/g, "").replace(/([\\()])/g, "\\$1");
+  const stream = `BT /F1 12 Tf 56 780 Td 16 TL ${lines.map((l) => `(${esc(l)}) Tj T*`).join(" ")} ET`;
+  const objs = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  ];
+  let out = "%PDF-1.4\n";
+  const offsets: number[] = [];
+  objs.forEach((o, i) => { offsets.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const xref = out.length;
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offsets.map((n) => `${String(n).padStart(10, "0")} 00000 n \n`).join("")}trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return new TextEncoder().encode(out);
 }

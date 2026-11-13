@@ -52,17 +52,18 @@ on("order.placed", async ({ orderId }) => {
   if (shop.notifyEmail) await sendMail(shop.notifyEmail, `[${order.isTrade ? "B2B" : "B2C"}] ${order.kind} ${order.number}`, html, order.email);
 });
 
-async function pushCustomer(userId: number) {
+async function pushCustomer(userId: number, previousEmail?: string) {
   const { vinx } = await getSettings("vinx");
   if (!vinx.enabled || !vinx.pushCustomers) return;
   const payload = await customerPayload(userId);
   if (payload) {
+    if (previousEmail && previousEmail.toLowerCase() !== payload.email.toLowerCase()) payload.previousEmail = previousEmail;
     await enqueue("customer", userId, payload);
     await flushSoon();
   }
 }
 on("customer.registered", ({ userId }) => pushCustomer(userId));
-on("customer.updated", ({ userId }) => pushCustomer(userId));
+on("customer.updated", ({ userId, previousEmail }) => pushCustomer(userId, previousEmail));
 on("trade.approved", async ({ userId }) => {
   await pushCustomer(userId);
   const db = await getDb();

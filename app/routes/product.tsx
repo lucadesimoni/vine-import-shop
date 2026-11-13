@@ -55,6 +55,8 @@ export default function Product({ loaderData }: Route.ComponentProps) {
     [t("product.origin"), [c.region, c.country].filter(Boolean).join(", ")],
     ...(shop.modules.wineDetails ? [[t("product.appellation"), p.appellation], [t("product.grapes"), p.grapes]] : []),
     [t("product.alcohol"), p.alcohol ? `${p.alcohol} % vol.` : null],
+    [t("product.drinkTemp"), p.erp?.drinkTemp],
+    [t("product.storage"), p.erp?.storage ? `${p.erp.storage} ${t("product.years")}` : null],
   ].filter(([, v]) => v) as [string, string][];
 
   return (
@@ -140,10 +142,33 @@ export default function Product({ loaderData }: Route.ComponentProps) {
           )}
           {!showPrices && !user && <Notice>{t("auth.tradeText")} <Link to="/trade#apply" className="font-medium underline underline-offset-4">{t("trade.apply")}</Link></Notice>}
 
+          {!!p.erp?.ratings?.length && (
+            <div className="grid gap-3">
+              <h2 className="text-eyebrow text-label text-muted-fg">{t("product.ratings")}</h2>
+              <ul className="flex flex-wrap gap-2">
+                {p.erp.ratings.map((r, i) => (
+                  <li key={i} className="flex min-w-0 items-baseline gap-2 rounded-control border border-border bg-surface px-3 py-2 text-sm" title={r.text ?? undefined}>
+                    <span className="truncate text-muted-fg">{r.source}{r.vintage ? ` ${r.vintage}` : ""}</span>
+                    {r.points != null && <span className="font-semibold tabular-nums">{r.points}{r.max ? `/${r.max}` : ""}{r.unit && !r.max ? ` ${r.unit}` : ""}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {p.description && (
             <div className="grid gap-3">
               <h2 className="text-eyebrow text-label text-muted-fg">{t("product.details")}</h2>
               <p className="text-lead whitespace-pre-line">{p.description}</p>
+            </div>
+          )}
+          {p.erp && (["characteristic", "vinification", "terroir", "advice"] as const).some((k) => p.erp?.[k]) && (
+            <div className="grid divide-y divide-border border-y border-border">
+              {(["characteristic", "vinification", "terroir", "advice"] as const).filter((k) => p.erp?.[k]).map((k) => (
+                <details key={k} className="group py-3.5">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium">{t(`product.${k}`)}<ChevronRight size={15} className="shrink-0 text-muted-fg transition-transform group-open:rotate-90" /></summary>
+                  <p className="mt-2 whitespace-pre-line text-sm text-muted-fg">{p.erp![k]}</p>
+                </details>
+              ))}
             </div>
           )}
           {p.pairing && (

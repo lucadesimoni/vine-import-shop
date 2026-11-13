@@ -13,6 +13,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import type { Block } from "~/lib/blocks";
+import type { ErpDetails } from "~/lib/erp-details";
 import type { Localized } from "~/lib/localized";
 
 /**
@@ -119,6 +120,8 @@ export const products = pgTable(
     promo: boolean("promo").notNull().default(false),
     isNew: boolean("is_new").notNull().default(false),
     image: text("image"),
+    /** ERP-owned details (wine texts, ratings, EAN …) — lib/erp-details.ts */
+    erpDetails: jsonb("erp_details").$type<ErpDetails>(),
     ...timestamps,
   },
   (t) => [index("products_category_idx").on(t.categoryId), index("products_producer_idx").on(t.producerId)],

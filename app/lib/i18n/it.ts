@@ -63,7 +63,7 @@ const it: Partial<Messages> = {
   "portal.toShop": "Al negozio", "portal.toPortal": "Al portale B2B", "portal.welcome": "Bentornato, {name}",
   "portal.kpi.ordersYear": "Ordini {year}", "portal.kpi.revenueYear": "Fatturato {year}", "portal.kpi.open": "In lavorazione", "portal.kpi.list": "Lista d'ordine",
   "portal.minOrder": "Ordine minimo {amount} · Condizioni {group}", "portal.recent": "Ultimi ordini", "portal.frequent": "Ordinati spesso",
-  "portal.contact": "Il vostro contatto", "portal.downloads": "Download", "portal.allOrders": "Tutti gli ordini", "portal.addSelected": "Aggiungi selezionati",
+  "portal.contact": "Il vostro contatto", "portal.downloads": "Download", "product.years": "anni", "product.ratings": "Valutazioni", "product.drinkTemp": "Temperatura di servizio", "product.storage": "Potenziale di invecchiamento", "product.characteristic": "Carattere", "product.vinification": "Vinificazione", "product.terroir": "Terroir", "product.advice": "Consiglio", "portal.documents": "Documenti", "portal.allOrders": "Tutti gli ordini", "portal.addSelected": "Aggiungi selezionati",
   "portal.results": "{n} articoli", "portal.noAccess": "Nessun accesso al portale B2B",
   "portal.noAccessText": "Il portale è riservato ai clienti commerciali approvati. Richiedete un conto commerciale.",
   "portal.pendingText": "Il vostro conto commerciale è in verifica.", "portal.loginTitle": "Accesso clienti commerciali",

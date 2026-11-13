@@ -315,7 +315,7 @@ const de = {
   "portal.recent": "Letzte Bestellungen",
   "portal.frequent": "Häufig bestellt",
   "portal.contact": "Ihr Kontakt",
-  "portal.downloads": "Downloads",
+  "portal.downloads": "Downloads", "product.years": "Jahre", "product.ratings": "Bewertungen", "product.drinkTemp": "Trinktemperatur", "product.storage": "Lagerfähigkeit", "product.characteristic": "Charakter", "product.vinification": "Vinifikation", "product.terroir": "Terroir", "product.advice": "Empfehlung", "portal.documents": "Belege aus dem ERP",
   "portal.allOrders": "Alle Bestellungen",
   "portal.addSelected": "Ausgewählte in Bestellliste",
   "portal.results": "{n} Artikel",

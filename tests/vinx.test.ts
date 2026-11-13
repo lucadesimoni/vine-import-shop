@@ -65,3 +65,34 @@ describe("CSV exchange", () => {
     expect(decodeUpload(bytes.buffer)).toBe("Nero dàvola");
   });
 });
+
+describe("vinX wine details", () => {
+  it("maps Wine texts, ratings, EAN and brand into erpDetails; producer info and ERP text separately", () => {
+    const a = mapArticle({
+      ...article, ean1: "8032853720010", isRarity: true, description: "Klassischer Nebbiolo aus Steillagen.", brand: { designation: "Rocce Rosse" },
+      producer: { id: 12, designation: "ARPEPE", history: "Seit 1860 in der Valtellina.", website: "https://www.arpepe.com" },
+      wine: { characteristic: "Rose, Teer", vinification: "Grosses Holzfass", minimalDrinkingTemperature: 16, maximalDrinkingTemperature: 18, storagePeriod: 5, maximalStoragePeriod: 20,
+        ratings: [{ source: "Gambero Rosso", points: 3, max: 3, unit: "Gläser", ratingText: null, vintage: 2016 }] },
+    }, m);
+    expect(a.details).toMatchObject({ characteristic: "Rose, Teer", vinification: "Grosses Holzfass", drinkTemp: "16–18 °C", storage: "5–20", ean: "8032853720010", rarity: true, brand: "Rocce Rosse" });
+    expect(a.details?.ratings).toEqual([{ source: "Gambero Rosso", points: 3, max: 3, unit: "Gläser", text: null, vintage: "2016" }]);
+    expect(a.text).toBe("Klassischer Nebbiolo aus Steillagen.");
+    expect(a.producerInfo).toEqual({ description: "Seit 1860 in der Valtellina.", website: "https://www.arpepe.com" });
+  });
+  it("leaves details empty when vinX has none", () => {
+    expect(mapArticle(article, m).details).toBeUndefined();
+  });
+});
+
+describe("mock driver documents", () => {
+  it("builds a valid PDF", async () => {
+    const { minimalPdf } = await import("~/.server/vinx/mock");
+    const s = new TextDecoder().decode(minimalPdf(["Rechnung R-1", "Total CHF 12.00 (ä)"]));
+    expect(s.startsWith("%PDF-1.4")).toBe(true);
+    const xref = Number(/startxref\n(\d+)/.exec(s)![1]);
+    expect(s.slice(xref, xref + 4)).toBe("xref");
+    const off = Number(/0000000000 65535 f \n(\d{10})/.exec(s)![1]);
+    expect(s.slice(off, off + 7)).toBe("1 0 obj");
+    expect(s).toContain("(Total CHF 12.00 \\(a\\)) Tj");
+  });
+});

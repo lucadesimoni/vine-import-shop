@@ -62,3 +62,23 @@ describe("vinX Shop API v2.0 contract", () => {
     for (const k of Object.keys(articleTypes)) expect(S.ArticleCategoryKindV20.enum, k).toContain(k);
   });
 });
+
+describe("vinX Shop API v2.0 contract — details, documents, proposals", () => {
+  it("uses real endpoints for wine details, documents, order proposals, assortment and username change", () => {
+    for (const p of ["BaseData/Wine", "BaseData/WineRating", "BaseData/Rating", "BaseData/Brand", "BaseData/DocumentInfo", "BaseData/Document({id})", "Calculated/OrderProposal",
+      "BaseData/ArticleSelectionCode", "BaseData/PaymentCondition", "BaseData/Address({id})/ChangeShopUsername", "BaseData/Receipt", "BaseData/Address"]) {
+      expect(spec.paths, p).toContain(SHOP + p);
+    }
+  });
+  it("reads only fields that exist", () => {
+    for (const f of ["characteristic", "vinification", "terroir", "consumptionAdvice", "history", "drinkingTemperature", "minimalDrinkingTemperature", "maximalDrinkingTemperature", "storagePeriod", "maximalStoragePeriod"]) expect(has("Wine", f), `Wine.${f}`).toBe(true);
+    for (const f of ["wineId", "ratingId", "points", "ratingText", "vintage"]) expect(has("WineRating", f), `WineRating.${f}`).toBe(true);
+    for (const f of ["designation", "maximalRating", "unit"]) expect(has("Rating", f), `Rating.${f}`).toBe(true);
+    for (const f of ["designation", "website", "history"]) expect(has("Brand", f), `Brand.${f}`).toBe(true);
+    for (const f of ["history", "description", "website"]) expect(has("Producer", f), `Producer.${f}`).toBe(true);
+    for (const f of ["Id", "receiptId", "addressId", "documentDescription"]) expect(has("DocumentInfo", f), `DocumentInfo.${f}`).toBe(true);
+    for (const f of ["articleId", "articleNumber", "addressId", "quantityOrdered", "numberOfOrders"]) expect(has("OrderProposal", f), `OrderProposal.${f}`).toBe(true);
+    for (const f of ["articleId", "selectionId"]) expect(has("ArticleSelectionCode", f), `ArticleSelectionCode.${f}`).toBe(true);
+    for (const f of ["brandId", "description", "ean1", "isRarity", "wineId"]) expect(has("Article", f), `Article.${f}`).toBe(true);
+  });
+});

@@ -33,6 +33,18 @@ export interface ErpClient {
   productInfo?(req: { customerId?: number | null; priceGroupId?: number | null; articles: { erpId: string; qty: number }[] }): Promise<Map<string, ProductInfo>>;
   /** Authoritative basket calculation (conditions, promotions, deposits, surcharges, freight). */
   calculateBasket?(basket: BasketRequest): Promise<BasketResult>;
+  /** Documents (invoices, delivery notes …) of a customer — BaseData/DocumentInfo. */
+  documents?(addressId: string): Promise<{ id: string; receiptId: string | null; title: string }[]>;
+  /** A document's file — BaseData/Document({id}). */
+  document?(id: string): Promise<{ body: ArrayBuffer; type: string; name: string } | null>;
+  /** Frequently ordered articles of a customer — Calculated/OrderProposal. */
+  orderProposal?(addressId: string): Promise<{ articleId: string; articleNumber: string; quantity: number; orders: number }[]>;
+  /** Article ids in an e-commerce assortment (BaseData/ArticleSelectionCode by selection id). */
+  assortment?(selectionId: string): Promise<Set<string>>;
+  /** Reference data for the admin mappings. */
+  referenceData?(): Promise<{ deliveryConditions: Raw[]; paymentConditions: Raw[]; priceGroups: Raw[] }>;
+  /** Change the shop login (e-mail) of an ERP address — BaseData/Address({id})/ChangeShopUsername. */
+  changeShopUsername?(addressId: string, username: string): Promise<void>;
   /** Receipts (orders / delivery notes / invoices) changed since — vinX BaseData/Receipt; `shopId` = shop order number. */
   receipts?(since?: Date | null): AsyncIterable<Raw>;
   /** Customer addresses changed since (vinX BaseData/Address) — pulled into linked shop customers. */
@@ -78,4 +90,6 @@ export type OrderPayload = {
 export type CustomerPayload = {
   id: number; erpId: string | null; email: string; name: string; company: string | null; uidNumber: string | null; phone: string | null;
   priceList: string | null; locale: string; billing: Record<string, string | undefined> | null;
+  /** set when the login e-mail changed → vinX ChangeShopUsername after the address update */
+  previousEmail?: string;
 };

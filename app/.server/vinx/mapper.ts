@@ -1,3 +1,4 @@
+import type { ErpDetails } from "~/lib/erp-details";
 import type { Settings } from "~/lib/settings";
 import type { Raw } from "./client";
 
@@ -41,7 +42,31 @@ export type MappedArticle = {
   kind: "wine" | "food" | "spirit" | "beverage" | null;
   product: { country?: string; region?: string; appellation?: string; grapes?: string; alcohol?: number; color?: string; taxClass?: "standard" | "reduced" };
   variant: { vintage?: string; size?: string; volumeMl?: number; priceCents?: number; packSize?: number; stock?: number; active?: boolean; erpId?: string; discountGroup?: string };
+  /** ERP-owned details (REST: BaseData/Wine, WineRating, Brand, Article) */
+  details?: ErpDetails;
+  /** Article description from the ERP — used only while the shop has no own text */
+  text?: string;
+  /** Producer portrait / website from the ERP — used only while the shop has none */
+  producerInfo?: { description?: string; website?: string };
 };
+
+const txt = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
+export function erpDetailsOf(row: Raw): ErpDetails | undefined {
+  const w = (row.wine ?? {}) as Raw;
+  const temp = w.minimalDrinkingTemperature != null && w.maximalDrinkingTemperature != null ? `${w.minimalDrinkingTemperature}–${w.maximalDrinkingTemperature} °C` : w.drinkingTemperature != null ? `${w.drinkingTemperature} °C` : undefined;
+  const storage = w.storagePeriod != null || w.maximalStoragePeriod != null ? [w.storagePeriod, w.maximalStoragePeriod].filter((x) => x != null).join("–") : undefined;
+  const ratings = (Array.isArray(w.ratings) ? (w.ratings as Raw[]) : []).map((r) => ({
+    source: String(r.source ?? "Bewertung"), points: r.points != null ? Number(r.points) : null, max: r.max != null ? Number(r.max) : null,
+    unit: txt(r.unit) ?? null, text: txt(r.ratingText) ?? null, vintage: txt(r.vintage != null ? String(r.vintage) : undefined) ?? null,
+  }));
+  const d: ErpDetails = {
+    characteristic: txt(w.characteristic), vinification: txt(w.vinification), terroir: txt(w.terroir), advice: txt(w.consumptionAdvice), history: txt(w.history),
+    drinkTemp: temp, storage: storage || undefined, ratings: ratings.length ? ratings : undefined,
+    ean: txt(row.ean1 != null ? String(row.ean1) : undefined), rarity: row.isRarity === true ? true : undefined, brand: txt((row.brand as Raw | undefined)?.designation),
+  };
+  const clean = Object.fromEntries(Object.entries(d).filter(([, v]) => v !== undefined)) as ErpDetails;
+  return Object.keys(clean).length ? clean : undefined;
+}
 
 export function mapArticle(row: Raw, m: Mapping): MappedArticle {
   const a = m.article;
@@ -89,6 +114,9 @@ export function mapArticle(row: Raw, m: Mapping): MappedArticle {
       erpId: s("erpId") ?? sku,
       discountGroup: s("discountGroup"),
     },
+    details: erpDetailsOf(row),
+    text: txt(row.description),
+    producerInfo: row.producer && typeof row.producer === "object" ? { description: txt((row.producer as Raw).history) ?? txt((row.producer as Raw).description), website: txt((row.producer as Raw).website) } : undefined,
   };
 }
 

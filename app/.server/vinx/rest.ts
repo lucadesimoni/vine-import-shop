@@ -86,16 +86,29 @@ export class Rest3Client implements ErpClient {
     return `Connected to ${this.root} (${this.cfg.apiVersion})`;
   }
 
-  private async all(path: string) {
+  private async all(path: string, filter?: string, limit = Infinity) {
     const out: Raw[] = [];
-    for await (const r of this.collection(path)) out.push(r);
+    for await (const r of this.collection(path, filter)) {
+      out.push(r);
+      if (out.length >= limit) break;
+    }
     return out;
+  }
+
+  /** Authenticated GET returning the raw response (binary documents). */
+  private async raw(method: string, url: string, retry = true): Promise<Response> {
+    const res = await fetch(url, { method, headers: { Authorization: `Bearer ${await this.auth()}`, "Accept-Language": this.locale }, signal: AbortSignal.timeout(45_000) });
+    if (res.status === 401 && retry) {
+      this.token = null;
+      return this.raw(method, url, false);
+    }
+    return res;
   }
 
   /** Lookup tables referenced by Article (ids → records), loaded once per sync run. */
   private async lookups() {
-    const [producers, regions, countries, categories, fillings, units, compositions, grapes] = await Promise.all(
-      ["BaseData/Producer", "BaseData/Region", "BaseData/Country", "BaseData/ArticleCategory", "BaseData/Filling", "BaseData/TradingUnit", "BaseData/WineComposition", "BaseData/Grape"].map((p) => this.all(p).catch(() => [] as Raw[])),
+    const [producers, regions, countries, categories, fillings, units, compositions, grapes, wines, wineRatings, ratings, brands] = await Promise.all(
+      ["BaseData/Producer", "BaseData/Region", "BaseData/Country", "BaseData/ArticleCategory", "BaseData/Filling", "BaseData/TradingUnit", "BaseData/WineComposition", "BaseData/Grape", "BaseData/Wine", "BaseData/WineRating", "BaseData/Rating", "BaseData/Brand"].map((p) => this.all(p).catch(() => [] as Raw[])),
     );
     const byId = (rows: Raw[]) => new Map(rows.map((r) => [Number(r.id), r]));
     const grapeName = byId(grapes);
@@ -104,7 +117,14 @@ export class Rest3Client implements ErpClient {
       const g = grapeName.get(Number(c.grapeId))?.designation;
       if (g) wineGrapes.set(Number(c.wineId), [...(wineGrapes.get(Number(c.wineId)) ?? []), String(g)]);
     }
-    return { producers: byId(producers), regions: byId(regions), countries: byId(countries), categories: byId(categories), fillings: byId(fillings), units: byId(units), wineGrapes };
+    // Wine texts + ratings (WineRating → Rating gives the source, e.g. "Gambero Rosso", and the scale)
+    const ratingById = byId(ratings);
+    const ratingsByWine = new Map<number, Raw[]>();
+    for (const r of wineRatings) {
+      const src = ratingById.get(Number(r.ratingId));
+      ratingsByWine.set(Number(r.wineId), [...(ratingsByWine.get(Number(r.wineId)) ?? []), { ...r, source: src?.designation, max: src?.maximalRating, unit: src?.unit }]);
+    }
+    return { producers: byId(producers), regions: byId(regions), countries: byId(countries), categories: byId(categories), fillings: byId(fillings), units: byId(units), wineGrapes, wines: byId(wines), ratingsByWine, brands: byId(brands) };
   }
 
   /** Articles enriched with their referenced master data so the generic mapper can use nested paths. */
@@ -126,12 +146,49 @@ export class Rest3Client implements ErpClient {
         filling: L.fillings.get(Number(a.fillingUnitId)),
         tradingUnit: L.units.get(Number(a.tradingUnitId)),
         grapes: a.wineId != null ? (L.wineGrapes.get(Number(a.wineId)) ?? []).join(", ") || undefined : undefined,
+        wine: a.wineId != null ? { ...(L.wines.get(Number(a.wineId)) ?? {}), ratings: L.ratingsByWine.get(Number(a.wineId)) ?? [] } : undefined,
+        brand: a.brandId != null ? L.brands.get(Number(a.brandId)) : undefined,
       };
     }
   }
 
   stock() {
     return this.collection("Calculated/StockData");
+  }
+
+  async documents(addressId: string) {
+    const rows = await this.all("BaseData/DocumentInfo", `addressId eq ${Number(addressId)}`).catch(() => [] as Raw[]);
+    return rows.map((d) => ({ id: String(d.Id ?? d.id), receiptId: d.receiptId != null ? String(d.receiptId) : null, title: String(d.documentDescription ?? "Dokument") }));
+  }
+
+  async document(id: string) {
+    const res = await this.raw("GET", this.shop(`BaseData/Document(${Number(id)})`));
+    if (!res.ok) return null;
+    const type = res.headers.get("content-type") ?? "application/pdf";
+    const name = /filename="?([^";]+)/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? `dokument-${id}.pdf`;
+    return { body: await res.arrayBuffer(), type, name };
+  }
+
+  async orderProposal(addressId: string) {
+    const rows = await this.all("Calculated/OrderProposal", `addressId eq ${Number(addressId)}`, 200).catch(() => [] as Raw[]);
+    return rows
+      .map((r) => ({ articleId: String(r.articleId), articleNumber: String(r.articleNumber ?? ""), quantity: Number(r.quantityOrdered ?? 0), orders: Number(r.numberOfOrders ?? 0) }))
+      .sort((a, b) => b.orders - a.orders)
+      .slice(0, 24);
+  }
+
+  async assortment(selectionId: string) {
+    const rows = await this.all("BaseData/ArticleSelectionCode", `selectionId eq ${Number(selectionId)}`);
+    return new Set(rows.map((r) => String(r.articleId)));
+  }
+
+  async referenceData() {
+    const [deliveryConditions, paymentConditions, priceGroups] = await Promise.all(["BaseData/DeliveryCondition", "BaseData/PaymentCondition", "BaseData/PriceGroup"].map((p) => this.all(p).catch(() => [] as Raw[])));
+    return { deliveryConditions, paymentConditions, priceGroups };
+  }
+
+  async changeShopUsername(addressId: string, username: string) {
+    await this.request("POST", this.shop(`BaseData/Address(${Number(addressId)})/ChangeShopUsername`), { shopUsername: username });
   }
 
   /** BaseData/Receipt with a shop order reference, incrementally by changedOn (positions not needed). */

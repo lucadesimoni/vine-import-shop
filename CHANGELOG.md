@@ -13,6 +13,14 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 ## [Unreleased]
 
 ### Added
+- **vinX: broader coverage of the Shop API v2.0.** The shop now uses 32 of 57 paths. `docs/VINX.md` lists every path and why the rest is not used.
+  - Wine details from `BaseData/Wine`, `WineRating`, `Rating` and `Brand` appear on the product page: ratings with source and scale, character, vinification, terroir, recommendation, drinking temperature and ageing potential.
+  - Article and producer texts and the producer website from vinX fill **only empty** shop fields. Shop texts always win.
+  - B2B portal: invoices and delivery notes from vinX (`DocumentInfo`, `Document`) to download, with an ownership check. "Häufig bestellt" uses the vinX order proposal, so it includes phone and e-mail orders.
+  - Optional online assortment: articles outside a vinX selection (`ArticleSelectionCode`) are taken offline.
+  - When a customer's e-mail changes, the vinX shop login follows (`ChangeShopUsername`).
+  - Admin › vinX shows delivery conditions, payment conditions and price groups with their ids for the mappings.
+  - Contract test extended to the new endpoints and fields. The spec extract was refreshed from the I-AG demo server.
 - **Licensing.**
   - Proprietary licence (`LICENSE`, `"license": "UNLICENSED"`).
   - Inventory of all 90 runtime dependencies (`THIRD_PARTY_LICENSES.md`, `npm run licenses`). CI blocks copyleft or unknown licences (`npm run licenses:check`).

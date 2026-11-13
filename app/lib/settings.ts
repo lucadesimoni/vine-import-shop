@@ -249,6 +249,8 @@ export const vinxSchema = z.object({
   liveBasket: z.boolean().default(true),
   /** Price group used for guests/consumers (BaseData/PriceGroup id). */
   consumerPriceGroupId: z.number().int().nullable().default(null),
+  /** vinX ArticleSelectionCode selection id of the e-commerce assortment (empty: all articles) */
+  selectionCodeId: z.string().default(""),
   /** vinX article used to transmit shop vouchers as negative position (priceCalculationRule "fromShop"). */
   promoArticleId: z.number().int().nullable().default(null),
   /** OAuth client id for /api/Identity/Realm/RequestToken (I-AG default: "Integrated"). */

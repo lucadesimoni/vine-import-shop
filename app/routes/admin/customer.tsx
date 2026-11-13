@@ -71,7 +71,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     updatedAt: new Date(),
   }).where(eq(u.id, id));
   if (status === "approved" && before?.tradeStatus !== "approved") await emit("trade.approved", { userId: id });
-  else await emit("customer.updated", { userId: id });
+  else await emit("customer.updated", { userId: id, previousEmail: before?.email });
   return { ok: "Gespeichert." };
 }
 

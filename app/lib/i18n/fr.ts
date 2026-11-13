@@ -60,7 +60,7 @@ const fr: Partial<Messages> = {
   "portal.toShop": "Vers la boutique", "portal.toPortal": "Vers le portail B2B", "portal.welcome": "Bon retour, {name}",
   "portal.kpi.ordersYear": "Commandes {year}", "portal.kpi.revenueYear": "Chiffre d'affaires {year}", "portal.kpi.open": "En cours", "portal.kpi.list": "Liste de commande",
   "portal.minOrder": "Commande minimale {amount} · Conditions {group}", "portal.recent": "Dernières commandes", "portal.frequent": "Souvent commandés",
-  "portal.contact": "Votre contact", "portal.downloads": "Téléchargements", "portal.allOrders": "Toutes les commandes", "portal.addSelected": "Ajouter la sélection",
+  "portal.contact": "Votre contact", "portal.downloads": "Téléchargements", "product.years": "ans", "product.ratings": "Notes", "product.drinkTemp": "Température de service", "product.storage": "Potentiel de garde", "product.characteristic": "Caractère", "product.vinification": "Vinification", "product.terroir": "Terroir", "product.advice": "Conseil", "portal.documents": "Documents", "portal.allOrders": "Toutes les commandes", "portal.addSelected": "Ajouter la sélection",
   "portal.results": "{n} articles", "portal.noAccess": "Pas d'accès au portail B2B",
   "portal.noAccessText": "Le portail est réservé aux clients professionnels approuvés.",
   "portal.pendingText": "Votre compte professionnel est en cours de vérification.", "portal.loginTitle": "Connexion clients professionnels",

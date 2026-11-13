@@ -1,12 +1,14 @@
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, or, sql } from "drizzle-orm";
 import { Form, Link } from "react-router";
-import { ArrowRight, FileSpreadsheet, Mail, Phone, RotateCcw, Zap } from "lucide-react";
+import { ArrowRight, FileSpreadsheet, FileText, Mail, Phone, RotateCcw, Zap } from "lucide-react";
 import type { Route } from "./+types/dashboard";
 import { requireUser } from "~/.server/auth";
 import { shopContext } from "~/.server/context";
 import { cartSummary, getCart } from "~/.server/cart";
 import { toCards } from "~/.server/catalog";
 import { getDb, schema } from "~/.server/db";
+import { erpConnected } from "~/.server/erp-ownership";
+import { erpClient } from "~/.server/vinx/sync";
 import { useI18n, type MessageKey } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
 import { useRootData } from "~/lib/root-data";
@@ -38,6 +40,29 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     getCart(request, ctx),
   ]);
   const summary = await cartSummary(ctx, cart.items, cart.couponCode);
+
+  // ERP data for linked customers: documents (invoices, delivery notes) and the ERP's order proposal,
+  // which also knows orders placed by phone/e-mail — the local order history is the fallback
+  let documents: { id: string; title: string }[] = [];
+  if (user.erpId && (await erpConnected())) {
+    const client = await erpClient().catch(() => null);
+    const [docs, proposal] = await Promise.all([
+      client?.documents?.(user.erpId).catch(() => []) ?? [],
+      client?.orderProposal?.(user.erpId).catch(() => []) ?? [],
+    ]);
+    documents = docs.slice(0, 8).map((d) => ({ id: d.id, title: d.title }));
+    if (proposal.length) {
+      const keys = proposal.flatMap((p) => [p.articleId, p.articleNumber]).filter(Boolean);
+      const vs = await db.select({ id: schema.variants.id, productId: schema.variants.productId, sku: schema.variants.sku, erpId: schema.variants.erpId }).from(schema.variants)
+        .where(or(inArray(schema.variants.erpId, keys), inArray(schema.variants.sku, keys)));
+      const fromErp = proposal
+        .map((p) => vs.find((v) => v.erpId === p.articleId || v.sku === p.articleNumber))
+        .filter((v, i, a) => v && a.findIndex((x) => x?.id === v.id) === i)
+        .slice(0, 6)
+        .map((v) => ({ productId: v!.productId, variantId: v!.id as number | null, qty: proposal.find((p) => p.articleId === v!.erpId || p.articleNumber === v!.sku)?.quantity ?? 0 }));
+      if (fromErp.length) frequent.splice(0, frequent.length, ...fromErp);
+    }
+  }
   const cards = await toCards(ctx, [...new Set(frequent.map((f) => f.productId))]);
 
   return {
@@ -56,6 +81,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       .filter((x) => x !== null),
     contact: { phone: ctx.brand.contact.phone, email: ctx.brand.contact.email },
     priceList: ctx.shop.trade.priceListExport,
+    documents,
     quickOrder: ctx.shop.trade.quickOrder,
   };
 }
@@ -66,7 +92,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export default function PortalDashboard({ loaderData }: Route.ComponentProps) {
-  const { year, name, company, group, kpi, recent, frequent, contact, priceList, quickOrder } = loaderData;
+  const { year, name, company, group, kpi, recent, frequent, contact, priceList, documents, quickOrder } = loaderData;
   const { t, locale } = useI18n();
   const { shop } = useRootData();
   const m = (c: number) => formatMoney(c, shop.currency, locale);
@@ -166,10 +192,18 @@ export default function PortalDashboard({ loaderData }: Route.ComponentProps) {
             {contact.phone && <a href={`tel:${contact.phone.replace(/\s/g, "")}`} className="flex items-center gap-3 text-sm hover:text-primary"><Phone size={15} className="text-muted-fg" /> {contact.phone}</a>}
             {contact.email && <a href={`mailto:${contact.email}`} className="flex items-center gap-3 text-sm hover:text-primary"><Mail size={15} className="text-muted-fg" /> {contact.email}</a>}
           </Card>
-          {priceList && (
+          {(priceList || documents.length > 0) && (
             <Card className="grid gap-4 p-6">
               <Eyebrow className="text-2xs">{t("portal.downloads")}</Eyebrow>
-              <a href="/account/price-list.csv" className="flex items-center gap-3 text-sm hover:text-primary"><FileSpreadsheet size={15} className="text-muted-fg" /> {t("account.priceList")}</a>
+              {priceList && <a href="/account/price-list.csv" className="flex items-center gap-3 text-sm hover:text-primary"><FileSpreadsheet size={15} className="shrink-0 text-muted-fg" /> {t("account.priceList")}</a>}
+              {documents.length > 0 && (
+                <div className="grid gap-2.5 border-t border-border pt-4">
+                  <span className="text-xs text-muted-fg">{t("portal.documents")}</span>
+                  {documents.map((d) => (
+                    <a key={d.id} href={`/account/documents/${d.id}`} className="flex min-w-0 items-center gap-3 text-sm hover:text-primary"><FileText size={15} className="shrink-0 text-muted-fg" /> <span className="truncate">{d.title}</span></a>
+                  ))}
+                </div>
+              )}
             </Card>
           )}
         </aside>
