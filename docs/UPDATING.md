@@ -43,3 +43,16 @@ If the automatic backup fails, the update stops before any change is made. With 
 - **Retention.** The newest 14 backups are kept (`BACKUP_KEEP`); pre-update backups are kept for at least 30 days.
 - **Location.** Backups go to `data/backups/`, or to `BACKUP_DIR`. Copy them off the server regularly, for example by downloading from Admin › System.
 - **Restore from the admin** (embedded database only): **Admin › System › Wiederherstellen** schedules the restore; it is applied at the next restart.
+
+## Versioning & releases (for maintainers)
+
+Semantic versioning (see the top of [CHANGELOG.md](../CHANGELOG.md)). Every change goes into `## [Unreleased]` with its PR; CI checks the changelog and the translations.
+
+1. `npm run version:bump -- minor` (or `patch` / `major`). This moves the *Unreleased* entries into `## [x.y.z] - date`, updates `package.json` and commits "Release vx.y.z".
+2. Merge or push to `main`. The **Release** workflow then:
+   - tags `vx.y.z`;
+   - publishes the GitHub release with the changelog section and `shop-x.y.z.tar.gz`;
+   - pushes the Docker image `ghcr.io/<org>/<repo>:x.y.z` and `:latest`.
+
+   Already-released versions are skipped. Pushing a tag by hand works too.
+3. Vercel deploys `main` to production automatically. Installations show the new version under **Admin › System**.
