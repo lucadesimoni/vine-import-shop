@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-11-13
+
 ### Added
 - **Shop host for customer installations** (`deploy/host`, guide `docs/HOSTING.md`). Many shops run on one server: Caddy (automatic HTTPS), one PostgreSQL (a database and a user per shop) and one container per shop, about 50 MB RAM each. The host is driven by one Bash script, `shopctl`, and systemd timers.
   - **New customer in one command:** `npm run customer:new` issues the licence key locally, then runs `shopctl new` over SSH: database, secrets, container, health check, HTTPS for all domains, admin login.
@@ -338,7 +340,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.10.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.11.0...HEAD
+[1.11.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.7.0...v1.8.0
