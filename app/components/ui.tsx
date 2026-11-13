@@ -169,11 +169,12 @@ export function Notice({ tone = "neutral", children, className }: { tone?: "neut
   return <div role="status" className={cn("rounded-control px-4 py-3 text-sm leading-relaxed", tones[tone], className)}>{children}</div>;
 }
 
-export function EmptyState({ icon, title, text, action }: { icon?: ReactNode; title: string; text?: string; action?: ReactNode }) {
+/** `heading="h1"` when the empty state is the whole page (e.g. an empty cart), so the page keeps its main heading */
+export function EmptyState({ icon, title, text, action, heading: H = "h2" }: { icon?: ReactNode; title: string; text?: string; action?: ReactNode; heading?: "h1" | "h2" }) {
   return (
     <div className="grid justify-items-center gap-3 rounded-surface border border-dashed border-border-strong/60 px-6 py-16 text-center">
       {icon && <div className="text-muted-fg">{icon}</div>}
-      <h2 className="text-h3">{title}</h2>
+      <H className="text-h3">{title}</H>
       {text && <p className="max-w-sm text-sm text-muted-fg">{text}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>

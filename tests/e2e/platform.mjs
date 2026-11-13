@@ -1,5 +1,8 @@
 // Full-platform end-to-end test against a running production server with fresh demo data.
-//   CRON_SECRET=e2e-cron VINX_WEBHOOK_SECRET=e2e-hook STRIPE_WEBHOOK_SECRET=whsec_e2e npm start   (fresh ./data)
+//   JOBS_INTERVAL_MINUTES=0 CRON_SECRET=e2e-cron VINX_WEBHOOK_SECRET=e2e-hook STRIPE_WEBHOOK_SECRET=whsec_e2e \
+//     ORDER_WEBHOOK_URL=http://127.0.0.1:4555/hook ORDER_WEBHOOK_SECRET=e2e-sign npm start   (fresh ./data)
+//   JOBS_INTERVAL_MINUTES=0: the test triggers the vinX jobs itself; a scheduler run before would already import
+//   vinX special prices and change the expected prices.
 //   BASE_URL=http://localhost:3000 node tests/e2e/platform.mjs
 import { createHmac } from "node:crypto";
 import { createServer } from "node:http";

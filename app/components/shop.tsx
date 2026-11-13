@@ -180,8 +180,8 @@ export function Header() {
             {locales.map((l) => (
               <Form key={l} method="post" action="/set-locale">
                 <input type="hidden" name="locale" value={l} />
-                <input type="hidden" name="redirectTo" value={location.pathname} />
-                <button className={l === locale ? "font-semibold text-fg" : "text-muted-fg"}>{l}</button>
+                <input type="hidden" name="redirectTo" value={location.pathname + location.search} />
+                <button lang={l} aria-current={l === locale} className={cn("uppercase tracking-wider", l === locale ? "font-semibold text-fg" : "text-muted-fg")}>{l}</button>
               </Form>
             ))}
           </div>

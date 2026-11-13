@@ -155,8 +155,8 @@ export default function AdminProduct({ loaderData }: Route.ComponentProps) {
           <Panel title="Bild">
             <div className="relative mb-4 aspect-square rounded-surface bg-media"><div className="absolute inset-[8%]"><ProductImage product={{ image: p?.image ?? null, name: p?.name.de ?? "", kind: p?.kind ?? "wine", color: p?.color ?? null }} /></div></div>
             <div className="grid gap-3">
-              <Input type="file" name="imageFile" accept="image/jpeg,image/png,image/webp,image/avif" className="h-auto py-2 text-sm" />
-              <Input name="image" defaultValue={p?.image ?? ""} placeholder="oder Bild-URL" size="sm" />
+              <Input type="file" name="imageFile" aria-label="Produktbild hochladen" accept="image/jpeg,image/png,image/webp,image/avif" className="h-auto py-2 text-sm" />
+              <Input name="image" defaultValue={p?.image ?? ""} placeholder="oder Bild-URL" aria-label="Bild-URL" size="sm" />
             </div>
           </Panel>
           <Panel title="Zuordnung">

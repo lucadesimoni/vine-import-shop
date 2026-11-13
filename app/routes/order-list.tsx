@@ -29,7 +29,7 @@ export default function OrderList({ loaderData }: Route.ComponentProps) {
   if (!summary.lines.length) {
     return (
       <div className="container-page section-y">
-        <EmptyState icon={<ShoppingBag size={30} strokeWidth={1.3} />} title={t("cart.empty")} text={t("cart.emptyHint")} action={<ButtonLink to={to("/shop")}>{t("cart.toShop")}</ButtonLink>} />
+        <EmptyState heading="h1" icon={<ShoppingBag size={30} strokeWidth={1.3} />} title={t("cart.empty")} text={t("cart.emptyHint")} action={<ButtonLink to={to("/shop")}>{t("cart.toShop")}</ButtonLink>} />
       </div>
     );
   }

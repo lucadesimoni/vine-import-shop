@@ -12,6 +12,14 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Fixed
+- **Accessibility, from a sweep of every page as guest, consumer, B2B customer and admin** (desktop and mobile, light and dark):
+  - Every admin field now has a label for screen readers: multilingual fields per language, product image and producer logo (file and URL), shipping JSON, and the design preview.
+  - An empty cart keeps the page's main heading.
+  - The sweep found no console errors, server errors, horizontal overflow or images without alt text.
+- **Language switch:** in the B2B portal and the mobile shop menu the language codes are upper case like everywhere else; Tailwind resets text-transform on buttons. The mobile menu now keeps the query string when the language changes and marks the active language for screen readers.
+- **Admin overview:** without orders, the revenue chart shows a clear empty state instead of an empty frame.
+
 ## [1.12.0] - 2026-11-13
 
 ### Added

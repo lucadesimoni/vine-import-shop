@@ -179,7 +179,7 @@ export default function Design({ loaderData }: Route.ComponentProps) {
                   </div>
                 ))}
               </div>
-              <Input placeholder="Eingabefeld" className="h-9 text-sm" />
+              <Input placeholder="Eingabefeld" aria-label="Vorschau Eingabefeld" tabIndex={-1} readOnly className="h-9 text-sm" />
             </div>
             <div className="bg-inverse px-6 py-5 text-xs text-on-inverse">Footer · {draft.name}</div>
           </div>

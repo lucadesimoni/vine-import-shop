@@ -134,8 +134,8 @@ export default function AdminProducer({ loaderData }: Route.ComponentProps) {
               <ProducerLogo name={p?.name ?? "?"} logo={p?.logo} size="lg" />
             </div>
             <div className="grid gap-3">
-              <Input type="file" name="logoFile" accept="image/svg+xml,image/png,image/webp,image/jpeg,image/avif" className="h-auto py-2 text-sm" />
-              <Input name="logo" defaultValue={p?.logo ?? ""} placeholder="oder Logo-URL" size="sm" />
+              <Input type="file" name="logoFile" aria-label="Logo-Datei hochladen" accept="image/svg+xml,image/png,image/webp,image/jpeg,image/avif" className="h-auto py-2 text-sm" />
+              <Input name="logo" defaultValue={p?.logo ?? ""} placeholder="oder Logo-URL" aria-label="Logo-URL" size="sm" />
               {p?.logo && <label className="flex items-center gap-2 text-sm text-muted-fg"><input type="checkbox" name="removeLogo" className="h-4 w-4 accent-primary" /> Logo entfernen</label>}
             </div>
           </Panel>

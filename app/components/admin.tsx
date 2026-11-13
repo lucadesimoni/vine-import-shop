@@ -199,9 +199,9 @@ export function LocalizedInput({ name, value, locales, multiline = false, rows =
       </div>
       {active.map((l) =>
         multiline ? (
-          <Textarea key={l} name={`${name}.${l}`} defaultValue={value?.[l] ?? ""} rows={rows} hidden={l !== current} lang={l} />
+          <Textarea key={l} name={`${name}.${l}`} defaultValue={value?.[l] ?? ""} rows={rows} hidden={l !== current} lang={l} aria-label={`${label ?? name} (${l.toUpperCase()})`} />
         ) : (
-          <Input key={l} name={`${name}.${l}`} defaultValue={value?.[l] ?? ""} hidden={l !== current} lang={l} />
+          <Input key={l} name={`${name}.${l}`} defaultValue={value?.[l] ?? ""} hidden={l !== current} lang={l} aria-label={`${label ?? name} (${l.toUpperCase()})`} />
         ),
       )}
     </div>

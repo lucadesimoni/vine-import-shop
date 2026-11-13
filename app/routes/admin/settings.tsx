@@ -351,7 +351,7 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
         </Panel>
 
         <Panel title="Versandarten" description='Preise in Rappen. "rates": [[ab Einheiten, Preis]] · "audience": all | consumer | trade' className="xl:col-span-2">
-          <Textarea name="shippingJson" rows={14} spellCheck={false} defaultValue={JSON.stringify(shop.shipping, null, 2)} className="font-mono text-note" />
+          <Textarea name="shippingJson" aria-label="Versandarten (JSON)" rows={14} spellCheck={false} defaultValue={JSON.stringify(shop.shipping, null, 2)} className="font-mono text-note" />
         </Panel>
       </div>
       <SaveBar saved={!!result && "ok" in result} />

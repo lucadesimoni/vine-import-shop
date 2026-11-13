@@ -5,7 +5,7 @@ import { getDb, schema } from "~/.server/db";
 import { getSetting } from "~/.server/settings";
 import { lastSuccess, outboxCounts } from "~/.server/vinx/sync";
 import { formatMoney } from "~/lib/money";
-import { Badge } from "~/components/ui";
+import { Badge, EmptyState } from "~/components/ui";
 import { PageHeader, Panel, Stat } from "~/components/admin";
 import { OrdersTable } from "~/components/orders-table";
 
@@ -55,7 +55,9 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Panel title="Umsatz pro Tag">
-          {(
+          {!days.some((d) => d.total) ? (
+            <EmptyState title="Noch kein Umsatz in den letzten 30 Tagen" text="Sobald Bestellungen eingehen, erscheint hier der Umsatz pro Tag." />
+          ) : (
             <div>
               <div className="flex h-44 items-end gap-[3px] border-b border-border" role="img" aria-label="Umsatz pro Tag, letzte 30 Tage">
                 {days.map((d) => (

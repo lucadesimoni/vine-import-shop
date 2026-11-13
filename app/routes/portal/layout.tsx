@@ -78,7 +78,7 @@ export default function PortalLayout({ loaderData }: Route.ComponentProps) {
                       <Form key={l} method="post" action="/set-locale" className="contents">
                         <input type="hidden" name="locale" value={l} />
                         <input type="hidden" name="redirectTo" value={location.pathname + location.search} />
-                        <button className={cn("rounded-badge px-2 py-1", l === locale ? "bg-muted font-semibold text-fg" : "text-muted-fg")} aria-current={l === locale}>{l}</button>
+                        <button lang={l} className={cn("rounded-badge px-2 py-1 uppercase", l === locale ? "bg-muted font-semibold text-fg" : "text-muted-fg")} aria-current={l === locale}>{l}</button>
                       </Form>
                     ))}
                   </div>
@@ -121,7 +121,7 @@ export default function PortalLayout({ loaderData }: Route.ComponentProps) {
                   <Form key={l} method="post" action="/set-locale" className="contents">
                     <input type="hidden" name="locale" value={l} />
                     <input type="hidden" name="redirectTo" value={location.pathname + location.search} />
-                    <button className={l === locale ? "font-semibold text-fg" : "text-muted-fg hover:text-fg"} aria-current={l === locale}>{l}</button>
+                    <button lang={l} className={cn("uppercase", l === locale ? "font-semibold text-fg" : "text-muted-fg hover:text-fg")} aria-current={l === locale}>{l}</button>
                   </Form>
                 ))}
               </div>
