@@ -9,7 +9,7 @@ import { parseSettings } from "~/lib/settings";
 const S = spec.schemas as Record<string, { fields?: string[]; enum?: string[] }>;
 const has = (schema: string, field: string) => !!S[schema]?.fields?.includes(field);
 const SHOP = "/api/v2.0/Core/VinX/Shop/";
-const ENRICHED: Record<string, string> = { producer: "Producer", region: "Region", regionTop: "Region", country: "Country", category: "ArticleCategory", filling: "Filling", tradingUnit: "TradingUnit" };
+const ENRICHED: Record<string, string> = { eCommerceGroup: "ECommerceGroup", producer: "Producer", region: "Region", regionTop: "Region", country: "Country", category: "ArticleCategory", filling: "Filling", tradingUnit: "TradingUnit" };
 
 describe("vinX Shop API v2.0 contract", () => {
   it("uses only endpoints that exist", () => {
@@ -80,5 +80,41 @@ describe("vinX Shop API v2.0 contract — details, documents, proposals", () => 
     for (const f of ["articleId", "articleNumber", "addressId", "quantityOrdered", "numberOfOrders"]) expect(has("OrderProposal", f), `OrderProposal.${f}`).toBe(true);
     for (const f of ["articleId", "selectionId"]) expect(has("ArticleSelectionCode", f), `ArticleSelectionCode.${f}`).toBe(true);
     for (const f of ["brandId", "description", "ean1", "isRarity", "wineId"]) expect(has("Article", f), `Article.${f}`).toBe(true);
+  });
+});
+
+describe("vinX Shop API v2.0 contract — customer data, logistics, rarities", () => {
+  it("uses real endpoints", () => {
+    for (const p of ["BaseData/Classification", "BaseData/ProductCycle", "BaseData/ECommerceGroup", "BaseData/Ingredients", "BaseData/SellingSet", "BaseData/SalesRepresentative", "BaseData/Tour", "BaseData/DeliveryDay",
+      "BaseData/CustomerCategory", "BaseData/Chain", "BaseData/DistributionChannel", "BaseData/Salutation", "BaseData/ContactPerson", "BaseData/Reservation", "BaseData/ReceiptType", "BaseData/ShippingPackage",
+      "BaseData/Condition", "Calculated/ProductInfoCondition", "BaseData/PaymentMeans", "BaseData/SpecialCondition", "BaseData/DiscountGroupArticleCustomer", "BaseData/Warehouse", "Online/OnlineAddress({id})",
+      "BaseData/SelectionCode", "BaseData/PlatformAssortment", "BaseData/Marketing", "BaseData/CustomerMarketing", "BaseData/Department"]) {
+      expect(spec.paths, p).toContain(SHOP + p);
+    }
+  });
+  it("reads only fields that exist", () => {
+    const f = (schema: string, fields: string[]) => { for (const x of fields) expect(has(schema, x), `${schema}.${x}`).toBe(true); };
+    f("Article", ["productCycleId", "eCommerceGroupId", "substituteArticleId", "substituteArticleText", "weight"]);
+    f("Wine", ["classificationId", "acidity", "residualSugar"]);
+    f("Ingredient", ["articleId", "contentInfo", "nutritionInfo", "allergenInfo"]);
+    f("SellingSet", ["setArticleId", "articleId", "amount", "position"]);
+    f("Address", ["salesRepresentativeId", "tourId", "deliveryDayId", "customerCategoryId", "chainId", "distributionChannelId", "selectionCodeId", "salutationId", "paymentConditionId"]);
+    f("SalesRepresentative", ["name", "firstName", "reference", "region"]);
+    f("Tour", ["tourName", "tourDescription", "tourMonday", "tourTuesday", "tourWednesday", "tourThursday", "tourFriday", "tourSaturday"]);
+    f("DeliveryDay", ["tourDescription", "tourMonday", "tourSaturday"]);
+    f("ContactPerson", ["addressId", "firstName", "lastName", "email", "telephone", "mobile"]);
+    f("Reservation", ["articleId", "addressId", "quantity"]);
+    f("Receipt", ["invoiceNumber", "dueDate", "totalNet", "totalVat", "totalPayed", "receiptTypeId", "invoicingDate", "addressId"]);
+    f("ShippingPackage", ["receiptId", "shipmentNumber", "shipmentNumberComplete", "notUsed"]);
+    f("Condition", ["designation", "quality", "level", "levelInCm", "label", "capsule"]);
+    f("StockDataHead", ["conditionId"]);
+    f("ArticleParameterCondition", ["conditionId", "articleId", "quantity"]);
+    f("OnlineAddress", ["addressId", "id"]);
+    f("PlatformAssortment", ["addressId", "selectionCodeId", "fromDate", "toDate"]);
+    f("CustomerMarketing", ["addressId", "marketingId", "active"]);
+    f("Marketing", ["designation"]);
+    f("SelectionCode", ["designation"]);
+    f("ContactPerson", ["departmentDesignation", "departmentId"]);
+    f("Department", ["designation"]);
   });
 });

@@ -55,7 +55,12 @@ export default function Product({ loaderData }: Route.ComponentProps) {
     [t("product.origin"), [c.region, c.country].filter(Boolean).join(", ")],
     ...(shop.modules.wineDetails ? [[t("product.appellation"), p.appellation], [t("product.grapes"), p.grapes]] : []),
     [t("product.alcohol"), p.alcohol ? `${p.alcohol} % vol.` : null],
+    [t("product.classification"), p.erp?.classification],
     [t("product.drinkTemp"), p.erp?.drinkTemp],
+    [t("product.acidity"), p.erp?.acidity != null ? `${p.erp.acidity} g/l` : null],
+    [t("product.residualSugar"), p.erp?.residualSugar != null ? `${p.erp.residualSugar} g/l` : null],
+    [t("product.condition"), p.erp?.condition ? [p.erp.condition.designation, p.erp.condition.level, p.erp.condition.label, p.erp.condition.capsule].filter(Boolean).join(" · ") : null],
+    [t("product.ean"), p.erp?.ean],
     [t("product.storage"), p.erp?.storage ? `${p.erp.storage} ${t("product.years")}` : null],
   ].filter(([, v]) => v) as [string, string][];
 
@@ -161,9 +166,24 @@ export default function Product({ loaderData }: Route.ComponentProps) {
               <p className="text-lead whitespace-pre-line">{p.description}</p>
             </div>
           )}
-          {p.erp && (["characteristic", "vinification", "terroir", "advice"] as const).some((k) => p.erp?.[k]) && (
+          {p.erp?.cycle && <p className="text-note"><Badge tone="outline">{p.erp.cycle}</Badge></p>}
+          {p.erpLinks.substitute && (
+            <Notice>
+              {t("product.substitute")}{" "}
+              {p.erpLinks.substitute.product ? <Link to={to(`/product/${p.erpLinks.substitute.product.slug}`)} className="font-medium underline underline-offset-4">{p.erpLinks.substitute.product.name}</Link> : p.erpLinks.substitute.text}
+            </Notice>
+          )}
+          {p.erpLinks.set.length > 0 && (
+            <div className="grid gap-3">
+              <h2 className="text-eyebrow text-label text-muted-fg">{t("product.setContents")}</h2>
+              <ul className="grid gap-1.5 text-sm">
+                {p.erpLinks.set.map((x) => <li key={x.slug} className="flex gap-2"><span className="tabular-nums text-muted-fg">{x.amount}×</span><Link to={to(`/product/${x.slug}`)} className="hover:underline">{x.name}</Link>{x.size && <span className="text-muted-fg">{x.size}</span>}</li>)}
+              </ul>
+            </div>
+          )}
+          {p.erp && (["characteristic", "vinification", "terroir", "advice", "ingredients", "allergens", "nutrition"] as const).some((k) => p.erp?.[k]) && (
             <div className="grid divide-y divide-border border-y border-border">
-              {(["characteristic", "vinification", "terroir", "advice"] as const).filter((k) => p.erp?.[k]).map((k) => (
+              {(["allergens", "ingredients", "nutrition", "characteristic", "vinification", "terroir", "advice"] as const).filter((k) => p.erp?.[k]).map((k) => (
                 <details key={k} className="group py-3.5">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium">{t(`product.${k}`)}<ChevronRight size={15} className="shrink-0 text-muted-fg transition-transform group-open:rotate-90" /></summary>
                   <p className="mt-2 whitespace-pre-line text-sm text-muted-fg">{p.erp![k]}</p>

@@ -10,6 +10,7 @@ import { getDb, schema } from "~/.server/db";
 import { erpConnected } from "~/.server/erp-ownership";
 import { erpClient } from "~/.server/vinx/sync";
 import { useI18n, type MessageKey } from "~/lib/i18n";
+import { tl } from "~/lib/localized";
 import { formatMoney } from "~/lib/money";
 import { useRootData } from "~/lib/root-data";
 import { Badge, Button, ButtonLink, Card, EmptyState, Eyebrow } from "~/components/ui";
@@ -44,12 +45,23 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   // ERP data for linked customers: documents (invoices, delivery notes) and the ERP's order proposal,
   // which also knows orders placed by phone/e-mail — the local order history is the fallback
   let documents: { id: string; title: string }[] = [];
+  let openItems: { id: string; number: string; type: string; due: string | null; openCents: number }[] = [];
+  let reserved: { name: string; slug: string; size: string | null; quantity: number }[] = [];
   if (user.erpId && (await erpConnected())) {
     const client = await erpClient().catch(() => null);
-    const [docs, proposal] = await Promise.all([
+    const [docs, proposal, items, reservations] = await Promise.all([
       client?.documents?.(user.erpId).catch(() => []) ?? [],
       client?.orderProposal?.(user.erpId).catch(() => []) ?? [],
+      client?.openItems?.(user.erpId).catch(() => []) ?? [],
+      client?.reservations?.(user.erpId).catch(() => []) ?? [],
     ]);
+    openItems = items.slice(0, 10);
+    // reservations (allocations, subscriptions) → shop products
+    if (reservations.length) {
+      const rows = await db.select({ erpId: schema.variants.erpId, size: schema.variants.size, slug: schema.products.slug, name: schema.products.name }).from(schema.variants)
+        .innerJoin(schema.products, eq(schema.products.id, schema.variants.productId)).where(inArray(schema.variants.erpId, reservations.map((r) => r.articleId)));
+      reserved = reservations.map((r) => ({ r, v: rows.find((x) => x.erpId === r.articleId) })).filter((x) => x.v).map(({ r, v }) => ({ name: tl(v!.name, ctx.locale), slug: v!.slug, size: v!.size, quantity: r.quantity }));
+    }
     documents = docs.slice(0, 8).map((d) => ({ id: d.id, title: d.title }));
     if (proposal.length) {
       const keys = proposal.flatMap((p) => [p.articleId, p.articleNumber]).filter(Boolean);
@@ -82,6 +94,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     contact: { phone: ctx.brand.contact.phone, email: ctx.brand.contact.email },
     priceList: ctx.shop.trade.priceListExport,
     documents,
+    openItems,
+    reserved,
+    erpInfo: user.erpInfo ?? null,
     quickOrder: ctx.shop.trade.quickOrder,
   };
 }
@@ -92,7 +107,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export default function PortalDashboard({ loaderData }: Route.ComponentProps) {
-  const { year, name, company, group, kpi, recent, frequent, contact, priceList, documents, quickOrder } = loaderData;
+  const { year, name, company, group, kpi, recent, frequent, contact, priceList, documents, openItems, reserved, erpInfo, quickOrder } = loaderData;
   const { t, locale } = useI18n();
   const { shop } = useRootData();
   const m = (c: number) => formatMoney(c, shop.currency, locale);
@@ -171,6 +186,20 @@ export default function PortalDashboard({ loaderData }: Route.ComponentProps) {
               </Card>
             </section>
           )}
+
+          {reserved.length > 0 && (
+            <section className="grid gap-4">
+              <h2 className="text-h3">{t("portal.reserved")}</h2>
+              <Card className="divide-y divide-border">
+                {reserved.map((r) => (
+                  <Link key={r.slug + r.size} to={`/portal/product/${r.slug}`} className="flex items-center justify-between gap-4 px-5 py-3 hover:bg-muted/50">
+                    <span className="min-w-0 truncate font-medium">{r.name}{r.size && <span className="ml-2 text-note font-normal text-muted-fg">{r.size}</span>}</span>
+                    <span className="shrink-0 tabular-nums">{r.quantity}×</span>
+                  </Link>
+                ))}
+              </Card>
+            </section>
+          )}
         </div>
 
         <aside className="grid content-start gap-4">
@@ -187,8 +216,29 @@ export default function PortalDashboard({ loaderData }: Route.ComponentProps) {
               </dl>
             </div>
           )}
+          {openItems.length > 0 && (
+            <Card className="grid gap-3 p-6">
+              <div className="flex items-baseline justify-between gap-3">
+                <Eyebrow className="text-2xs">{t("portal.openItems")}</Eyebrow>
+                <span className="text-note font-medium tabular-nums">{m(openItems.reduce((a, i) => a + i.openCents, 0))}</span>
+              </div>
+              <ul className="grid gap-2 text-sm">
+                {openItems.map((i) => {
+                  const overdue = !!i.due && new Date(i.due) < new Date();
+                  return (
+                    <li key={i.id} className="flex items-baseline justify-between gap-3">
+                      <span className="min-w-0"><span className="block truncate">{i.type} {i.number}</span><span className={overdue ? "text-xs text-danger" : "text-xs text-muted-fg"}>{overdue ? t("portal.overdue") : i.due ? t("portal.due", { date: new Date(i.due).toLocaleDateString(`${locale}-CH`) }) : ""}</span></span>
+                      <span className="shrink-0 tabular-nums">{m(i.openCents)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Card>
+          )}
           <Card className="grid gap-4 p-6">
             <Eyebrow className="text-2xs">{t("portal.contact")}</Eyebrow>
+            {erpInfo?.salesRep?.name && <p className="text-sm"><span className="block text-xs text-muted-fg">{t("portal.salesRep")}</span>{erpInfo.salesRep.name}</p>}
+            {!!erpInfo?.deliveryDays?.length && <p className="text-note text-muted-fg">{t("portal.deliveryDays", { days: erpInfo.deliveryDays.map((d) => t(`day.${d}` as MessageKey)).join(", ") })}</p>}
             {contact.phone && <a href={`tel:${contact.phone.replace(/\s/g, "")}`} className="flex items-center gap-3 text-sm hover:text-primary"><Phone size={15} className="text-muted-fg" /> {contact.phone}</a>}
             {contact.email && <a href={`mailto:${contact.email}`} className="flex items-center gap-3 text-sm hover:text-primary"><Mail size={15} className="text-muted-fg" /> {contact.email}</a>}
           </Card>

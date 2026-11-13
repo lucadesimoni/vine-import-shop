@@ -73,7 +73,10 @@ export async function createPostLabel(orderId: number, weightG?: number) {
   const cfg = shop.fulfillment.post;
   const to = (order.shipping ?? order.billing) as Address;
   if ((to.country || "CH").toUpperCase() !== "CH" && (to.country || "CH").toUpperCase() !== "LI") throw new Error("Post-Etiketten nur für Inlandsendungen (CH/LI)");
-  const weight = weightG ?? cfg.defaultWeight;
+  // weight: entered in the admin, else from the articles (vinX Article.weight), else the default
+  const items = await db.select({ qty: schema.orderItems.qty, w: schema.variants.weightG }).from(schema.orderItems).leftJoin(schema.variants, eq(schema.variants.id, schema.orderItems.variantId)).where(eq(schema.orderItems.orderId, orderId));
+  const fromArticles = items.length && items.every((i) => i.w) ? items.reduce((a, i) => a + i.qty * i.w!, 0) : null;
+  const weight = weightG ?? fromArticles ?? cfg.defaultWeight;
   let identCode: string, pdf: string;
   if (postConfigured()) {
     if (!cfg.frankingLicense || !cfg.sender.name1 || !cfg.sender.zip) throw new Error("Frankierlizenz und Absender in den Einstellungen erfassen");

@@ -40,6 +40,26 @@ export const settings = pgTable("settings", {
  * own branding and settings (settings rows "<key>@<slug>", falling back to the main shop), own assortment,
  * own customers, orders and legal pages. The main shop is the platform itself (storefront = null).
  */
+export type ErpCustomerInfo = {
+  salesRep?: { name: string; reference?: string; region?: string };
+  /** delivery weekdays 1 (Mon) … 6 (Sat) from Tour / DeliveryDay */
+  deliveryDays?: number[];
+  tour?: string;
+  category?: string;
+  chain?: string;
+  channel?: string;
+  /** Address.selectionCodeId, else the PlatformAssortment valid today — customer-specific assortment (ArticleSelectionCode) */
+  selectionCodeId?: number;
+  /** SelectionCode.designation of that assortment */
+  assortment?: string;
+  /** CustomerMarketing → Marketing designations (read-only) */
+  marketing?: string[];
+  /** ContactPerson department (contact-person logins) */
+  department?: string;
+  salutation?: string;
+  /** ContactPerson id when this login belongs to a contact person of the address */
+  contactPersonId?: number;
+};
 export type StorefrontCatalog = {
   /** empty = all kinds / categories / producers */
   kinds: string[];
@@ -99,6 +119,8 @@ export const users = pgTable(
     paymentMethods: jsonb("payment_methods").$type<string[]>(),
     /** vinX BaseData/Address.paymentConditionId (synced) */
     erpPaymentConditionId: integer("erp_payment_condition_id"),
+    /** customer master data from vinX (sales rep, tour / delivery days, category, chain, channel, assortment) — see vinx/sync.ts */
+    erpInfo: jsonb("erp_info").$type<ErpCustomerInfo>(),
     ...timestamps,
   },
   (t) => [uniqueIndex("users_email_idx").on(sql`lower(${t.email})`, sql`coalesce(${t.storefrontId}, 0)`)],
@@ -182,6 +204,10 @@ export const variants = pgTable(
     active: boolean("active").notNull().default(true),
     sort: integer("sort").notNull().default(0),
     syncedAt: timestamp("synced_at", { withTimezone: true }),
+    /** gross weight in grams (vinX Article.weight) — shipping labels */
+    weightG: integer("weight_g"),
+    /** bottle condition of the stock (vinX StockData.conditionId, Rarities add-in) — live price per condition */
+    conditionId: integer("condition_id"),
   },
   (t) => [index("variants_product_idx").on(t.productId)],
 );

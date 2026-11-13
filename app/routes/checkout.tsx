@@ -30,6 +30,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     company: ctx.user?.company ?? "",
     isTrade: ctx.isTrade,
     cancelled: url.searchParams.has("cancelled"),
+    // vinX tour / delivery days of the customer → only those dates are offered
+    deliveryDays: ctx.isTrade ? (ctx.user?.erpInfo?.deliveryDays ?? null) : null,
   };
 }
 
@@ -73,7 +75,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     paymentMethod: form.payment,
     notes: form.notes?.slice(0, 2000),
     poNumber: form.po?.slice(0, 80),
-    deliveryDate: /^\d{4}-\d{2}-\d{2}$/.test(form.deliveryDate ?? "") ? form.deliveryDate : undefined,
+    deliveryDate: validDeliveryDate(form.deliveryDate, ctx.isTrade ? ctx.user?.erpInfo?.deliveryDays : null),
   });
   await updateCart(cart.id!, () => []);
 
@@ -86,7 +88,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 export const meta: Route.MetaFunction = () => [{ title: "Checkout" }, { name: "robots", content: "noindex" }];
 
 export default function Checkout({ loaderData, actionData }: Route.ComponentProps) {
-  const { summary, payments, billing, email, company, isTrade, cancelled } = loaderData;
+  const { summary, payments, billing, email, company, isTrade, cancelled, deliveryDays } = loaderData;
   const { t, locale } = useI18n();
   const { user, shop } = useRootData();
   const errors = (actionData?.errors ?? {}) as Record<string, string>;
@@ -141,7 +143,18 @@ export default function Checkout({ loaderData, actionData }: Route.ComponentProp
             {isTrade && (
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field label={t("checkout.po")}>{(id) => <Input id={id} name="po" maxLength={80} />}</Field>
-                <Field label={t("checkout.deliveryDate")}>{(id) => <Input id={id} name="deliveryDate" type="date" min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)} />}</Field>
+                {deliveryDays?.length ? (
+                  <Field label={t("checkout.deliveryDate")} hint={t("checkout.deliveryDayHint", { days: deliveryDays.map((d) => t(`day.${d}` as MessageKey)).join(", ") })}>
+                    {(id) => (
+                      <Select id={id} name="deliveryDate" defaultValue="">
+                        <option value="">—</option>
+                        {nextDeliveryDates(deliveryDays).map((d) => <option key={d} value={d}>{new Date(`${d}T12:00:00`).toLocaleDateString(`${locale}-CH`, { weekday: "short", day: "numeric", month: "long" })}</option>)}
+                      </Select>
+                    )}
+                  </Field>
+                ) : (
+                  <Field label={t("checkout.deliveryDate")}>{(id) => <Input id={id} name="deliveryDate" type="date" min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)} />}</Field>
+                )}
               </div>
             )}
           </Section>
@@ -213,4 +226,24 @@ function Section({ n, title, children }: { n: number; title: string; children: R
       {children}
     </section>
   );
+}
+
+/** Next delivery dates on the customer's tour days (1 = Monday … 6 = Saturday), from tomorrow on. */
+function nextDeliveryDates(days: number[], count = 8) {
+  const out: string[] = [];
+  for (let i = 1; out.length < count && i < 60; i++) {
+    const d = new Date(Date.now() + i * 86400000);
+    const wd = d.getDay() === 0 ? 7 : d.getDay();
+    if (days.includes(wd)) out.push(d.toISOString().slice(0, 10));
+  }
+  return out;
+}
+
+/** A requested delivery date is kept only if it is a date in the future and (with vinX tour days) on one of them. */
+function validDeliveryDate(v: string | undefined, days: number[] | null | undefined) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v ?? "")) return undefined;
+  const d = new Date(`${v}T12:00:00`);
+  if (d.getTime() < Date.now()) return undefined;
+  const wd = d.getDay() === 0 ? 7 : d.getDay();
+  return !days?.length || days.includes(wd) ? v : undefined;
 }

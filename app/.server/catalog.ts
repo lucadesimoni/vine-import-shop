@@ -6,6 +6,7 @@ import { and, asc, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
 import { priceFor, stockLevel, withConditions, type PriceInfo, type StockLevel, type Tier } from "~/lib/pricing";
 import { tl } from "~/lib/localized";
 import type { ShopContext } from "./context";
+import type { ErpDetails } from "~/lib/erp-details";
 import { catalogScope } from "./storefronts";
 import { getDb, schema } from "./db";
 
@@ -144,8 +145,14 @@ export async function categoryAndDescendants(slug: string): Promise<number[]> {
 }
 
 /** Products this request may see: active, trade-only only for trade customers, within the storefront's assortment. */
-export function visibleProducts(ctx: Pick<ShopContext, "isTrade" | "storefront">): SQL {
-  return and(eq(p.active, true), ctx.isTrade ? undefined : eq(p.tradeOnly, false), catalogScope(ctx.storefront))!;
+export function visibleProducts(ctx: Pick<ShopContext, "isTrade" | "storefront"> & { assortment?: string[] | null }): SQL {
+  return and(
+    eq(p.active, true),
+    ctx.isTrade ? undefined : eq(p.tradeOnly, false),
+    catalogScope(ctx.storefront),
+    // the customer's own assortment from vinX (ArticleSelectionCode)
+    ctx.assortment?.length ? sql`exists (select 1 from ${schema.variants} where ${schema.variants.productId} = ${p.id} and ${inArray(schema.variants.erpId, ctx.assortment)})` : undefined,
+  )!;
 }
 
 export async function searchProducts(ctx: ShopContext, params: SearchParams) {
@@ -246,6 +253,7 @@ export async function productDetail(ctx: ShopContext, slug: string) {
     alcohol: row.alcohol,
     taxClass: row.taxClass,
     erp: row.erpDetails ?? null,
+    erpLinks: await erpLinks(ctx, row.erpDetails),
     producer: producer ? { name: producer.name, slug: producer.slug, logo: producer.logo, region: producer.region, country: producer.country, description: tl(producer.description, ctx.locale) } : null,
     moreFromProducer: await toCards(ctx, sameProducer.map((x) => x.id)),
     related: await toCards(ctx, sameCategory.map((x) => x.id)),
@@ -253,6 +261,20 @@ export async function productDetail(ctx: ShopContext, slug: string) {
 }
 
 /** All producers with the number of products visible in this shop (ctx omitted: all active products). */
+/** vinX set contents and substitute article → shop products (name + link), only those visible in this shop. */
+async function erpLinks(ctx: ShopContext, d: ErpDetails | null) {
+  const ids = [...(d?.set ?? []).map((x) => x.articleId), ...(d?.substitute?.articleId ? [d.substitute.articleId] : [])];
+  if (!ids.length) return { set: [], substitute: null };
+  const db = await getDb();
+  const rows = await db.select({ erpId: schema.variants.erpId, slug: p.slug, name: p.name, size: schema.variants.size }).from(schema.variants)
+    .innerJoin(p, eq(p.id, schema.variants.productId)).where(and(inArray(schema.variants.erpId, ids), visibleProducts(ctx)));
+  const find = (id: string) => rows.find((r) => r.erpId === id);
+  return {
+    set: (d?.set ?? []).map((x) => ({ amount: x.amount, item: find(x.articleId) })).filter((x) => x.item).map((x) => ({ amount: x.amount, slug: x.item!.slug, name: tl(x.item!.name, ctx.locale), size: x.item!.size })),
+    substitute: d?.substitute ? { text: d.substitute.text ?? null, product: d.substitute.articleId && find(d.substitute.articleId) ? { slug: find(d.substitute.articleId)!.slug, name: tl(find(d.substitute.articleId)!.name, ctx.locale) } : null } : null,
+  };
+}
+
 export async function producersList(ctx?: Pick<ShopContext, "isTrade" | "storefront">) {
   const db = await getDb();
   return db

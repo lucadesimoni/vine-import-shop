@@ -41,7 +41,7 @@ export type MappedArticle = {
   category: string | null;
   kind: "wine" | "food" | "spirit" | "beverage" | null;
   product: { country?: string; region?: string; appellation?: string; grapes?: string; alcohol?: number; color?: string; taxClass?: "standard" | "reduced" };
-  variant: { vintage?: string; size?: string; volumeMl?: number; priceCents?: number; packSize?: number; stock?: number; active?: boolean; erpId?: string; discountGroup?: string };
+  variant: { vintage?: string; size?: string; volumeMl?: number; priceCents?: number; packSize?: number; stock?: number; active?: boolean; erpId?: string; discountGroup?: string; weightG?: number };
   /** ERP-owned details (REST: BaseData/Wine, WineRating, Brand, Article) */
   details?: ErpDetails;
   /** Article description from the ERP — used only while the shop has no own text */
@@ -50,6 +50,7 @@ export type MappedArticle = {
   producerInfo?: { description?: string; website?: string };
 };
 
+const num = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)) || Number(v) === 0 ? undefined : Number(v));
 const txt = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : undefined);
 export function erpDetailsOf(row: Raw): ErpDetails | undefined {
   const w = (row.wine ?? {}) as Raw;
@@ -63,6 +64,12 @@ export function erpDetailsOf(row: Raw): ErpDetails | undefined {
     characteristic: txt(w.characteristic), vinification: txt(w.vinification), terroir: txt(w.terroir), advice: txt(w.consumptionAdvice), history: txt(w.history),
     drinkTemp: temp, storage: storage || undefined, ratings: ratings.length ? ratings : undefined,
     ean: txt(row.ean1 != null ? String(row.ean1) : undefined), rarity: row.isRarity === true ? true : undefined, brand: txt((row.brand as Raw | undefined)?.designation),
+    classification: txt((w.classification as Raw | undefined)?.designation),
+    cycle: txt((row.productCycle as Raw | undefined)?.designation),
+    acidity: num(w.acidity), residualSugar: num(w.residualSugar),
+    ingredients: txt((row.ingredients as Raw | undefined)?.contentInfo), nutrition: txt((row.ingredients as Raw | undefined)?.nutritionInfo), allergens: txt((row.ingredients as Raw | undefined)?.allergenInfo),
+    set: Array.isArray(row.setItems) && row.setItems.length ? (row.setItems as Raw[]).map((x) => ({ articleId: String(x.articleId), amount: Number(x.amount ?? 1) })) : undefined,
+    substitute: row.substituteArticleId != null || txt(row.substituteArticleText) ? { articleId: row.substituteArticleId != null ? String(row.substituteArticleId) : undefined, text: txt(row.substituteArticleText) } : undefined,
   };
   const clean = Object.fromEntries(Object.entries(d).filter(([, v]) => v !== undefined)) as ErpDetails;
   return Object.keys(clean).length ? clean : undefined;
@@ -113,6 +120,8 @@ export function mapArticle(row: Raw, m: Mapping): MappedArticle {
       active: a.active && pick(row, a.active) !== undefined ? truthy(pick(row, a.active)) : undefined,
       erpId: s("erpId") ?? sku,
       discountGroup: s("discountGroup"),
+      // Article.weight (kg in vinX; values above 50 are taken as grams)
+      weightG: (() => { const w = decimal(pick(row, a.weight)); return w && w > 0 ? Math.round(w <= 50 ? w * 1000 : w) : undefined; })(),
     },
     details: erpDetailsOf(row),
     text: txt(row.description),

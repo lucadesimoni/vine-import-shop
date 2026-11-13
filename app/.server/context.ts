@@ -24,6 +24,8 @@ export type ShopContext = {
   shop: Shop;
   /** the storefront serving this request (own domain / preview); null = main shop */
   storefront: Storefront | null;
+  /** vinX article ids of the customer's own assortment (vinx.customerAssortments), null = no restriction */
+  assortment: string[] | null;
   channel: {
     mode: ChannelMode;
     /** this request is served by the B2B portal */
@@ -73,6 +75,7 @@ export async function buildShopContext(request: Request): Promise<ShopContext> {
     brand,
     shop,
     storefront,
+    assortment: await customerAssortment(user),
     channel: { mode, portal, portalEnabled, canUsePortal: portalEnabled && approved },
   };
 }
@@ -82,4 +85,26 @@ function acceptLanguages(request: Request): string[] {
     .split(",")
     .map((p) => p.trim().slice(0, 2).toLowerCase())
     .filter(Boolean);
+}
+
+/** Customer-specific assortment from vinX (Address.selectionCodeId → ArticleSelectionCode), cached per selection. */
+const assortmentCache = new Map<number, { at: number; ids: string[] }>();
+async function customerAssortment(user: SessionUser): Promise<string[] | null> {
+  const sel = user?.erpInfo?.selectionCodeId;
+  if (!sel) return null;
+  const { getSetting } = await import("./settings");
+  const cfg = await getSetting("vinx");
+  if (!cfg.enabled || !cfg.customerAssortments) return null;
+  const hit = assortmentCache.get(sel);
+  if (hit && Date.now() - hit.at < 10 * 60_000) return hit.ids;
+  try {
+    const { erpClient } = await import("./vinx/sync");
+    const client = await erpClient(cfg);
+    if (!client.assortment) return null;
+    const ids = [...(await client.assortment(String(sel)))];
+    assortmentCache.set(sel, { at: Date.now(), ids });
+    return ids.length ? ids : null;
+  } catch {
+    return hit?.ids ?? null; // ERP unreachable: last known assortment, else no restriction
+  }
 }

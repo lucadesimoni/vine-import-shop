@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { and, asc, desc, eq, isNull, ne, sql } from "drizzle-orm";
 import { data, Form, Link, redirect, useActionData } from "react-router";
 import { ArrowLeft, ArrowUpRight, Mail, RefreshCw, Trash2 } from "lucide-react";
@@ -136,6 +136,24 @@ export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
         </Form>
 
         <div className="grid content-start gap-6">
+          {c.erpInfo && Object.keys(c.erpInfo).length > 0 && (
+            <Panel title="Stammdaten aus vinX" description="Read-only — gepflegt in vinX, übernommen mit dem Job „Kundenadressen“.">
+              <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-5 gap-y-2 text-sm">
+                {([
+                  ["Aussendienst", c.erpInfo.salesRep?.name],
+                  ["Tour", c.erpInfo.tour],
+                  ["Liefertage", c.erpInfo.deliveryDays?.map((d) => ["", "Mo", "Di", "Mi", "Do", "Fr", "Sa"][d]).join(", ")],
+                  ["Kategorie", c.erpInfo.category],
+                  ["Kette", c.erpInfo.chain],
+                  ["Vertriebsweg", c.erpInfo.channel],
+                  ["Sortiment", c.erpInfo.selectionCodeId != null ? `${c.erpInfo.assortment ?? "Selektion"} (${c.erpInfo.selectionCodeId})` : undefined],
+                  ["Marketing", c.erpInfo.marketing?.join(", ")],
+                  ["Abteilung", c.erpInfo.department],
+                  ["Kontaktperson", c.erpInfo.contactPersonId != null ? `#${c.erpInfo.contactPersonId} (eigenes Login)` : undefined],
+                ] as const).filter(([, v]) => v).map(([k, v]) => <Fragment key={k}><dt className="text-muted-fg">{k}</dt><dd>{v}</dd></Fragment>)}
+              </dl>
+            </Panel>
+          )}
           <Panel title="Zugang" description={c.passwordSet ? "Der Kunde hat ein Passwort gesetzt." : "Noch kein Passwort — z. B. nach einem Import."}>
             <Form method="post"><Button type="submit" name="intent" value="invite" variant="secondary" size="sm"><Mail size={13} /> {c.passwordSet ? "Link zum Zurücksetzen senden" : "Einladung senden"}</Button></Form>
           </Panel>

@@ -107,8 +107,9 @@ export class Rest3Client implements ErpClient {
 
   /** Lookup tables referenced by Article (ids → records), loaded once per sync run. */
   private async lookups() {
-    const [producers, regions, countries, categories, fillings, units, compositions, grapes, wines, wineRatings, ratings, brands] = await Promise.all(
-      ["BaseData/Producer", "BaseData/Region", "BaseData/Country", "BaseData/ArticleCategory", "BaseData/Filling", "BaseData/TradingUnit", "BaseData/WineComposition", "BaseData/Grape", "BaseData/Wine", "BaseData/WineRating", "BaseData/Rating", "BaseData/Brand"].map((p) => this.all(p).catch(() => [] as Raw[])),
+    const [producers, regions, countries, categories, fillings, units, compositions, grapes, wines, wineRatings, ratings, brands, classifications, cycles, ecGroups, ingredients, sets] = await Promise.all(
+      ["BaseData/Producer", "BaseData/Region", "BaseData/Country", "BaseData/ArticleCategory", "BaseData/Filling", "BaseData/TradingUnit", "BaseData/WineComposition", "BaseData/Grape", "BaseData/Wine", "BaseData/WineRating", "BaseData/Rating", "BaseData/Brand",
+        "BaseData/Classification", "BaseData/ProductCycle", "BaseData/ECommerceGroup", "BaseData/Ingredients", "BaseData/SellingSet"].map((p) => this.all(p).catch(() => [] as Raw[])),
     );
     const byId = (rows: Raw[]) => new Map(rows.map((r) => [Number(r.id), r]));
     const grapeName = byId(grapes);
@@ -124,7 +125,13 @@ export class Rest3Client implements ErpClient {
       const src = ratingById.get(Number(r.ratingId));
       ratingsByWine.set(Number(r.wineId), [...(ratingsByWine.get(Number(r.wineId)) ?? []), { ...r, source: src?.designation, max: src?.maximalRating, unit: src?.unit }]);
     }
-    return { producers: byId(producers), regions: byId(regions), countries: byId(countries), categories: byId(categories), fillings: byId(fillings), units: byId(units), wineGrapes, wines: byId(wines), ratingsByWine, brands: byId(brands) };
+    // set articles (SellingSet: setArticleId → components) and food labelling (Ingredients by articleId)
+    const setItems = new Map<number, Raw[]>();
+    for (const s of [...sets].sort((a, b) => Number(a.position ?? 0) - Number(b.position ?? 0))) setItems.set(Number(s.setArticleId), [...(setItems.get(Number(s.setArticleId)) ?? []), s]);
+    return {
+      producers: byId(producers), regions: byId(regions), countries: byId(countries), categories: byId(categories), fillings: byId(fillings), units: byId(units), wineGrapes, wines: byId(wines), ratingsByWine, brands: byId(brands),
+      classifications: byId(classifications), cycles: byId(cycles), ecGroups: byId(ecGroups), ingredients: new Map(ingredients.map((i) => [Number(i.articleId), i])), setItems,
+    };
   }
 
   /** Articles enriched with their referenced master data so the generic mapper can use nested paths. */
@@ -146,8 +153,12 @@ export class Rest3Client implements ErpClient {
         filling: L.fillings.get(Number(a.fillingUnitId)),
         tradingUnit: L.units.get(Number(a.tradingUnitId)),
         grapes: a.wineId != null ? (L.wineGrapes.get(Number(a.wineId)) ?? []).join(", ") || undefined : undefined,
-        wine: a.wineId != null ? { ...(L.wines.get(Number(a.wineId)) ?? {}), ratings: L.ratingsByWine.get(Number(a.wineId)) ?? [] } : undefined,
+        wine: a.wineId != null ? (() => { const w = L.wines.get(Number(a.wineId)) ?? {}; return { ...w, ratings: L.ratingsByWine.get(Number(a.wineId)) ?? [], classification: L.classifications.get(Number(w.classificationId)) }; })() : undefined,
         brand: a.brandId != null ? L.brands.get(Number(a.brandId)) : undefined,
+        productCycle: a.productCycleId != null ? L.cycles.get(Number(a.productCycleId)) : undefined,
+        eCommerceGroup: a.eCommerceGroupId != null ? L.ecGroups.get(Number(a.eCommerceGroupId)) : undefined,
+        ingredients: L.ingredients.get(Number(a.id)),
+        setItems: L.setItems.get(Number(a.id)),
       };
     }
   }
@@ -183,8 +194,50 @@ export class Rest3Client implements ErpClient {
   }
 
   async referenceData() {
-    const [deliveryConditions, paymentConditions, priceGroups] = await Promise.all(["BaseData/DeliveryCondition", "BaseData/PaymentCondition", "BaseData/PriceGroup"].map((p) => this.all(p).catch(() => [] as Raw[])));
-    return { deliveryConditions, paymentConditions, priceGroups };
+    const [deliveryConditions, paymentConditions, priceGroups, paymentMeans, discountGroups, specialConditions, receiptTypes, warehouses, distributionChannels, selectionCodes] = await Promise.all(
+      ["BaseData/DeliveryCondition", "BaseData/PaymentCondition", "BaseData/PriceGroup", "BaseData/PaymentMeans", "BaseData/DiscountGroupArticleCustomer", "BaseData/SpecialCondition", "BaseData/ReceiptType", "BaseData/Warehouse", "BaseData/DistributionChannel", "BaseData/SelectionCode"].map((p) => this.all(p).catch(() => [] as Raw[])),
+    );
+    return { deliveryConditions, paymentConditions, priceGroups, paymentMeans, discountGroups, specialConditions, receiptTypes, warehouses, distributionChannels, selectionCodes };
+  }
+
+  async openItems(addressId: string) {
+    const [rows, types] = await Promise.all([
+      this.all("BaseData/Receipt", `addressId eq ${Number(addressId)} and invoiceNumber ne null`, 200).catch(() => [] as Raw[]),
+      this.all("BaseData/ReceiptType").catch(() => [] as Raw[]),
+    ]);
+    const typeName = new Map(types.map((t) => [Number(t.id), String(t.designation ?? "")]));
+    return rows
+      .map((r) => {
+        const total = cents(Number(r.totalNet ?? 0) + Number(r.totalVat ?? 0));
+        return { id: String(r.id), number: String(r.invoiceNumber ?? r.receiptNumber ?? r.id), type: typeName.get(Number(r.receiptTypeId)) || "Rechnung", date: (r.invoicingDate as string) ?? (r.receiptDate as string) ?? null, due: (r.dueDate as string) ?? null, totalCents: total, openCents: Math.max(0, total - cents(r.totalPayed ?? 0)) };
+      })
+      .filter((r) => r.openCents > 0)
+      .sort((a, b) => String(a.due).localeCompare(String(b.due)));
+  }
+
+  async reservations(addressId: string) {
+    const rows = await this.all("BaseData/Reservation", `addressId eq ${Number(addressId)}`, 200).catch(() => [] as Raw[]);
+    return rows.filter((r) => Number(r.quantity) > 0).map((r) => ({ articleId: String(r.articleId), quantity: Number(r.quantity) }));
+  }
+
+  async shippingPackages(receiptId: string) {
+    const rows = await this.all("BaseData/ShippingPackage", `receiptId eq ${Number(receiptId)}`, 50).catch(() => [] as Raw[]);
+    return [...new Set(rows.filter((r) => !r.notUsed).map((r) => String(r.shipmentNumberComplete ?? r.shipmentNumber ?? "").trim()).filter(Boolean))];
+  }
+
+  async *contactPersons() {
+    const departments = new Map((await this.all("BaseData/Department").catch(() => [] as Raw[])).map((d) => [Number(d.id), d]));
+    for await (const c of this.collection("BaseData/ContactPerson")) {
+      yield { ...c, department: c.departmentDesignation ?? departments.get(Number(c.departmentId))?.designation };
+    }
+  }
+
+  async onlineAddress(id: string) {
+    return this.request<Raw>("GET", this.shop(`Online/OnlineAddress(${Number(id)})`)).catch(() => null);
+  }
+
+  async conditions() {
+    return this.all("BaseData/Condition").catch(() => [] as Raw[]);
   }
 
   async changeShopUsername(addressId: string, username: string) {
@@ -198,9 +251,40 @@ export class Rest3Client implements ErpClient {
 
   /** BaseData/Address (customers), incrementally by changedOn, with the country resolved to its ISO code. */
   async *addresses(since?: Date | null) {
-    const countries = new Map((await this.all("BaseData/Country")).map((c) => [Number(c.id), c]));
+    const [countries, reps, tours, days, categories, chains, channels, salutations, selections, platform, marketing, customerMarketing] = await Promise.all(
+      ["BaseData/Country", "BaseData/SalesRepresentative", "BaseData/Tour", "BaseData/DeliveryDay", "BaseData/CustomerCategory", "BaseData/Chain", "BaseData/DistributionChannel", "BaseData/Salutation",
+        "BaseData/SelectionCode", "BaseData/PlatformAssortment", "BaseData/Marketing", "BaseData/CustomerMarketing"].map((p) => this.all(p).catch(() => [] as Raw[])),
+    );
+    const byId = (rows: Raw[]) => new Map(rows.map((r) => [Number(r.id ?? r.Id), r]));
+    const [C, R, T, D, K, H, V, S, SEL, MK] = [countries, reps, tours, days, categories, chains, channels, salutations, selections, marketing].map(byId);
+    // assortments assigned per address for a period (PlatformAssortment) and the address's marketing codes (CustomerMarketing → Marketing)
+    const today = Date.now();
+    const platformByAddress = new Map<number, number[]>();
+    for (const pa of platform) {
+      const from = pa.fromDate ? Date.parse(String(pa.fromDate)) : -Infinity, to = pa.toDate ? Date.parse(String(pa.toDate)) : Infinity;
+      if (pa.addressId != null && pa.selectionCodeId != null && from <= today && today <= to) platformByAddress.set(Number(pa.addressId), [...(platformByAddress.get(Number(pa.addressId)) ?? []), Number(pa.selectionCodeId)]);
+    }
+    const marketingByAddress = new Map<number, string[]>();
+    for (const cm of customerMarketing) {
+      const m = MK.get(Number(cm.marketingId));
+      if (cm.active === false || !m?.designation) continue;
+      marketingByAddress.set(Number(cm.addressId), [...(marketingByAddress.get(Number(cm.addressId)) ?? []), String(m.designation)]);
+    }
     for await (const a of this.collection("BaseData/Address", since ? `changedOn gt ${since.toISOString()}` : undefined)) {
-      yield { ...a, country: countries.get(Number(a.countryId)) };
+      yield {
+        ...a,
+        country: C.get(Number(a.countryId)),
+        salesRepresentative: R.get(Number(a.salesRepresentativeId)),
+        tour: T.get(Number(a.tourId)),
+        deliveryDay: D.get(Number(a.deliveryDayId)),
+        customerCategory: K.get(Number(a.customerCategoryId)),
+        chain: H.get(Number(a.chainId)),
+        distributionChannel: V.get(Number(a.distributionChannelId)),
+        salutation: S.get(Number(a.salutationId)),
+        selectionCode: SEL.get(Number(a.selectionCodeId)),
+        platformSelectionIds: platformByAddress.get(Number(a.id)),
+        marketing: marketingByAddress.get(Number(a.id)),
+      };
     }
   }
 
@@ -217,12 +301,16 @@ export class Rest3Client implements ErpClient {
     return this.collection("BaseData/SpecialPrices");
   }
 
-  async productInfo(req: { customerId?: number | null; priceGroupId?: number | null; articles: { erpId: string; qty: number }[] }) {
-    const rows = await this.request<Raw[]>("POST", this.shop("Calculated/ProductInfo"), {
-      validDate: new Date().toISOString(),
-      ...(req.customerId ? { customerId: req.customerId } : { priceGroupId: req.priceGroupId ?? undefined }),
-      articleParameters: req.articles.map((a) => ({ articleId: Number(a.erpId), quantity: a.qty })),
-    });
+  async productInfo(req: { customerId?: number | null; priceGroupId?: number | null; articles: { erpId: string; qty: number; conditionId?: number | null }[] }) {
+    const who = req.customerId ? { customerId: req.customerId } : { priceGroupId: req.priceGroupId ?? undefined };
+    const plain = req.articles.filter((a) => a.conditionId == null);
+    const rare = req.articles.filter((a) => a.conditionId != null);
+    // rarities: price per bottle condition (Calculated/ProductInfoCondition)
+    const [a, b] = await Promise.all([
+      plain.length ? this.request<Raw[]>("POST", this.shop("Calculated/ProductInfo"), { validDate: new Date().toISOString(), ...who, articleParameters: plain.map((x) => ({ articleId: Number(x.erpId), quantity: x.qty })) }) : [],
+      rare.length ? this.request<Raw[]>("POST", this.shop("Calculated/ProductInfoCondition"), { validDate: new Date().toISOString(), ...who, articleParameters: rare.map((x) => ({ articleId: Number(x.erpId), quantity: x.qty, conditionId: x.conditionId })) }) : [],
+    ]);
+    const rows = [...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])];
     const out = new Map<string, ProductInfo>();
     for (const r of Array.isArray(rows) ? rows : []) {
       const qty = Math.max(1, Number(r.quantity ?? 1));
@@ -289,7 +377,13 @@ export class Rest3Client implements ErpClient {
       ...onlineAddress({ ...(c.billing ?? {}), company: c.company ?? undefined, name: c.name, phone: c.phone ?? undefined }, c.email, c.erpId ? "change" : "new", c.locale),
       ...(c.erpId ? { addressId: Number(c.erpId) } : {}),
     });
-    return String(r?.addressId ?? r?.id ?? "");
+    if (r?.addressId != null) return String(r.addressId);
+    // vinX may only acknowledge the online address; read it back to get the address id once it is processed
+    if (r?.id != null) {
+      const back = await this.onlineAddress(String(r.id));
+      if (back?.addressId != null) return String(back.addressId);
+    }
+    return c.erpId ?? "";
   }
 }
 

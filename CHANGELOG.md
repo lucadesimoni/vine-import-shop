@@ -12,6 +12,25 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **vinX Shop API v2.0 fully used: 57 of 57 endpoints** (see `docs/VINX.md`, checked against the official spec by the contract test).
+  - **Product page:**
+    - Allergens, ingredients and nutrition facts (`Ingredients`).
+    - Classification (DOCG …), product cycle, acidity / residual sugar.
+    - Set contents with links (`SellingSet`), substitute article for discontinued ones.
+    - Bottle condition for rarities (`Condition`, stock per condition) and live prices per condition (`ProductInfoCondition`).
+  - **Categories** come from the web groups (`ECommerceGroup`) when they are maintained.
+  - **Weight** from the article goes into the Post label.
+  - **Customers** (`SalesRepresentative`, `Tour`/`DeliveryDay`, `CustomerCategory`, `Chain`, `DistributionChannel`, `Salutation`, `SelectionCode`, `PlatformAssortment`, `Marketing`/`CustomerMarketing`):
+    - The portal shows the sales rep and the delivery days. The B2B checkout offers only dates on the customer's tour days.
+    - The admin shows the vinX master data of each customer.
+    - Optional customer assortment.
+  - **Contact persons** (`ContactPerson`, `Department`): one portal login each, with the same address, prices and payment terms.
+  - **Portal:** open invoices with due and overdue status (`Receipt`, `ReceiptType`), «Für Sie reserviert» (`Reservation`).
+  - **Tracking numbers** from vinX (`ShippingPackage`) go onto the order and into the shipping e-mail.
+  - **New online addresses** are resolved to their vinX address id (`Online/OnlineAddress({id})`).
+  - **Admin › vinX:** reference data (payment means, discount groups, special conditions, receipt types, warehouses, distribution channels, selections).
+
 ## [1.7.0] - 2026-11-13
 
 ### Added

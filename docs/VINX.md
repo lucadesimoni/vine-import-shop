@@ -37,22 +37,21 @@ All shop paths live under `/api/v2.0/Core/VinX/Shop/`. Collections support OData
 | Online assortment | `GET BaseData/ArticleSelectionCode?$filter=selectionId eq …` | Optional (Admin › vinX › Online-Sortiment): articles outside the selection are set inactive in the shop |
 | Reference data | `GET BaseData/DeliveryCondition · PaymentCondition · PriceGroup` | Admin › vinX shows the ids for the mappings |
 
-### Coverage of the Shop API v2.0 (57 paths)
+### Coverage of the Shop API v2.0: 57 of 57 paths used
 
-**Used: 32.** The paths above, plus the lookups for the article sync.
-**Not used: 25**, each for one of the reasons below. All are read-only (`GET`). The API writes only `Online/Basket`, `Online/OnlineAddress` and `ChangeShopUsername`.
+Beyond the processes above:
 
-| Path | Why not (yet) | 
-|---|---|
-| `Online/OnlineAddress({id})` | Reads an online address back. The shop keeps its own copy, and `BaseData/Address` covers the pull |
-| `Calculated/ProductInfoCondition` | Explains how a price came about (conditions behind `ProductInfo`). The shop shows the effective price; an extension could add a breakdown |
-| `BaseData/Condition` | Bottle condition (Rarities add-in), not discounts. Relevant only for rarity shops → extension |
-| `BaseData/Classification`, `ProductCycle`, `Ingredients` | Wine classification, product life cycle and ingredients (food labelling). Can be mapped via `mapping` once a customer uses them |
-| `BaseData/SelectionCode`, `ECommerceGroup`, `PlatformAssortment`, `SellingSet` | Alternative ways to model assortments and sets. The shop uses `ArticleSelectionCode`; sets are bundles in the shop |
-| `BaseData/ContactPerson`, `Salutation`, `Department`, `SalesRepresentative`, `CustomerCategory`, `CustomerMarketing`, `Marketing`, `Chain`, `DistributionChannel` | CRM and organisation data. Not needed for ordering; a sales-rep contact in the portal would be a small extension |
-| `BaseData/DiscountGroupArticleCustomer`, `SpecialCondition` | vinX applies these in `ProductInfo` and `Basket`; the shop does not recalculate them |
-| `BaseData/PaymentMeans`, `ReceiptType` | The payment means and receipt types behind `PaymentCondition` and `Receipt` |
-| `BaseData/DeliveryDay`, `Tour`, `ShippingPackage`, `Warehouse`, `Reservation` | Logistics. Delivery dates per tour would be the next useful extension for B2B delivery |
+| Area | Endpoints | In the shop |
+|---|---|---|
+| Product data | `Classification`, `ProductCycle`, `ECommerceGroup`, `Ingredients`, `SellingSet`, `Article.substituteArticleId/Text`, `Article.weight`, `Wine.acidity/residualSugar` | Product page: classification (e.g. DOCG), product cycle badge, allergens / ingredients / nutrition facts, set contents with links, substitute article for discontinued ones, acidity / residual sugar. Categories come from the web groups (`ECommerceGroup`) when they are maintained, else from the article category. Weight goes into the Post label |
+| Rarities | `Condition`, `StockData.conditionId`, `Calculated/ProductInfoCondition` | Bottle condition (level, label, capsule) on the product page. Live customer prices per condition |
+| Customers | `SalesRepresentative`, `Tour`, `DeliveryDay`, `CustomerCategory`, `Chain`, `DistributionChannel`, `Salutation`, `SelectionCode`, `PlatformAssortment`, `Marketing`, `CustomerMarketing` | Synced into `users.erp_info`. The portal shows the sales rep and the delivery days, and the B2B checkout offers only dates on the customer's tour days. The admin shows category, chain, channel, assortment and marketing codes. Optional customer assortment (`selectionCodeId` or a `PlatformAssortment` valid today) |
+| Contact persons | `ContactPerson`, `Department` | Job "customers:import" creates one portal login per contact person with an e-mail: same address, prices, conditions and payment terms. These logins are not pushed back as addresses |
+| Online addresses | `Online/OnlineAddress({id})` | When vinX only acknowledges a new online address, the shop reads it back to get the address id |
+| Receipts | `Receipt` (invoice, due date, paid), `ReceiptType` | Portal: open invoices with due and overdue status |
+| Allocations | `Reservation` | Portal: «Für Sie reserviert» (allocations, subscriptions) |
+| Shipping | `ShippingPackage` | Tracking numbers of a delivery go onto the order and into the shipping e-mail when vinX marks it shipped |
+| Reference data | `PaymentMeans`, `DiscountGroupArticleCustomer`, `SpecialCondition`, `ReceiptType`, `Warehouse`, `DistributionChannel`, `SelectionCode` | Admin › vinX lists them with their ids for the mappings. vinX itself applies special conditions and customer discounts in `ProductInfo` and `Basket` |
 
 Other I-AG APIs (Base, Shop v1, DigitalDrink, Logistics, Delivery, PoS, Portal, Reporting) are not needed for the shop. None of them writes article master data either.
 

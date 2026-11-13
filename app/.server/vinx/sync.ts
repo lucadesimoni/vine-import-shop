@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, lte, or, sql } from "drizzle-orm";
 import type { Settings } from "~/lib/settings";
 import { slugify } from "~/lib/slug";
 import { getDb, schema } from "../db";
+import type { ErpCustomerInfo } from "../db/schema";
 import { getSetting } from "../settings";
 import type { CustomerPayload, ErpClient, OrderPayload, Raw } from "./client";
 import { CsvClient } from "./csv";
@@ -106,7 +107,7 @@ export async function syncArticles(client: ErpClient, full = false) {
         categoryId = categoryCache.get(a.category);
       }
 
-      const vPatch: Partial<typeof schema.variants.$inferInsert> = { syncedAt: new Date(), erpId: a.variant.erpId };
+      const vPatch: Partial<typeof schema.variants.$inferInsert> = { syncedAt: new Date(), erpId: a.variant.erpId, ...(a.variant.weightG ? { weightG: a.variant.weightG } : {}) };
       if (owned.has("price") && a.variant.priceCents != null) vPatch.priceCents = a.variant.priceCents;
       if (owned.has("stock") && a.variant.stock != null) vPatch.stock = a.variant.stock;
       if (owned.has("vintage") && a.variant.vintage) vPatch.vintage = a.variant.vintage;
@@ -170,11 +171,21 @@ export async function syncStock(client: ErpClient) {
     const db = await getDb();
     let n = 0;
     const ids = await variantRefs();
+    // Rarities add-in: stock per bottle condition (StockData.conditionId → BaseData/Condition)
+    const conditions = client.conditions ? new Map((await client.conditions()).map((c) => [Number(c.id), c])) : new Map<number, Raw>();
     for await (const raw of client.stock()) {
       const s = mapStock(raw, mappingFor(cfg, client));
       const id = ids.get(s.ref);
       if (!id) continue;
-      await db.update(schema.variants).set({ stock: s.stock, syncedAt: new Date() }).where(eq(schema.variants.id, id));
+      const conditionId = raw.conditionId != null ? Number(raw.conditionId) : null;
+      await db.update(schema.variants).set({ stock: s.stock, syncedAt: new Date(), conditionId }).where(eq(schema.variants.id, id));
+      const c = conditionId != null ? conditions.get(conditionId) : undefined;
+      if (c) {
+        const v = await db.query.variants.findFirst({ where: eq(schema.variants.id, id), columns: { productId: true } });
+        const p = v && (await db.query.products.findFirst({ where: eq(schema.products.id, v.productId), columns: { erpDetails: true } }));
+        const str = (x: unknown) => (x == null || x === "" ? undefined : String(x));
+        if (v) await db.update(schema.products).set({ erpDetails: { ...(p?.erpDetails ?? {}), condition: { id: conditionId!, designation: String(c.designation ?? ""), quality: str(c.quality), level: str(c.levelInCm != null ? `${c.levelInCm} cm` : c.level), label: str(c.label), capsule: str(c.capsule) } } }).where(eq(schema.products.id, v.productId));
+      }
       n++;
     }
     return { items: n, message: `${n} variants updated` };
@@ -321,7 +332,9 @@ export async function syncCustomers(client: ErpClient) {
     let updated = 0, skipped = 0;
     for await (const a of client.addresses(since)) {
       const id = String(a.id ?? a.addressNumber ?? "");
-      const u = id ? await db.query.users.findFirst({ where: eq(schema.users.erpId, id) }) : undefined;
+      // the address's own login (contact-person logins share the address id and follow below)
+      const linked = id ? await db.select().from(schema.users).where(eq(schema.users.erpId, id)) : [];
+      const u = linked.find((x) => !x.erpInfo?.contactPersonId) ?? linked[0];
       if (!u) { skipped++; continue; }
       const changed = a.changedOn ? new Date(String(a.changedOn)) : null;
       if (changed && u.updatedAt > changed) { skipped++; continue; }
@@ -339,12 +352,17 @@ export async function syncCustomers(client: ErpClient) {
         groupId: group?.id ?? u.groupId,
         // the customer's payment terms in vinX decide which payment methods the shop offers (see payments.ts)
         erpPaymentConditionId: a.paymentConditionId != null ? Number(a.paymentConditionId) : u.erpPaymentConditionId,
+        erpInfo: { ...erpInfoOf(a), ...(u.erpInfo?.contactPersonId ? { contactPersonId: u.erpInfo.contactPersonId } : {}) },
         locale: language && ["de", "it", "fr", "en"].includes(language) ? language : u.locale,
         updatedAt: changed ?? new Date(),
       };
       const before = JSON.stringify([u.name, u.company, u.phone, u.billing, u.groupId, u.locale]);
       if (before === JSON.stringify([patch.name, patch.company, patch.phone, patch.billing, patch.groupId, patch.locale])) { skipped++; continue; }
       await db.update(schema.users).set(patch).where(eq(schema.users.id, u.id));
+      // contact-person logins of the same address: company, address, group, payment terms, master data
+      for (const cp of linked.filter((x) => x.id !== u.id)) {
+        await db.update(schema.users).set({ company: patch.company, billing: { ...patch.billing, name: cp.billing?.name ?? cp.name }, groupId: patch.groupId, erpPaymentConditionId: patch.erpPaymentConditionId, erpInfo: { ...patch.erpInfo, contactPersonId: cp.erpInfo?.contactPersonId } }).where(eq(schema.users.id, cp.id));
+      }
       updated++;
     }
     return { items: updated, message: `${updated} customers updated from vinX, ${skipped} unchanged/not linked` };
@@ -359,6 +377,29 @@ export async function syncCustomers(client: ErpClient) {
 const RECEIPT_STATUS = { new: "confirmed", inProgress: "processing", done: "shipped", payed: "completed", archived: "completed", cancelled: "cancelled" } as const;
 const RANK = ["new", "confirmed", "processing", "shipped", "completed"];
 
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** vinX address (enriched by the driver) → customer master data shown in admin and portal. */
+export function erpInfoOf(a: Raw): ErpCustomerInfo {
+  const str = (x: unknown) => (x == null || x === "" ? undefined : String(x));
+  const rep = a.salesRepresentative as Raw | undefined;
+  const tourOrDay = (a.deliveryDay ?? a.tour) as Raw | undefined;
+  const days = tourOrDay ? (["tourMonday", "tourTuesday", "tourWednesday", "tourThursday", "tourFriday", "tourSaturday"] as const).map((k, i) => (tourOrDay[k] ? i + 1 : 0)).filter(Boolean) : undefined;
+  const info: ErpCustomerInfo = {
+    salesRep: rep ? { name: [rep.firstName, rep.name].filter(Boolean).join(" "), reference: str(rep.reference), region: str(rep.region) } : undefined,
+    deliveryDays: days?.length ? days : undefined,
+    tour: str((a.tour as Raw | undefined)?.tourName ?? (a.tour as Raw | undefined)?.tourDescription ?? (a.deliveryDay as Raw | undefined)?.tourDescription),
+    category: str((a.customerCategory as Raw | undefined)?.designation),
+    chain: str((a.chain as Raw | undefined)?.designation),
+    channel: str((a.distributionChannel as Raw | undefined)?.description),
+    selectionCodeId: a.selectionCodeId != null ? Number(a.selectionCodeId) : (a.platformSelectionIds as number[] | undefined)?.[0],
+    assortment: str((a.selectionCode as Raw | undefined)?.designation),
+    marketing: Array.isArray(a.marketing) && a.marketing.length ? (a.marketing as string[]) : undefined,
+    salutation: str((a.salutation as Raw | undefined)?.salutation ?? (a.salutation as Raw | undefined)?.designation),
+  };
+  return Object.fromEntries(Object.entries(info).filter(([, v]) => v !== undefined)) as ErpCustomerInfo;
+}
+
 export async function syncOrderStatus(client: ErpClient) {
   return job("orders:status", async () => {
     if (!client.receipts) return { items: 0, message: "driver has no receipts feed" };
@@ -372,9 +413,11 @@ export async function syncOrderStatus(client: ErpClient) {
       const next = RECEIPT_STATUS[String(r.receiptStatus) as keyof typeof RECEIPT_STATUS];
       if (r.orderNumber && !order.erpId) await db.update(schema.orders).set({ erpId: String(r.orderNumber), erpStatus: "transferred" }).where(eq(schema.orders.id, order.id));
       if ((r.receiptStatus === "payed" || r.receiptStatus === "archived") && order.paymentStatus !== "paid") await markPaid(order.id, `vinx:${r.invoiceNumber ?? r.id}`);
+      // tracking numbers of the delivery (BaseData/ShippingPackage) — they go into the shipping e-mail
+      const tracking = next === "shipped" && !order.trackingNumber && client.shippingPackages && r.id != null ? (await client.shippingPackages(String(r.id))).join(", ") || null : null;
       if (!next || order.status === "cancelled" || order.status === next) continue;
       if (next !== "cancelled" && RANK.indexOf(next) <= RANK.indexOf(order.status)) continue;
-      await setOrderStatus(order.id, next);
+      await setOrderStatus(order.id, next, tracking ? { carrier: order.carrier ?? "post", trackingNumber: tracking } : undefined);
       updated++;
     }
     return { items: updated, message: `${updated} orders updated from vinX receipts${unknown ? `, ${unknown} receipts without shop order` : ""}` };
@@ -414,12 +457,31 @@ export async function importErpCustomers(client: ErpClient) {
         groupId: groups.find((g) => g.code === groupCode)?.id ?? groups.find((g) => g.code === (company ? "trade" : "consumer"))?.id ?? null,
         tradeStatus: company ? "approved" : null,
         erpPaymentConditionId: a.paymentConditionId != null ? Number(a.paymentConditionId) : null,
+        erpInfo: erpInfoOf(a),
         locale: ["de", "it", "fr", "en"].includes(lang) ? lang : "de",
         billing: { name, company: company ?? undefined, street: str(a.street) ?? "", zip: str(a.zipCode) ?? "", city: str(a.city) ?? "", country: str((a.country as Raw | undefined)?.isoCode) ?? "CH" },
       });
       created++;
     }
-    return { items: created, message: `${created} customers created from vinX, ${existing} already present, ${skipped} without e-mail / inactive` };
+    // BaseData/ContactPerson: one portal login per contact person with an e-mail (same address, prices and conditions)
+    let contacts = 0;
+    if (client.contactPersons) {
+      for await (const c of client.contactPersons()) {
+        const email = String(c.email ?? "").trim().toLowerCase();
+        if (!EMAIL.test(email)) continue;
+        const owner = await db.query.users.findFirst({ where: eq(schema.users.erpId, String(c.addressId)) });
+        if (!owner || (await db.query.users.findFirst({ where: sql`lower(${schema.users.email}) = ${email} and ${schema.users.storefrontId} is null` }))) continue;
+        const name = [c.firstName, c.lastName].filter(Boolean).join(" ") || email;
+        await db.insert(schema.users).values({
+          email, name, company: owner.company, phone: (c.telephone as string) || (c.mobile as string) || null, erpId: owner.erpId, role: "customer",
+          passwordHash: `invite$${randomBytes(18).toString("base64url")}`, groupId: owner.groupId, tradeStatus: owner.tradeStatus, locale: owner.locale,
+          erpPaymentConditionId: owner.erpPaymentConditionId, erpInfo: { ...(owner.erpInfo ?? {}), contactPersonId: Number(c.id), ...(c.department ? { department: String(c.department) } : {}) },
+          billing: { ...(owner.billing ?? { street: "", zip: "", city: "", country: "CH" }), name },
+        });
+        contacts++;
+      }
+    }
+    return { items: created + contacts, message: `${created} customers created from vinX${contacts ? ` + ${contacts} contact-person logins` : ""}, ${existing} already present, ${skipped} without e-mail / inactive` };
   });
 }
 
@@ -427,6 +489,8 @@ export async function customerPayload(userId: number): Promise<CustomerPayload |
   const db = await getDb();
   const u = await db.query.users.findFirst({ where: eq(schema.users.id, userId) });
   if (!u || u.role !== "customer") return null;
+  // contact-person logins are maintained in vinX (BaseData/ContactPerson) — never pushed as an address
+  if (u.erpInfo?.contactPersonId) return null;
   const g = u.groupId ? await db.query.customerGroups.findFirst({ where: eq(schema.customerGroups.id, u.groupId) }) : null;
   return { id: u.id, erpId: u.erpId, email: u.email, name: u.name, company: u.company, uidNumber: u.uidNumber, phone: u.phone, priceList: g?.erpCode ?? null, locale: u.locale, billing: u.billing };
 }

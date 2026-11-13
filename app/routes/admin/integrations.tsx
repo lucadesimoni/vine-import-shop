@@ -24,7 +24,11 @@ export async function loader() {
   const ref = await erpClient(vinx).then((c) => c.referenceData ? Promise.race([c.referenceData(), new Promise<null>((r) => setTimeout(() => r(null), 4000))]) : null).catch(() => null);
   const pick = (rows: Record<string, unknown>[] = []) => rows.slice(0, 40).map((r) => ({ id: String(r.Id ?? r.id ?? ""), name: String(r.designation ?? r.description ?? r.name ?? "") }));
   return {
-    reference: ref ? { delivery: pick(ref.deliveryConditions), payment: pick(ref.paymentConditions), priceGroups: pick(ref.priceGroups) } : null,
+    reference: ref ? {
+      delivery: pick(ref.deliveryConditions), payment: pick(ref.paymentConditions), priceGroups: pick(ref.priceGroups),
+      paymentMeans: pick(ref.paymentMeans), discountGroups: pick(ref.discountGroups), specialConditions: pick(ref.specialConditions),
+      receiptTypes: pick(ref.receiptTypes), warehouses: pick(ref.warehouses), channels: pick(ref.distributionChannels), selections: pick(ref.selectionCodes),
+    } : null,
     vinx, logs, outbox, counts, last,
     secrets: { password: !!process.env.VINX_PASSWORD, cron: !!process.env.CRON_SECRET, webhook: !!process.env.VINX_WEBHOOK_SECRET },
     drivers: [...ext.erpDrivers.values()].map((d) => ({ id: d.id, label: d.label })),
@@ -48,7 +52,7 @@ export async function action({ request }: Route.ActionArgs) {
       ...vinx, mapping,
       enabled: form.has("enabled"), driver: form.get("driver"), baseUrl: String(form.get("baseUrl") ?? "").trim(), apiVersion: form.get("apiVersion"),
       username: String(form.get("username") ?? ""), livePrices: form.has("livePrices"), liveBasket: form.has("liveBasket"),
-      pushOrders: form.has("pushOrders"), pushCustomers: form.has("pushCustomers"), pullCustomers: form.has("pullCustomers"),
+      pushOrders: form.has("pushOrders"), pushCustomers: form.has("pushCustomers"), pullCustomers: form.has("pullCustomers"), customerAssortments: form.has("customerAssortments"),
       promoArticleId: Number(form.get("promoArticleId")) || null,
       selectionCodeId: String(form.get("selectionCodeId") ?? "").trim(),
       clientId: String(form.get("clientId") ?? "").trim() || "Integrated",
@@ -162,6 +166,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
                 <Toggle name="enabled" label="Integration aktiv" defaultChecked={vinx.enabled} />
                 <Toggle name="pushOrders" label="Bestellungen an vinX (Online/Basket action=order)" defaultChecked={vinx.pushOrders} />
                 <Toggle name="pushCustomers" label="Kunden an vinX senden (neu und geändert, Online/OnlineAddress)" defaultChecked={vinx.pushCustomers} />
+                <Toggle name="customerAssortments" label="Kundensortimente aus vinX" description="B2B-Kunden sehen nur ihr Sortiment (Address.selectionCodeId bzw. PlatformAssortment → ArticleSelectionCode)" defaultChecked={vinx.customerAssortments} />
                 <Toggle name="pullCustomers" label="Adressänderungen aus vinX übernehmen" description="BaseData/Address für verknüpfte Kunden — Job „Kundenadressen“" defaultChecked={vinx.pullCustomers} />
                 <Toggle name="livePrices" label="Live-Preise (Calculated/ProductInfo)" defaultChecked={vinx.livePrices} />
                 <Toggle name="liveBasket" label="Warenkorbberechnung durch vinX (B2B)" description="Konditionen, Aktionen, Gebinde, LSVA, Fracht" defaultChecked={vinx.liveBasket} />
@@ -238,7 +243,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
           {reference && (
             <Panel title="Stammdaten aus vinX" description="IDs für Lieferbedingung, Zahlungskondition und Preisgruppe">
               <div className="grid gap-4 sm:grid-cols-3">
-                {([["Lieferbedingungen", reference.delivery], ["Zahlungskonditionen", reference.payment], ["Preisgruppen", reference.priceGroups]] as const).map(([t, rows]) => (
+                {([["Lieferbedingungen", reference.delivery], ["Zahlungskonditionen", reference.payment], ["Preisgruppen", reference.priceGroups], ["Zahlungsmittel", reference.paymentMeans], ["Rabattgruppen", reference.discountGroups], ["Spezialkonditionen", reference.specialConditions], ["Belegarten", reference.receiptTypes], ["Lager", reference.warehouses], ["Vertriebswege", reference.channels], ["Selektionen (Sortimente)", reference.selections]] as const).filter(([, rows]) => rows.length).map(([t, rows]) => (
                   <div key={t} className="min-w-0">
                     <h3 className="text-field-label mb-1.5">{t}</h3>
                     {rows.length ? (

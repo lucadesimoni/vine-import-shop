@@ -315,6 +315,7 @@ export async function seedDeSimoniDemo(db: DB) {
       email: "gastro@demo.ch", passwordHash: await hashPassword("gastro-demo-1234"), name: "Marco Rossi", company: "Trattoria Demo GmbH",
       uidNumber: "CHE-123.456.789", role: "customer", groupId: gastro.id, tradeStatus: "approved", locale: "de", erpId: "41001", // vinX address id
       erpPaymentConditionId: 2, // vinX payment terms "Rechnung 30 Tage" → invoice allowed
+      erpInfo: { salesRep: { name: "Luca Bianchi", region: "Zentralschweiz" }, tour: "Tour Luzern", deliveryDays: [2, 5] }, // as synced from vinX (Tour, SalesRepresentative)
       billing: { company: "Trattoria Demo GmbH", name: "Marco Rossi", street: "Pilatusstrasse 12", zip: "6003", city: "Luzern", country: "CH", phone: "+41 41 000 00 00" },
     },
     {

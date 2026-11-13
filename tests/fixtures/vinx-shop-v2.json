@@ -356,6 +356,284 @@
     "totalVat"
    ]
   },
+  "Classification": {
+   "fields": [
+    "designation",
+    "id"
+   ]
+  },
+  "ProductCycle": {
+   "fields": [
+    "active",
+    "designation",
+    "id"
+   ]
+  },
+  "ECommerceGroup": {
+   "fields": [
+    "designation",
+    "id",
+    "parentId",
+    "sortKey"
+   ]
+  },
+  "Ingredient": {
+   "fields": [
+    "allergenInfo",
+    "articleId",
+    "contentInfo",
+    "nutritionInfo"
+   ]
+  },
+  "SellingSet": {
+   "fields": [
+    "amount",
+    "amountTradingUnit",
+    "articleId",
+    "fillingId",
+    "id",
+    "percentage",
+    "position",
+    "setArticleId",
+    "tradeUnitId"
+   ]
+  },
+  "SalesRepresentative": {
+   "fields": [
+    "firstName",
+    "id",
+    "name",
+    "reference",
+    "region"
+   ]
+  },
+  "Tour": {
+   "fields": [
+    "id",
+    "tourDescription",
+    "tourFriday",
+    "tourMonday",
+    "tourName",
+    "tourSaturday",
+    "tourSundayHostId",
+    "tourThursday",
+    "tourTuesday",
+    "tourWednesday"
+   ]
+  },
+  "DeliveryDay": {
+   "fields": [
+    "id",
+    "tourDescription",
+    "tourFriday",
+    "tourMonday",
+    "tourSaturday",
+    "tourThursday",
+    "tourTuesday",
+    "tourWednesday"
+   ]
+  },
+  "CustomerCategory": {
+   "fields": [
+    "costCenterId",
+    "designation",
+    "id"
+   ]
+  },
+  "Chain": {
+   "fields": [
+    "addressId",
+    "designation",
+    "id",
+    "level",
+    "parentChainId"
+   ]
+  },
+  "Vertriebsweg": {
+   "fields": [
+    "Id",
+    "description"
+   ]
+  },
+  "Salutation": {
+   "fields": [
+    "designation",
+    "id",
+    "personType",
+    "salutation"
+   ]
+  },
+  "ContactPerson": {
+   "fields": [
+    "addressId",
+    "departmentDesignation",
+    "departmentId",
+    "email",
+    "firstName",
+    "id",
+    "lastName",
+    "mobile",
+    "receivesMailings",
+    "telephone",
+    "titleId"
+   ]
+  },
+  "Reservation": {
+   "fields": [
+    "addressId",
+    "allocationFor",
+    "articleId",
+    "chainId",
+    "customerGroupId",
+    "id",
+    "priority",
+    "process",
+    "quantity",
+    "warehouseId"
+   ]
+  },
+  "ReceiptType": {
+   "fields": [
+    "description",
+    "designation",
+    "id"
+   ]
+  },
+  "ShippingPackage": {
+   "fields": [
+    "articlePositionId",
+    "id",
+    "isPrinted",
+    "notUsed",
+    "receiptId",
+    "shipmentNumber",
+    "shipmentNumberComplete"
+   ]
+  },
+  "Condition": {
+   "fields": [
+    "capsule",
+    "designation",
+    "documentText",
+    "id",
+    "isActive",
+    "label",
+    "level",
+    "levelInCm",
+    "quality",
+    "remark"
+   ]
+  },
+  "StockDataDetail": {
+   "fields": [
+    "conditionId",
+    "forShop",
+    "quantityAvailable",
+    "quantityCurrent",
+    "warehouseId"
+   ]
+  },
+  "ProductInfoCondition": {
+   "fields": [
+    "applicableTaxRate",
+    "articleId",
+    "conditionId",
+    "discounts",
+    "divisionId",
+    "fromQuality",
+    "isNetto",
+    "price",
+    "priceCalculationRule",
+    "priceGroupId",
+    "pricePromotion",
+    "promotionText",
+    "quantity",
+    "stock"
+   ]
+  },
+  "ArticleParameterCondition": {
+   "fields": [
+    "articleId",
+    "conditionId",
+    "quantity"
+   ]
+  },
+  "PaymentMeans": {
+   "fields": [
+    "designation",
+    "id",
+    "paymentMeansKind"
+   ]
+  },
+  "SpecialCondition": {
+   "fields": [
+    "description",
+    "id",
+    "specialCalculation",
+    "specialCustomerDiscountAllowed",
+    "specialPriceBecomesNetto",
+    "specialQuantityDiscountAllowed",
+    "specialReducePce",
+    "specialReducedPcePer"
+   ]
+  },
+  "DiscountGroupArticleCustomer": {
+   "fields": [
+    "designation",
+    "id"
+   ]
+  },
+  "Lager": {
+   "fields": [
+    "designation",
+    "id"
+   ]
+  },
+  "PlatformAssortment": {
+   "fields": [
+    "addressId",
+    "fromDate",
+    "id",
+    "providerId",
+    "remarks",
+    "selectionCodeId",
+    "toDate"
+   ]
+  },
+  "SelectionCode": {
+   "fields": [
+    "designation",
+    "id",
+    "parentId"
+   ]
+  },
+  "Marketing": {
+   "fields": [
+    "activeFrom",
+    "activeUntil",
+    "description",
+    "designation",
+    "id",
+    "marketingGroupId",
+    "online",
+    "onlinePublication"
+   ]
+  },
+  "CustomerMarketing": {
+   "fields": [
+    "active",
+    "addressId",
+    "contactPersonId",
+    "id",
+    "marketingId"
+   ]
+  },
+  "Department": {
+   "fields": [
+    "designation",
+    "id"
+   ]
+  },
   "StockDataHead": {
    "fields": [
     "articleId",

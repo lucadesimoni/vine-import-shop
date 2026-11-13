@@ -287,6 +287,8 @@ export const vinxSchema = z.object({
   paymentConditionMethods: z.record(z.string(), z.array(z.string())).default({}),
   /** Price group used for guests/consumers (BaseData/PriceGroup id). */
   consumerPriceGroupId: z.number().int().nullable().default(null),
+  /** B2B customers see only their own assortment (Address.selectionCodeId → ArticleSelectionCode) when vinX assigns one */
+  customerAssortments: z.boolean().default(false),
   /** vinX ArticleSelectionCode selection id of the e-commerce assortment (empty: all articles) */
   selectionCodeId: z.string().default(""),
   /** vinX article used to transmit shop vouchers as negative position (priceCalculationRule "fromShop"). */
@@ -312,7 +314,7 @@ export const vinxSchema = z.object({
     .object({
       article: z.record(z.string(), z.string()).default({
         erpId: "id", sku: "articleNumber", name: "designationWeb|designation", product: "wineId|articleNumber",
-        producer: "producer.designation", category: "category.designation", vintage: "vintage", size: "filling.designation",
+        producer: "producer.designation", category: "eCommerceGroup.designation|category.designation", vintage: "vintage", size: "filling.designation", weight: "weight",
         volumeCl: "filling.contentInCl", alcohol: "volume", price: "", taxRate: "vatPercentage", packSize: "tradingUnit.unitsPerTradingUnit",
         active: "isActive", articleType: "articleType", country: "country.isoCode|country.designation", region: "regionTop.designation",
         appellation: "region.designation", grapes: "grapes", description: "description",

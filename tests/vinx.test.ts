@@ -96,3 +96,19 @@ describe("mock driver documents", () => {
     expect(s).toContain("(Total CHF 12.00 \\(a\\)) Tj");
   });
 });
+
+describe("vinX full article data", () => {
+  it("maps classification, cycle, acidity, food labelling, sets, substitute and weight", () => {
+    const a = mapArticle({
+      ...article, weight: 1.35, substituteArticleId: 5001, substituteArticleText: "Nachfolgejahrgang",
+      productCycle: { designation: "Auslaufartikel" }, eCommerceGroup: { designation: "Rotweine Italien" },
+      ingredients: { contentInfo: "Hartweizengriess, Wasser", allergenInfo: "Gluten", nutritionInfo: "Energie 1500 kJ" },
+      setItems: [{ articleId: 7, amount: 2 }, { articleId: 8, amount: 1 }],
+      wine: { classification: { designation: "DOCG" }, acidity: 5.6, residualSugar: 1.2 },
+    }, m);
+    expect(a.details).toMatchObject({ classification: "DOCG", cycle: "Auslaufartikel", acidity: 5.6, residualSugar: 1.2, ingredients: "Hartweizengriess, Wasser", allergens: "Gluten", nutrition: "Energie 1500 kJ",
+      set: [{ articleId: "7", amount: 2 }, { articleId: "8", amount: 1 }], substitute: { articleId: "5001", text: "Nachfolgejahrgang" } });
+    expect(a.variant.weightG).toBe(1350);
+    expect(a.category).toBe("Rotweine Italien"); // web category (ECommerceGroup) before the article category
+  });
+});

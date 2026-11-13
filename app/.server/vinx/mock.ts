@@ -126,6 +126,9 @@ export class MockClient implements ErpClient {
         eMail: u.email, phoneBusiness: u.phone, language: u.locale.toUpperCase(), changedOn: u.updatedAt.toISOString(), isActive: true,
         // demo payment terms: approved trade customers "Rechnung 30 Tage" (2), others "Vorauskasse" (1)
         paymentConditionId: u.erpPaymentConditionId ?? (u.tradeStatus === "approved" ? 2 : 1),
+        ...(u.tradeStatus === "approved"
+          ? { salesRepresentative: { id: 3, firstName: "Luca", name: "Bianchi", region: "Zentralschweiz" }, tour: { id: 2, tourName: "Tour Luzern", tourTuesday: true, tourFriday: true } }
+          : {}),
       };
     }
   }
@@ -171,7 +174,47 @@ export class MockClient implements ErpClient {
       deliveryConditions: [{ id: 1, designation: "Post / Paketversand" }, { id: 2, designation: "Eigene Auslieferung" }, { id: 4, designation: "Abholung Lager" }],
       paymentConditions: [{ id: 1, designation: "Vorauskasse" }, { id: 2, designation: "Rechnung 30 Tage netto" }, { id: 7, designation: "Online-Zahlung" }],
       priceGroups: (await this.priceGroups()).map((g) => ({ id: g.id, designation: g.name })),
+      paymentMeans: [{ id: 1, designation: "Bank" }, { id: 2, designation: "Karte" }, { id: 3, designation: "TWINT" }],
+      discountGroups: [{ id: 1, designation: "WEIN" }, { id: 2, designation: "SPIRITUOSEN" }, { id: 3, designation: "FOOD" }],
+      receiptTypes: [{ id: 1, designation: "Auftrag" }, { id: 2, designation: "Lieferschein" }, { id: 3, designation: "Rechnung" }],
+      warehouses: [{ id: 1, designation: "Kriens" }],
     };
+  }
+
+  /** BaseData/Receipt: unpaid invoices of transferred orders older than a day (demo). */
+  async openItems(addressId: string) {
+    const db = await getDb();
+    const user = await db.query.users.findFirst({ where: eq(schema.users.erpId, addressId) });
+    if (!user) return [];
+    const rows = await db.select().from(schema.orders).where(and(eq(schema.orders.userId, user.id), isNotNull(schema.orders.erpId)));
+    return rows
+      .filter((o) => o.paymentStatus !== "paid" && o.paymentMethod === "invoice" && Date.now() - o.createdAt.getTime() > 24 * 3600e3)
+      .map((o) => ({ id: String(o.id), number: `R-${o.id}`, type: "Rechnung", date: o.createdAt.toISOString(), due: new Date(o.createdAt.getTime() + 30 * 864e5).toISOString(), totalCents: o.totalGross, openCents: o.totalGross }));
+  }
+
+  /** BaseData/Reservation: demo allocation of two wines for approved trade customers. */
+  async reservations(addressId: string) {
+    const db = await getDb();
+    const user = await db.query.users.findFirst({ where: eq(schema.users.erpId, addressId) });
+    if (user?.tradeStatus !== "approved") return [];
+    const vs = await db.select({ erpId: schema.variants.erpId }).from(schema.variants).where(isNotNull(schema.variants.erpId)).limit(40);
+    return vs.filter((_, i) => i === 7 || i === 23).map((v, i) => ({ articleId: v.erpId!, quantity: i ? 6 : 12 }));
+  }
+
+  /** BaseData/ShippingPackage: one Post parcel per receipt (demo number). */
+  async shippingPackages(receiptId: string) {
+    return [`99.00.200000.${String(receiptId).replace(/\D/g, "").padStart(8, "0").slice(-8)}`];
+  }
+
+  /** BaseData/ContactPerson: none in the demo (contact-person logins appear when vinX delivers them). */
+  async *contactPersons(): AsyncIterable<Raw> {}
+
+  async onlineAddress() {
+    return null;
+  }
+
+  async conditions() {
+    return [];
   }
 
   async changeShopUsername() {

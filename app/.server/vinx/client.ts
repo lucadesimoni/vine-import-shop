@@ -30,7 +30,7 @@ export interface ErpClient {
   /** Customer special prices (vinX SpecialPrices). */
   specialPrices?(): AsyncIterable<Raw>;
   /** Live, customer-specific prices (B2B). Returns map erpArticleId → unit price excl. VAT in cents. */
-  productInfo?(req: { customerId?: number | null; priceGroupId?: number | null; articles: { erpId: string; qty: number }[] }): Promise<Map<string, ProductInfo>>;
+  productInfo?(req: { customerId?: number | null; priceGroupId?: number | null; articles: { erpId: string; qty: number; conditionId?: number | null }[] }): Promise<Map<string, ProductInfo>>;
   /** Authoritative basket calculation (conditions, promotions, deposits, surcharges, freight). */
   calculateBasket?(basket: BasketRequest): Promise<BasketResult>;
   /** Documents (invoices, delivery notes …) of a customer — BaseData/DocumentInfo. */
@@ -42,7 +42,19 @@ export interface ErpClient {
   /** Article ids in an e-commerce assortment (BaseData/ArticleSelectionCode by selection id). */
   assortment?(selectionId: string): Promise<Set<string>>;
   /** Reference data for the admin mappings. */
-  referenceData?(): Promise<{ deliveryConditions: Raw[]; paymentConditions: Raw[]; priceGroups: Raw[] }>;
+  referenceData?(): Promise<{ deliveryConditions: Raw[]; paymentConditions: Raw[]; priceGroups: Raw[]; paymentMeans?: Raw[]; discountGroups?: Raw[]; specialConditions?: Raw[]; receiptTypes?: Raw[]; warehouses?: Raw[]; distributionChannels?: Raw[]; selectionCodes?: Raw[] }>;
+  /** Open items of a customer: invoices not (fully) paid — BaseData/Receipt (invoiceNumber, dueDate, totals, totalPayed) + ReceiptType. */
+  openItems?(addressId: string): Promise<{ id: string; number: string; type: string; date: string | null; due: string | null; openCents: number; totalCents: number }[]>;
+  /** Quantities reserved for a customer (allocations, subscriptions) — BaseData/Reservation. */
+  reservations?(addressId: string): Promise<{ articleId: string; quantity: number }[]>;
+  /** Tracking numbers of a receipt — BaseData/ShippingPackage (shipmentNumberComplete). */
+  shippingPackages?(receiptId: string): Promise<string[]>;
+  /** Contact persons of customer addresses (portal logins per person) — BaseData/ContactPerson. */
+  contactPersons?(): AsyncIterable<Raw>;
+  /** An online address submitted earlier (resolves the vinX address id) — Online/OnlineAddress({id}). */
+  onlineAddress?(id: string): Promise<Raw | null>;
+  /** Bottle conditions (Rarities add-in) — BaseData/Condition. */
+  conditions?(): Promise<Raw[]>;
   /** Change the shop login (e-mail) of an ERP address — BaseData/Address({id})/ChangeShopUsername. */
   changeShopUsername?(addressId: string, username: string): Promise<void>;
   /** Receipts (orders / delivery notes / invoices) changed since — vinX BaseData/Receipt; `shopId` = shop order number. */

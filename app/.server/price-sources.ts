@@ -66,7 +66,7 @@ registerPriceSource({
 
     const client = await erpClient(cfg);
     if (!client.productInfo) return null;
-    const info = await client.productInfo({ customerId: erpCustomer, articles: linked.map((v) => ({ erpId: v.erpId!, qty: 1 })) });
+    const info = await client.productInfo({ customerId: erpCustomer, articles: linked.map((v) => ({ erpId: v.erpId!, qty: 1, conditionId: (v as { conditionId?: number | null }).conditionId ?? null })) });
     const out = new Map<number, Tier[]>();
     for (const v of linked) {
       const p = info.get(v.erpId!);

@@ -360,6 +360,11 @@ ok(/Rechnung/.test(payText) && /vinX/.test(payText), "B2B customer: invoice via 
 await b2b.goto(B + "/portal/checkout");
 ok((await b2b.locator('input[name=payment][value=invoice]').count()) === 1 || /Bestellliste ist leer|leer/i.test(await b2b.locator("main").innerText()), "B2B checkout offers invoice");
 
+await b2b.goto(B + "/portal");
+const portalDash = await b2b.locator("main").innerText();
+ok(/Luca Bianchi/.test(portalDash) && /Di, Fr/.test(portalDash), "portal: sales rep and delivery days from vinX", portalDash.replace(/\s+/g, " ").slice(0, 200));
+ok(/Für Sie reserviert/.test(portalDash), "portal: reservations from vinX");
+
 section("Shipping: Post label, tracking, status e-mails");
 await consumer.goto(B + "/account");
 const cOrder = await consumer.locator('a[href^="/account/orders/"]').first().getAttribute("href");
