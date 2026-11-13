@@ -1,6 +1,6 @@
 # Notices
 
-The platform's own code is proprietary — see [LICENSE](LICENSE).
+**Vine Import Shop** — © 2026 Luca De Simoni. The platform's own code is proprietary — see [LICENSE](LICENSE).
 Third-party open-source packages: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) (`npm run licenses`; CI fails on copyleft or unknown licences).
 
 ## Map data

@@ -12,6 +12,26 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Sign-in link (magic link)** for registered customers, B2C and B2B: "Login-Link per E-Mail" on the shop and portal login.
+  - The link is valid 15 minutes and works once. Only a hash is stored, in separate columns, so a pending password-reset link stays valid.
+  - Opening the link shows a confirm button; the link is used only on submit, so mail scanners cannot use it up.
+  - B2B customers land in the portal, B2C customers in their account. Each storefront signs in only its own customers.
+  - Never sent to staff or admins (password only). Same answer for unknown addresses; requests are rate-limited.
+  - Translated into DE/IT/FR/EN. Migration `0008_magic_link`.
+
+### Changed
+- **Ownership made explicit:** the product is "Vine Import Shop", © Luca De Simoni (copyright holder and licensor), defined in one place, `app/lib/product.ts`.
+  - The notice is shown in the admin sidebar and on Admin › System, next to the licence data.
+  - It is written as a banner into every built JS file and added to `package.json` (`author`, `license: SEE LICENSE IN LICENSE`), README and NOTICE.
+- **LICENSE reworked for selling:**
+  - names the owner and the product; the software is licensed, not sold;
+  - prohibits reverse engineering, licence-key circumvention and sharing keys;
+  - confidentiality of source code;
+  - customer data and `custom/` extensions belong to the licensee;
+  - termination with data export; Swiss law.
+- `docs/LICENSING.md`: checklist for the chain of title (employment or contract work, contributors, AI-assisted code, transfer to a company, trademark search).
+
 ## [1.9.0] - 2026-11-13
 
 ### Added

@@ -1,10 +1,12 @@
 import { data, Form, Link, redirect, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/login";
 import { shopContext } from "~/.server/context";
-import { clearFailures, findUserByEmail, login, registerFailure, safeRedirect, throttle, verifyPassword } from "~/.server/auth";
+import { clearFailures, findUserByEmail, homeAfterLogin, login, registerFailure, safeRedirect, throttle, verifyPassword } from "~/.server/auth";
+import { sendLoginLink } from "~/.server/magic-link";
 import { useI18n, metaT } from "~/lib/i18n";
-import { channelPath, usePath } from "~/lib/channel";
+import { usePath } from "~/lib/channel";
 import { Logo } from "~/components/shop";
+import { Mail } from "lucide-react";
 import { Button, ButtonLink, Card, Eyebrow, Field, Input, Notice } from "~/components/ui";
 
 export async function loader({ context }: Route.LoaderArgs) {
@@ -18,6 +20,16 @@ export async function action({ request, context }: Route.ActionArgs) {
   const form = await request.formData();
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   const password = String(form.get("password") ?? "");
+  if (form.get("intent") === "link") {
+    // sign-in link for registered customers; same answer whether or not the address exists
+    if (!/^[^\s@]+@[^\s@]+$/.test(email)) return data({ error: ctx.t("auth.emailRequired") }, { status: 400 });
+    const lk = `link|${request.headers.get("X-Forwarded-For") ?? "local"}`;
+    if (throttle(lk)) return data({ error: ctx.t("auth.throttled") }, { status: 429 });
+    registerFailure(lk); // counts requests per client to limit mail flooding
+    const user = await findUserByEmail(email, ctx.storefront?.id ?? null);
+    if (user?.role === "customer" && (user.storefrontId ?? null) === (ctx.storefront?.id ?? null)) await sendLoginLink(user, new URL(request.url).origin, String(form.get("next") ?? ""));
+    return { linkSent: true as const };
+  }
   const key = `${request.headers.get("X-Forwarded-For") ?? "local"}|${email}`;
   if (throttle(key)) return data({ error: ctx.t("auth.throttled") }, { status: 429 });
   const user = await findUserByEmail(email, ctx.storefront?.id ?? null);
@@ -26,10 +38,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     return data({ error: ctx.t("auth.failed") }, { status: 401 });
   }
   clearFailures(key);
-  // one login = one role: approved B2B customers go to the portal (unless shop and portal are one channel)
-  const b2b = user.tradeStatus === "approved" && ctx.channel.portalEnabled && ctx.channel.mode !== "combined";
-  const home = user.role !== "customer" ? "/admin" : ctx.channel.portal || b2b ? "/portal" : channelPath("/account", false);
-  return login(request, user.id, safeRedirect(form.get("next"), home));
+  return login(request, user.id, safeRedirect(form.get("next"), homeAfterLogin(user, ctx.channel)));
 }
 
 export const meta: Route.MetaFunction = ({ matches }) => [{ title: metaT(matches)("nav.login") }, { name: "robots", content: "noindex" }];
@@ -46,13 +55,19 @@ export default function Login({ loaderData, actionData }: Route.ComponentProps) 
           <Eyebrow line>{to.portal ? t("portal.title") : t("auth.login")}</Eyebrow>
           <h1 className={to.portal ? "text-h2" : "text-h1"}>{to.portal ? t("portal.loginTitle") : t("auth.loginTitle")}</h1>
         </div>
-        {actionData?.error && <Notice tone="danger">{actionData.error}</Notice>}
+        {actionData && "error" in actionData && <Notice tone="danger">{actionData.error}</Notice>}
+        {actionData && "linkSent" in actionData && <Notice tone="success">{t("auth.magicSent")}</Notice>}
         <Form method="post" className="grid gap-5">
           <input type="hidden" name="next" value={params.get("next") ?? ""} />
           <Field label={t("form.email")}>{(id) => <Input id={id} name="email" type="email" autoComplete="email" required autoFocus />}</Field>
           <Field label={t("form.password")}>{(id) => <Input id={id} name="password" type="password" autoComplete="current-password" required />}</Field>
           <Link to="/login/forgot" className="-mt-2 w-fit text-note text-muted-fg underline-offset-4 hover:text-fg hover:underline">{t("auth.forgot")}</Link>
           <Button type="submit" size="lg" disabled={busy}>{t("auth.login")}</Button>
+          <div className="flex items-center gap-3 text-note text-muted-fg" aria-hidden><span className="h-px flex-1 bg-border" />{t("auth.or")}<span className="h-px flex-1 bg-border" /></div>
+          <div className="grid gap-2">
+            <Button type="submit" name="intent" value="link" variant="secondary" size="lg" formNoValidate disabled={busy}><Mail size={16} /> {t("auth.magicSend")}</Button>
+            <p className="text-note text-muted-fg">{t("auth.magicHint")}</p>
+          </div>
         </Form>
         {!to.portal && <p className="text-sm text-muted-fg">{t("auth.noAccount")} <Link to="/register" className="text-fg underline underline-offset-4">{t("auth.register")}</Link></p>}
       </Card>

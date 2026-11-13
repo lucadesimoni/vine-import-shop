@@ -4,6 +4,7 @@ import { createCookieSessionStorage, redirect } from "react-router";
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { getDb, schema } from "./db";
 import { resolveStorefront } from "./storefronts";
+import { channelPath } from "~/lib/channel";
 
 const scrypt = promisify(_scrypt) as (pw: string, salt: Buffer, len: number, opts: object) => Promise<Buffer>;
 const PARAMS = { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
@@ -53,7 +54,7 @@ async function loadUser(id: number) {
   const user = await db.query.users.findFirst({ where: eq(schema.users.id, id) });
   if (!user) return null;
   const group = user.groupId ? await db.query.customerGroups.findFirst({ where: eq(schema.customerGroups.id, user.groupId) }) : null;
-  const { passwordHash: _p, resetToken: _r, ...safe } = user;
+  const { passwordHash: _p, resetToken: _r, loginToken: _l, ...safe } = user;
   return { ...safe, group: group ?? null };
 }
 
@@ -109,6 +110,13 @@ export function registerFailure(key: string) {
   attempts.set(key, a && a.until > now ? { n: a.n + 1, until: a.until } : { n: 1, until: now + 10 * 60_000 });
 }
 export const clearFailures = (key: string) => attempts.delete(key);
+
+/** where a user lands after signing in: one login = one role (approved B2B customers go to the portal unless shop and portal are one channel) */
+export function homeAfterLogin(user: { role: string; tradeStatus: string | null }, channel: { portal: boolean; portalEnabled: boolean; mode: string }) {
+  if (user.role !== "customer") return "/admin";
+  const b2b = user.tradeStatus === "approved" && channel.portalEnabled && channel.mode !== "combined";
+  return channel.portal || b2b ? "/portal" : channelPath("/account", false);
+}
 
 export async function login(request: Request, userId: number, redirectTo: string) {
   const session = await getSession(request);

@@ -18,6 +18,7 @@ export default [
     route("login", "routes/login.tsx"),
     route("login/forgot", "routes/forgot.tsx"),
     route("login/reset/:token", "routes/reset.tsx"),
+    route("login/link/:token", "routes/login-link.tsx"),
     route("register", "routes/register.tsx"),
     route("account", "routes/account.tsx"),
     route("account/orders/:number", "routes/account-order.tsx"),

@@ -360,6 +360,46 @@ ok(await guest.getByText(/Link gesendet/).waitFor({ timeout: 5000 }).then(() => 
 await guest.goto(B + "/login/reset/abcdefghijklmnopqrstuvwxyz0123");
 ok(await guest.getByText(/ungültig oder abgelaufen/).isVisible(), "password reset: invalid token rejected");
 
+section("Sign-in link (magic link)");
+{
+  const { readFileSync } = await import("node:fs");
+  const mailLog = () => { try { return readFileSync("data/mail.log", "utf8"); } catch { return ""; } };
+  const lastLink = (email) => {
+    const blocks = mailLog().split("\n\n").filter((b) => b.includes(`To: ${email} |`) && b.includes("/login/link/"));
+    return blocks.length ? blocks.at(-1).match(/https?:\/\/\S+\/login\/link\/[\w-]+(\?\S*)?/)?.[0] ?? null : null;
+  };
+  const requestLink = async (page, email, path = "/login") => {
+    await page.goto(B + path);
+    await page.fill("input[name=email]", email);
+    await Promise.all([page.waitForResponse((r) => r.request().method() === "POST"), page.click("button[value=link]")]);
+    return page.getByText(/Anmelde-Link gesendet/).waitFor({ timeout: 5000 }).then(() => true, () => false);
+  };
+  const ml = await newPage();
+  ok(await requestLink(ml, "kunde@demo.ch"), "magic link: request answered on the login page");
+  const link = lastLink("kunde@demo.ch");
+  ok(!!link, "magic link: e-mail with sign-in link sent");
+  await ml.goto(link);
+  ok(await ml.getByText(/Anmeldung für kunde@demo.ch bestätigen/).isVisible(), "magic link: opening shows a confirmation (not used by mail scanners)");
+  await Promise.all([ml.waitForURL(/\/account/), ml.click("main button[type=submit]")]);
+  ok(new URL(ml.url()).pathname === "/account", "magic link: B2C customer signed in → account");
+  const again = await newPage();
+  await again.goto(link);
+  ok(await again.getByText(/ungültig, abgelaufen oder wurde bereits verwendet/).isVisible(), "magic link: single use");
+  const mlb = await newPage();
+  ok(await requestLink(mlb, "gastro@demo.ch", "/portal/login"), "magic link: request on the portal login");
+  const blink = lastLink("gastro@demo.ch");
+  await mlb.goto(blink);
+  await Promise.all([mlb.waitForURL(/\/portal/), mlb.click("main button[type=submit]")]);
+  ok(new URL(mlb.url()).pathname === "/portal", "magic link: B2B customer signed in → portal");
+  const before = mailLog().length;
+  const adm = await newPage();
+  ok(await requestLink(adm, "admin@example.com"), "magic link: same answer for staff/unknown addresses");
+  ok(!mailLog().slice(before).includes("/login/link/"), "magic link: never sent to staff or admins");
+  await ml.goto(B + "/login/link/abcdefghijklmnopqrstuvwxyz0123");
+  ok(await ml.getByText(/ungültig, abgelaufen/).isVisible(), "magic link: invalid token rejected");
+  for (const p of [ml, again, mlb, adm]) await p.context().close();
+}
+
 section("Payment methods per customer (vinX payment terms)");
 await admin.goto(B + "/admin/customers?q=gastro@demo.ch");
 await admin.locator('tbody a[href^="/admin/customers/"]').first().click();

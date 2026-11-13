@@ -57,6 +57,13 @@
       "when": 1794570128318,
       "tag": "0007_erp_more",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794584865546,
+      "tag": "0008_magic_link",
+      "breakpoints": true
     }
   ]
 }

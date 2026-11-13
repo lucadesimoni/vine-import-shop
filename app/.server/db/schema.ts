@@ -113,6 +113,9 @@ export const users = pgTable(
     erpId: text("erp_id"),
     resetToken: text("reset_token"),
     resetExpires: timestamp("reset_expires", { withTimezone: true }),
+    /** sign-in link ("magic link"): SHA-256 of the token, short-lived and single-use */
+    loginToken: text("login_token"),
+    loginExpires: timestamp("login_expires", { withTimezone: true }),
     /** customers belong to the shop they registered in (null = main shop); staff and admins are platform-wide */
     storefrontId: integer("storefront_id"),
     /** payment methods for this customer (null = from the vinX payment condition, else the group) — see .server/payments.ts */

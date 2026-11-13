@@ -1,7 +1,9 @@
 {
   "name": "whitelabel-wine-shop",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "Luca De Simoni (https://github.com/lucadesimoni)",
+  "description": "Vine Import Shop — proprietary white-label B2B/B2C shop platform for wine and speciality importers",
   "type": "module",
   "engines": {
     "node": ">=20.19"

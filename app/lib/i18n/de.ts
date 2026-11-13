@@ -364,6 +364,16 @@ const de = {
   "footer.contact": "Kontakt",
   "footer.hours": "Öffnungszeiten",
   "footer.legal": "Rechtliches",
+  "auth.or": "oder",
+  "auth.magicSend": "Login-Link per E-Mail",
+  "auth.magicHint": "Ohne Passwort: Wir senden Ihnen einen Link, der 15 Minuten gültig ist.",
+  "auth.magicSent": "Falls ein Konto mit dieser Adresse besteht, haben wir Ihnen einen Anmelde-Link gesendet. Er ist 15 Minuten gültig.",
+  "auth.emailRequired": "Bitte geben Sie Ihre E-Mail-Adresse ein.",
+  "auth.magicTitle": "Ihr Anmelde-Link",
+  "auth.magicMailText": "Melden Sie sich mit einem Klick ohne Passwort an. Der Link ist 15 Minuten gültig und funktioniert einmal. Falls Sie ihn nicht angefordert haben, ignorieren Sie diese E-Mail.",
+  "auth.magicButton": "Jetzt anmelden",
+  "auth.magicConfirm": "Anmeldung für {email} bestätigen.",
+  "auth.magicInvalid": "Der Anmelde-Link ist ungültig, abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen an.",
 };
 
 export default de;

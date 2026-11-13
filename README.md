@@ -1,4 +1,6 @@
-# White-label Wine & Food Import Shop — B2B + B2C, vinX-integrated
+# Vine Import Shop — white-label B2B + B2C shop for wine & food importers, vinX-integrated
+
+> © 2026 Luca De Simoni. Proprietary software, all rights reserved — see [LICENSE](LICENSE).
 
 A modern, fully white-labelled commerce platform for wine and speciality importers: a **B2B-first wholesale shop** (gastronomy and retail) that can also sell to consumers. It integrates with the Swiss wine ERP **vinX** through its official REST3 Shop API.
 
@@ -146,7 +148,8 @@ More: [Architecture](docs/ARCHITECTURE.md) · [vinX integration](docs/VINX.md) �
 
 ## Licence
 
-Proprietary — all rights reserved; use under a written licence agreement only ([LICENSE](LICENSE)).
+**Vine Import Shop** is owned by **Luca De Simoni** (copyright holder and licensor). Proprietary — all rights reserved; use only under a written licence agreement ([LICENSE](LICENSE)).
+The merchant's shop shows only the merchant's own brand; the product name and copyright appear in the admin (sidebar, Admin › System) and in every built JS file.
 Open-source dependencies keep their own licences ([THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)); data and demo-content notices are in [NOTICE.md](NOTICE.md).
 Further shops on their own domain (subsidiaries): [docs/STOREFRONTS.md](docs/STOREFRONTS.md).
 Selling the platform (customer distribution without demo content, licence keys, contract outline): [docs/LICENSING.md](docs/LICENSING.md).

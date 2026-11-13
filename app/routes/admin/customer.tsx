@@ -32,7 +32,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     erpConnected(),
     getSettings("shop"),
   ]);
-  const { passwordHash, resetToken: _r, resetExpires: _e, ...rest } = customer; // never send secrets to the browser
+  const { passwordHash, resetToken: _r, resetExpires: _e, loginToken: _l, loginExpires: _le, ...rest } = customer; // never send secrets to the browser
   const c = { ...rest, passwordSet: passwordHash.startsWith("scrypt$") };
   // payment methods: what the shop offers, and what this customer gets (and why)
   const { vinx } = await getSettings("vinx");

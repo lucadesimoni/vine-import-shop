@@ -7,6 +7,7 @@ import { dbInfo, getDb, schema } from "~/.server/db";
 import { knownMigrations } from "~/.server/db/migrate";
 import { getSettings } from "~/.server/settings";
 import { licenceStatus } from "~/.server/licence";
+import { copyright, PRODUCT } from "~/lib/product";
 import { APP_VERSION, cancelRestore, createBackup, latestRelease, listBackups, newer, pendingRestore, requestRestore } from "~/.server/maintenance";
 import { Badge, Button, Notice } from "~/components/ui";
 import { DataTable, PageHeader, Panel } from "~/components/admin";
@@ -106,6 +107,11 @@ export default function System({ loaderData, actionData }: Route.ComponentProps)
         </Panel>
 
         <Panel title="Lizenz" description="Schlüssel in der Umgebungsvariable LICENSE_KEY, offline geprüft (Ed25519).">
+          <dl className="mb-4 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 gap-y-2 border-b border-border pb-4 text-sm">
+            <dt className="text-muted-fg">Software</dt><dd>{PRODUCT.name} <span className="tabular-nums">v{version}</span></dd>
+            <dt className="text-muted-fg">Rechteinhaber</dt><dd><a href={PRODUCT.ownerUrl} target="_blank" rel="noreferrer" className="underline underline-offset-4">{PRODUCT.owner}</a></dd>
+            <dt className="text-muted-fg">Lizenzart</dt><dd>Proprietär — {copyright()}, alle Rechte vorbehalten. Nutzung nur gemäss Lizenzvertrag.</dd>
+          </dl>
           {licence.state === "development" ? (
             <p className="text-sm text-muted-fg">Demo-/Entwicklungs-Build — kein Lizenzschlüssel nötig.</p>
           ) : licence.state === "valid" || licence.state === "expired" ? (

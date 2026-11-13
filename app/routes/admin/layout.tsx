@@ -5,6 +5,7 @@ import { count, eq } from "drizzle-orm";
 import type { Route } from "./+types/layout";
 import { requireStaff, verifyPassword } from "~/.server/auth";
 import { APP_VERSION } from "~/.server/maintenance";
+import { copyright, PRODUCT } from "~/lib/product";
 import { getDb, schema } from "~/.server/db";
 import { cn } from "~/lib/cn";
 import { useRootData } from "~/lib/root-data";
@@ -88,7 +89,10 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
             <button className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-fg/75 hover:bg-muted"><LogOut size={15} /> Abmelden</button>
           </Form>
           <p className="truncate px-3 pt-2 text-xs text-muted-fg">{user.email}</p>
-          <Link to="/admin/system" className="block px-3 pt-1 text-label text-muted-fg tabular-nums hover:text-fg">v{loaderData.version}</Link>
+          <Link to="/admin/system" className="block px-3 pt-1 text-label text-muted-fg hover:text-fg" title={`${PRODUCT.name} — proprietäre Software, Lizenz: Admin › System`}>
+            <span className="tabular-nums">{PRODUCT.name} v{loaderData.version}</span>
+            <span className="block text-2xs">{copyright()}</span>
+          </Link>
         </div>
       </aside>
       <main className="min-w-0 px-4 py-6 sm:px-6 md:px-10 md:py-8">

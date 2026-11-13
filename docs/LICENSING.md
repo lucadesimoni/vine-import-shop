@@ -1,6 +1,6 @@
 # Vertrieb & Lizenzierung (für den Rechteinhaber)
 
-Die Plattform ist proprietär ([LICENSE](../LICENSE)): Alle Rechte liegen beim Rechteinhaber, der sie an Kunden lizenziert.
+Die Plattform **Vine Import Shop** ist proprietär ([LICENSE](../LICENSE)): Alle Rechte liegen beim Rechteinhaber **Luca De Simoni**, der sie an Kunden lizenziert. Name, Rechteinhaber und Kontakt stehen an einer Stelle: `app/lib/product.ts` (Admin-Seitenleiste, Admin › System, Copyright-Banner in jeder gebauten JS-Datei); in `LICENSE`, `NOTICE.md`, `README.md` und `package.json` (`author`) gleich halten.
 Dieses Dokument beschreibt, was zum Vertrieb gehört. **Keine Rechtsberatung** — den Lizenzvertrag vor dem ersten Verkauf von einer Anwältin / einem Anwalt (Schweizer IT-/Vertragsrecht) prüfen lassen.
 
 ## 1. Was Kunden bekommen (Kundendistribution)
@@ -51,7 +51,7 @@ npm run licence -- verify <key>
 ## 4. Vorlage Lizenzvertrag (Eckpunkte)
 
 1. **Parteien** — Rechteinhaber (Lizenzgeber) · Kunde (Lizenznehmer).
-2. **Gegenstand** — Software «[Produktname]» in der jeweils aktuellen Version, Kundendistribution; Dokumentation.
+2. **Gegenstand** — Software «Vine Import Shop» in der jeweils aktuellen Version, Kundendistribution; Dokumentation.
 3. **Nutzungsrecht** — nicht exklusiv, nicht übertragbar, für [1] Installation und die Domains [ … ], für den eigenen Geschäftsbetrieb des Lizenznehmers (inkl. Tochtergesellschaften gemäss Anhang). Keine Weitergabe, kein Weiterverkauf, keine Unterlizenzierung.
 4. **Laufzeit & Kündigung** — [12] Monate, stillschweigende Verlängerung, Kündigungsfrist [3] Monate. Nach Ende: Nutzung einstellen (bzw. bei Perpetual-Modell: letzte Version weiter nutzbar, ohne Updates).
 5. **Vergütung** — Einrichtung [CHF …] einmalig; Lizenz/Wartung [CHF …] pro Jahr; Zahlung im Voraus.
@@ -64,9 +64,11 @@ npm run licence -- verify <key>
 
 ## 5. Vor dem ersten Verkauf
 
-- [ ] Rechteinhaber in `LICENSE` prüfen (natürliche Person oder Firma, z. B. «… GmbH»); Kontaktadresse statt GitHub-Link.
+- [ ] Rechteinhaber prüfen: heute die natürliche Person Luca De Simoni. Bei Vertrieb über eine Firma (z. B. «… GmbH») die Rechte schriftlich an sie übertragen und `app/lib/product.ts`, `LICENSE`, `NOTICE.md`, `README.md`, `package.json` anpassen; Kontaktadresse statt GitHub-Link.
+- [ ] Rechtekette sichern: Entstand die Software ganz oder teilweise im Rahmen eines Arbeitsverhältnisses oder Auftrags (z. B. für De Simoni AG), stehen die Rechte nach Schweizer Recht (URG Art. 17) grundsätzlich dem Arbeitgeber zu → schriftliche Bestätigung/Abtretung einholen. Beiträge Dritter (Freelancer, Agenturen) nur mit Abtretungsklausel.
+- [ ] KI-unterstützt entwickelter Code: Schutz entsteht über die eigene schöpferische Leistung (Auswahl, Gestaltung, Anpassung); zusätzlich vertraglich absichern (Lizenzvertrag, Vertraulichkeit, Quellcode nicht herausgeben) — nicht allein auf das Urheberrecht stützen.
 - [ ] `npm run licence -- keygen`, öffentlichen Schlüssel committen, privaten sicher ablegen.
 - [ ] Lizenzvertrag/AGB juristisch prüfen lassen (Punkt 4).
 - [ ] Italien-Karte: Lizenz der Quelle (openpolis/ISTAT) bestätigen oder `it.json` mit Natural Earth bauen (`scripts/maps/build-region-maps.py … IT`), siehe NOTICE.md.
 - [ ] Demo nur mit schriftlicher Zustimmung der gezeigten Marken öffentlich zeigen (NOTICE.md).
-- [ ] Produktname / Marke für den Vertrieb festlegen (ggf. Markeneintrag beim IGE).
+- [ ] Produktname «Vine Import Shop» bestätigen oder ersetzen (`app/lib/product.ts`); vor dem Markteintritt Markenrecherche und ggf. Markeneintrag beim IGE (swissreg.ch).

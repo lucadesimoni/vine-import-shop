@@ -1,34 +1,62 @@
-Proprietary Software Licence
+Vine Import Shop — Proprietary Software Licence
 
-Copyright (c) 2026 lucadesimoni (https://github.com/lucadesimoni). All rights reserved.
+Copyright (c) 2026 Luca De Simoni (https://github.com/lucadesimoni). All rights reserved.
 
-This repository and all files in it — source code, configuration, documentation, design system,
-build and deployment scripts — (the "Software") are the confidential, proprietary property of the
-copyright holder.
+"Vine Import Shop" (the "Software") comprises this repository and everything built or distributed
+from it: source code, compiled builds, Docker images, release archives, database migrations,
+configuration, documentation, design system, templates, translations, maps produced by the
+Software's own scripts, and build, test and deployment scripts. The Software is the exclusive,
+confidential property of Luca De Simoni (the "Owner"), who holds all copyright and other
+intellectual property rights in it.
 
-1. No licence is granted by making the Software available. Any use, copying, modification,
-   distribution, sublicensing, hosting for third parties or creation of derivative works requires a
-   separate written licence agreement with the copyright holder.
+1. Ownership. The Software is licensed, not sold. No ownership passes to anyone who receives,
+   installs or uses it. Making the Software available, granting access to a repository, deploying
+   it or delivering a build does not grant any licence.
 
-2. Licensees may use the Software only within the scope, term and number of installations set out
-   in their licence agreement. Unless that agreement says otherwise:
-   a) the licensee may install, configure and adapt the Software for its own business, including
-      customisations in the `custom/` directory and in the admin settings;
-   b) the licensee may not resell, sublicense or publish the Software or substantial parts of it,
-      and may not remove copyright notices;
-   c) customisations made by the licensee in `custom/` belong to the licensee.
+2. Licence only by written agreement. Any use, copying, installation, hosting, modification,
+   distribution, sublicensing or creation of derivative works requires a separate written licence
+   agreement with the Owner (the "Licence Agreement"). The Licence Agreement defines the licensee,
+   scope, term, plan, number of installations and domains; it prevails over this file.
 
-3. Third-party components included with or used by the Software remain under their own licences
-   (see THIRD_PARTY_LICENSES.md and NOTICE.md). Nothing in this licence restricts rights granted by
-   those licences.
+3. Unless the Licence Agreement says otherwise, a licensee:
+   a) may install, configure and operate the Software for its own business and for the affiliates
+      named in the Licence Agreement, within the licensed installations and domains;
+   b) may adapt the Software through its admin settings and through extensions in the `custom/`
+      directory;
+   c) must not sell, rent, sublicense, publish, host for third parties or otherwise make the
+      Software or substantial parts of it available to anyone else;
+   d) must not decompile, reverse engineer or disassemble the Software except where the law
+      expressly permits this despite this restriction (e.g. for interoperability);
+   e) must not remove, alter or hide copyright, licence or ownership notices, and must not
+      circumvent, disable or forge the licence key check;
+   f) must keep source code it receives confidential and restrict access to its own staff and
+      contractors who need it, under equivalent obligations.
 
-4. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-   NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-   NON-INFRINGEMENT, EXCEPT AS EXPRESSLY AGREED IN A LICENCE AGREEMENT. TO THE EXTENT PERMITTED BY
-   LAW, THE COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING
-   FROM THE SOFTWARE OR ITS USE.
+4. What belongs to the licensee. Extensions the licensee writes in `custom/`, and all content and
+   data of its shop (brand, texts, images, product, customer and order data), belong to the
+   licensee. Everything else, including modifications to the Software made by or for the Owner,
+   remains the Owner's property. Suggestions and feedback may be used by the Owner freely.
 
-5. This licence is governed by Swiss law. Place of jurisdiction is the registered seat of the
-   copyright holder, unless a licence agreement provides otherwise.
+5. Licence keys. Each installation is identified by a licence key signed by the Owner. A key
+   documents the licence; it does not extend it. Keys must not be shared between installations.
 
-Licensing enquiries: via https://github.com/lucadesimoni
+6. Third-party components included with or used by the Software remain under their own licences
+   (THIRD_PARTY_LICENSES.md, NOTICE.md). Nothing in this licence restricts rights those licences
+   grant. Demo content (De Simoni brand, logos, photos, producer marks) is not licensed for any
+   installation other than the Owner's demonstration (NOTICE.md).
+
+7. Termination. Any licence ends automatically if its terms are breached. On termination the
+   licensee must stop using the Software and delete all copies, except data that belongs to the
+   licensee under section 4, which it may export and keep.
+
+8. No warranty. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+   AND NON-INFRINGEMENT, EXCEPT AS EXPRESSLY AGREED IN A LICENCE AGREEMENT. TO THE EXTENT PERMITTED
+   BY LAW, THE OWNER SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE
+   SOFTWARE OR ITS USE.
+
+9. Governing law. This licence is governed by Swiss law, excluding its conflict-of-law rules.
+   Place of jurisdiction is the Owner's domicile or registered seat, unless a Licence Agreement
+   provides otherwise.
+
+Licensing enquiries: Luca De Simoni — https://github.com/lucadesimoni
