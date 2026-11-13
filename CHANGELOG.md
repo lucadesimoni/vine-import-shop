@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-13
+
 ### Added
 - **vinX Shop API v2.0 fully used: 57 of 57 endpoints** (see `docs/VINX.md`, checked against the official spec by the contract test).
   - **Product page:**
@@ -283,7 +285,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.4.0...v1.5.0
