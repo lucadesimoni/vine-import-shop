@@ -12,6 +12,18 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Image optimizer:** job «Produktbilder optimieren (WebP)», scheduled and runnable in Admin › vinX ERP.
+  - Turns product photos (uploads, ERP/supplier URLs, demo files) into WebP at 1200 and 480 px under `img/`, locally or on S3, with long cache headers.
+  - Shop pages load the matching size through `srcset`. New uploads in Admin › Produkte are optimized right away.
+  - Uses sharp; its libvips binary (LGPL, dynamically loaded) is a reviewed exception in the licence check and is listed in NOTICE.md.
+- **Region maps zoom** like the world map: mouse wheel, pinch, drag, double click, buttons.
+
+### Changed
+- **One login, one role ("separate" channels):** approved B2B customers land in the portal after login, and every shop page (shop, product, order list, checkout, account) leads into the portal, including client-side navigation. Content pages stay readable, and the account icon points to the portal.
+- **Maps:** the mouse wheel zooms without a modifier key; at the zoom limit the page scrolls on. Resetting a region selection keeps the country. The country chip and the overview heading follow the map that is shown.
+- **Header:** the order list is icon-only (count badge, no text label).
+
 ## [1.4.0] - 2026-11-13
 
 ### Added
@@ -42,9 +54,6 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 - **Admin › Einstellungen › Herkunftskarte › "Weltkarte anzeigen".** When it is off, the shop shows region maps (home country and every country with a map) and A–Z only.
 
 ### Changed
-- **One login, one role ("separate" channels):** approved B2B customers land in the portal after login, and every shop page (shop, product, order list, checkout, account) leads into the portal, including client-side navigation. Content pages stay readable, and the account icon points to the portal.
-- **Maps:** the mouse wheel zooms without a modifier key; at the zoom limit the page scrolls on. Resetting a region selection keeps the country. The country chip and the overview heading follow the map that is shown.
-- **Header:** the order list is icon-only (count badge, no text label).
 - **Dark mode is calmer.**
   - The lifted brand colour loses some saturation (no more neon). Text on buttons keeps ≥ 4.5 : 1 contrast.
   - The announcement bar is muted.
