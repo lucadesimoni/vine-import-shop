@@ -12,6 +12,21 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Shop host for customer installations** (`deploy/host`, guide `docs/HOSTING.md`). Many shops run on one server: Caddy (automatic HTTPS), one PostgreSQL (a database and a user per shop) and one container per shop, about 50 MB RAM each. The host is driven by one Bash script, `shopctl`, and systemd timers.
+  - **New customer in one command:** `npm run customer:new` issues the licence key locally, then runs `shopctl new` over SSH: database, secrets, container, health check, HTTPS for all domains, admin login.
+  - **Nightly backups:** database, uploads and `.env`, kept locally. Optionally an AES-256-encrypted copy goes to S3 / R2 / Swiss Backup; nothing is uploaded without a passphrase. Restore works from either copy.
+  - **Automatic updates:** `UPDATE_POLICY` is minor, patch or off; major versions are never installed automatically. Each update takes a backup first and runs a health check. If the check fails, the database is restored, the old version is started and an alert mail is sent.
+  - **Monitoring every 2 min:**
+    - DOWN/UP mails, sent only when the state changes;
+    - warnings for certificates, disk space and missing backups;
+    - a password-protected static status page;
+    - an optional heartbeat URL so an external service notices when the whole server is down.
+  - `shopctl` also covers `list`, `domains`, `restore`, `logs`, `env`, `restart` and `rm`. `bootstrap.sh` sets up a fresh Debian/Ubuntu server.
+
+### Fixed
+- Docker image: includes `pg_dump`. Without it, the automatic backup before database migrations failed on PostgreSQL, and with it the update.
+
 ## [1.10.0] - 2026-11-13
 
 ### Added

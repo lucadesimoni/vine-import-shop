@@ -16,6 +16,10 @@ npm ci && npm run setup && npm run build && npm start     # → http://localhost
 - The server loads `.env` by itself. Real environment variables always take precedence.
 - `npm run release` creates `release/shop-<version>.tar.gz` for hosts where you can't build: unpack, run `npm ci --omit=dev`, then `npm start`.
 
+## Many customer shops on one server
+
+`deploy/host`: Caddy (automatic HTTPS) + one PostgreSQL + one container per shop, managed by `shopctl`. One command per new customer (licence, database, container, HTTPS); nightly backups (encrypted off-site), automatic updates with rollback, monitoring with alert mails and a status page. Guide (German): [docs/HOSTING.md](HOSTING.md).
+
 ## Hosting with data in Switzerland
 
 | Provider | Product | How | Recipe |

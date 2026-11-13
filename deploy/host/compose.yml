@@ -1,0 +1,34 @@
+# Shared infrastructure of a shop host: Caddy (HTTPS for all shop domains) + PostgreSQL (one database per shop).
+# Managed by shopctl (`shopctl init` starts it); the shops themselves are plain containers on the network "shops".
+name: shophost
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../caddy/sites:/etc/caddy/sites:ro
+      - ../status:/srv/status:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment: { ACME_EMAIL: "${ACME_EMAIL}" }
+    networks: [shops]
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # sized for a small VM (2–4 GB RAM, ~10–30 shops); raise with the machine
+    command: >
+      postgres -c shared_buffers=256MB -c effective_cache_size=768MB -c work_mem=8MB
+               -c max_connections=200 -c wal_compression=on -c log_min_duration_statement=1000
+    volumes: [pgdata:/var/lib/postgresql/data]
+    shm_size: 256mb
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "postgres"], interval: 10s, timeout: 3s, retries: 5 }
+    networks: [shops]
+
+volumes: { caddy_data: {}, caddy_config: {}, pgdata: {} }
+networks:
+  shops: { name: shops }

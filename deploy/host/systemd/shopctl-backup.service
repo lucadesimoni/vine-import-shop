@@ -1,0 +1,7 @@
+[Unit]
+Description=Shop host: nightly backups (database, uploads, .env; off-site copy)
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/shopctl backup --all
+Nice=15
+IOSchedulingClass=idle

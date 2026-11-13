@@ -1,0 +1,6 @@
+[Unit]
+Description=Shop host: health checks, alerts, status page
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/shopctl monitor
+Nice=10

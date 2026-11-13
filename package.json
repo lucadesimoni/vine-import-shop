@@ -29,6 +29,7 @@
     "restore": "tsx scripts/restore.ts",
     "version:bump": "node scripts/version.mjs",
     "i18n:check": "node scripts/check-i18n.mjs",
+    "customer:new": "node scripts/customer.mjs",
     "licenses": "node scripts/licenses.mjs",
     "licenses:check": "node scripts/licenses.mjs --check",
     "changelog:check": "node scripts/check-changelog.mjs",

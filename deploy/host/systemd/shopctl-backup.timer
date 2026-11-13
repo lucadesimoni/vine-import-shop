@@ -1,0 +1,8 @@
+[Unit]
+Description=Shop host backups at night
+[Timer]
+OnCalendar=*-*-* 02:30
+RandomizedDelaySec=20min
+Persistent=true
+[Install]
+WantedBy=timers.target

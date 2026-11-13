@@ -1,0 +1,7 @@
+{
+	# Let's Encrypt account e-mail (shopctl.env); certificates are issued and renewed automatically
+	email {$ACME_EMAIL}
+}
+
+# one file per shop, written by `shopctl new` / `shopctl domains`
+import /etc/caddy/sites/*.caddy

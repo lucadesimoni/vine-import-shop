@@ -1,0 +1,362 @@
+#!/usr/bin/env bash
+# shopctl — run many Vine Import Shop installations on one server (Docker), lean:
+#   Caddy (automatic HTTPS) + one PostgreSQL (a database per shop) + one container per shop.
+#   No agents, no monitoring stack: systemd timers call `backup`, `update` and `monitor`.
+#
+#   shopctl init                                   set up the host (once; bootstrap.sh calls it)
+#   shopctl new NAME --domains a.ch,b.ch --admin EMAIL [--licence KEY] [--version vX.Y.Z]
+#   shopctl list | status
+#   shopctl domains NAME a.ch,b.ch                 change the shop's domains (HTTPS follows automatically)
+#   shopctl update [NAME|--all] [--to vX.Y.Z]      backup → new version → health check → automatic rollback
+#   shopctl update --auto                          nightly: newest version allowed by UPDATE_POLICY, all shops
+#   shopctl backup [NAME|--all]                    database + uploads + .env (local, optional encrypted off-site copy)
+#   shopctl restore NAME FILE                      restore a backup (stops the shop, replaces database and files)
+#   shopctl monitor                                health checks, alert mails, status page (every 2 min)
+#   shopctl restart|logs|env NAME                  operate one shop (env: edit its .env, then restart)
+#   shopctl rm NAME [--purge]                      final backup, stop, remove (keeps data unless --purge)
+set -euo pipefail
+
+ROOT="${SHOPCTL_ROOT:-/srv/shophost}"
+CONF="$ROOT/shopctl.env"
+SHOPS="$ROOT/shops" BACKUPS="$ROOT/backups" STATE="$ROOT/state" SITES="$ROOT/caddy/sites" STATUS="$ROOT/status" INFRA="$ROOT/infra"
+HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+
+say() { printf '\033[1m▸ %s\033[0m\n' "$*" >&2; }
+die() { printf '\033[31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
+need_conf() { [ -f "$CONF" ] || die "$CONF missing — run: shopctl init"; set -a; . "$CONF"; set +a; : "${IMAGE:?IMAGE not set in $CONF}"; }
+valid_name() { [[ "$1" =~ ^[a-z][a-z0-9-]{1,30}$ ]] || die "name: lowercase letters, digits, dashes (2–31 chars)"; }
+exists() { [ -f "$SHOPS/$1/.env" ]; }
+shops() { [ -d "$SHOPS" ] && find "$SHOPS" -mindepth 1 -maxdepth 1 -type d -exec test -f '{}/.env' ';' -printf '%f\n' | sort || true; }
+secret() { head -c "${1:-32}" /dev/urandom | base64 | tr -d '/+=\n' | head -c "${2:-40}"; }
+envget() { grep -E "^$2=" "$SHOPS/$1/.env" | tail -1 | cut -d= -f2-; }
+version_of() { cat "$SHOPS/$1/version"; }
+domains_of() { cat "$SHOPS/$1/domains"; }
+primary_of() { domains_of "$1" | cut -d, -f1; }
+psql_admin() { docker exec -i shophost-postgres-1 psql -v ON_ERROR_STOP=1 -qAt -U postgres "$@"; }
+now() { date -u +%Y%m%dT%H%M%SZ; }
+
+# mail via curl's SMTP client (no MTA needed); silently skipped without SMTP_URL/ALERT_EMAIL
+alert() {
+  local subject="$1" body="$2"
+  printf '%s %s\n' "$(date -u +%FT%TZ)" "$subject" >> "$STATE/alerts.log"
+  [ -n "${SMTP_URL:-}" ] && [ -n "${ALERT_EMAIL:-}" ] || return 0
+  local from="${MAIL_FROM:-shopctl@$(hostname -f 2>/dev/null || hostname)}" addr
+  addr="$(sed -E 's/.*<(.*)>.*/\1/' <<<"$from")"
+  printf 'From: %s\r\nTo: %s\r\nSubject: [%s] %s\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n' \
+    "$from" "$ALERT_EMAIL" "$(hostname)" "$subject" "$body" \
+  | curl -sS --max-time 30 --ssl-reqd --url "$SMTP_URL" --mail-from "$addr" --mail-rcpt "$ALERT_EMAIL" -T - >/dev/null \
+  || echo "alert mail failed: $subject" >&2
+}
+
+site_file() { # NAME → Caddy site block for all its domains
+  local n="$1" tls=""
+  [ "${TLS:-acme}" = internal ] && tls=$'\n\ttls internal'
+  printf '%s {%s\n\tencode zstd gzip\n\treverse_proxy shop-%s:3000\n\theader -Server\n}\n' \
+    "$(domains_of "$n" | tr ',' ' ')" "$tls" "$n" > "$SITES/$n.caddy"
+}
+status_site() {
+  [ -n "${STATUS_DOMAIN:-}" ] || { rm -f "$SITES/_status.caddy"; return; }
+  local tls=""; [ "${TLS:-acme}" = internal ] && tls=$'\n\ttls internal'
+  { printf '%s {%s\n\troot * /srv/status\n\tfile_server\n\theader Cache-Control "no-store"\n' "$STATUS_DOMAIN" "$tls"
+    [ -n "${STATUS_PASSWORD_HASH:-}" ] && printf '\tbasic_auth {\n\t\t%s %s\n\t}\n' "${STATUS_USER:-ops}" "$STATUS_PASSWORD_HASH"
+    printf '}\n'; } > "$SITES/_status.caddy"
+}
+caddy_reload() { docker exec shophost-caddy-1 caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || docker restart shophost-caddy-1 >/dev/null; }
+
+# start (or replace) the shop container with the version in $SHOPS/NAME/version
+run_shop() {
+  local n="$1" tag; tag="$(version_of "$n")"
+  docker rm -f "shop-$n" >/dev/null 2>&1 || true
+  docker run -d --name "shop-$n" --network shops --restart unless-stopped \
+    --env-file "$SHOPS/$n/.env" -v "$SHOPS/$n/data:/app/data" \
+    --memory "${SHOP_MEMORY:-512m}" --cpus "${SHOP_CPUS:-1}" \
+    --log-opt max-size=10m --log-opt max-file=3 \
+    --label shophost.shop="$n" "$IMAGE:$tag" >/dev/null
+}
+wait_healthy() { # NAME [seconds] — the app answers /api/health inside the container
+  local n="$1" t="${2:-120}" i
+  for ((i = 0; i < t; i += 3)); do
+    docker exec "shop-$n" wget -qO- http://127.0.0.1:3000/api/health 2>/dev/null | grep -q '"ok":true' && return 0
+    docker inspect -f '{{.State.Running}}' "shop-$n" 2>/dev/null | grep -q true || return 1
+    sleep 3
+  done
+  return 1
+}
+pull() { docker pull -q "$IMAGE:$1" >/dev/null 2>&1 || docker image inspect "$IMAGE:$1" >/dev/null 2>&1; } # registry down → local copy
+image_version() { # TAG → version inside the image (pulls it)
+  pull "$1" || return 1
+  docker run --rm --entrypoint node "$IMAGE:$1" -p 'require("/app/package.json").version'
+}
+
+cmd_init() {
+  mkdir -p "$SHOPS" "$BACKUPS" "$STATE" "$SITES" "$STATUS" "$INFRA"; chmod 700 "$SHOPS" "$BACKUPS"
+  if [ ! -f "$CONF" ]; then
+    cp "$HERE/shopctl.env.example" "$CONF"
+    echo "POSTGRES_PASSWORD=$(secret 48 40)" >> "$CONF"
+    chmod 600 "$CONF"
+    say "wrote $CONF — set ACME_EMAIL, STATUS_DOMAIN, ALERT_EMAIL, SMTP_URL, OFFSITE … then run: shopctl init"
+    return 0
+  fi
+  need_conf
+  grep -q '^POSTGRES_PASSWORD=.' "$CONF" || { echo "POSTGRES_PASSWORD=$(secret 48 40)" >> "$CONF"; need_conf; }
+  if [ -z "${STATUS_PASSWORD_HASH:-}" ] && [ -n "${STATUS_DOMAIN:-}" ]; then
+    local pw; pw="$(secret 24 20)"
+    STATUS_PASSWORD_HASH="$(docker run --rm caddy:2-alpine caddy hash-password -p "$pw")"
+    sed -i "s#^STATUS_PASSWORD_HASH=.*#STATUS_PASSWORD_HASH='${STATUS_PASSWORD_HASH}'#" "$CONF"   # bcrypt has \$ → single quotes
+    say "status page https://$STATUS_DOMAIN — user ${STATUS_USER:-ops}, password: $pw  (shown once)"
+  fi
+  [ "$HERE" -ef "$INFRA" ] || cp "$HERE/compose.yml" "$HERE/Caddyfile" "$HERE/shopctl.env.example" "$INFRA/"
+  status_site
+  [ -f "$STATUS/index.html" ] || echo '<!doctype html><title>Status</title><p>Noch keine Daten.' > "$STATUS/index.html"
+  docker compose -f "$INFRA/compose.yml" --env-file "$CONF" up -d --quiet-pull
+  for _ in $(seq 1 30); do psql_admin -c 'select 1' >/dev/null 2>&1 && break; sleep 2; done
+  caddy_reload
+  say "host ready — next: shopctl new NAME --domains shop.example.ch --admin you@example.ch"
+}
+
+cmd_new() {
+  need_conf
+  local n="${1:-}"; shift || true; valid_name "$n"; exists "$n" && die "shop $n exists"
+  local domains="" admin="" licence="" tag=""
+  while [ $# -gt 0 ]; do case "$1" in
+    --domains) domains="$2"; shift 2;; --admin) admin="$2"; shift 2;;
+    --licence|--license) licence="$2"; shift 2;; --version) tag="$2"; shift 2;;
+    *) die "unknown option $1";; esac; done
+  [[ "$domains" =~ ^[a-z0-9.-]+(,[a-z0-9.-]+)*$ ]] || die "--domains a.ch,b.ch required"
+  [[ "$admin" == *@* ]] || die "--admin EMAIL required"
+  for d in ${domains//,/ }; do grep -qx -- "$d" <(cat "$SHOPS"/*/domains 2>/dev/null | tr ',' '\n') && die "domain $d is used by another shop"; done
+  if [ -z "$tag" ]; then tag="v$(image_version latest)" || die "cannot pull $IMAGE:latest (docker login ghcr.io?)"; else pull "$tag" || die "cannot pull $IMAGE:$tag"; fi
+
+  say "database shop_$n"
+  local dbpw; dbpw="$(secret 48 40)"
+  psql_admin <<SQL
+CREATE ROLE "shop_$n" LOGIN PASSWORD '$dbpw';
+CREATE DATABASE "shop_$n" OWNER "shop_$n";
+REVOKE ALL ON DATABASE "shop_$n" FROM PUBLIC;
+SQL
+  local adminpw; adminpw="$(secret 24 16)"
+  mkdir -p "$SHOPS/$n/data"; chown 1000:1000 "$SHOPS/$n/data" 2>/dev/null || true
+  umask 077
+  cat > "$SHOPS/$n/.env" <<ENV
+# shop $n — created $(date -u +%F). Edit with: shopctl env $n   (then shopctl restart $n)
+NODE_ENV=production
+APP_URL=https://${domains%%,*}
+DATABASE_URL=postgres://shop_$n:$dbpw@postgres:5432/shop_$n
+SESSION_SECRET=$(secret 64 64)
+CRON_SECRET=$(secret 32 40)
+VINX_WEBHOOK_SECRET=$(secret 32 40)
+DEMO_DATA=false
+ADMIN_EMAIL=$admin
+ADMIN_PASSWORD=$adminpw
+LICENSE_KEY=$licence
+JOBS_INTERVAL_MINUTES=10
+BACKUP_KEEP=3
+NODE_OPTIONS=--max-old-space-size=384
+MAIL_DRIVER=log
+# MAIL_DRIVER=smtp
+# SMTP_URL=smtps://user:pass@mail.example.ch:465
+# MAIL_FROM="Shop <shop@example.ch>"
+STORAGE_DRIVER=local
+ENV
+  umask 022
+  echo "$tag" > "$SHOPS/$n/version"; echo "$domains" > "$SHOPS/$n/domains"
+  say "starting shop-$n ($tag)"
+  run_shop "$n"; wait_healthy "$n" 180 || { docker logs --tail 40 "shop-$n" >&2; die "shop-$n did not become healthy"; }
+  site_file "$n"; caddy_reload
+  cat <<OUT
+
+✓ shop $n is running ($tag)
+  URL:       https://${domains%%,*}   (DNS: A/AAAA records of ${domains//,/, } → this server; HTTPS follows automatically)
+  Admin:     https://${domains%%,*}/admin
+  Login:     $admin  /  $adminpw   (must be changed at first login)
+  Next:      mail (SMTP) and payment keys → shopctl env $n ; shopctl restart $n
+OUT
+}
+
+cmd_list() {
+  need_conf
+  printf '%-16s %-10s %-9s %s\n' SHOP VERSION STATE DOMAINS
+  for n in $(shops); do
+    printf '%-16s %-10s %-9s %s\n' "$n" "$(version_of "$n")" "$(docker inspect -f '{{.State.Health.Status}}' "shop-$n" 2>/dev/null || echo stopped)" "$(domains_of "$n")"
+  done
+}
+
+cmd_domains() {
+  need_conf; local n="${1:-}" d="${2:-}"; exists "$n" || die "no shop $n"
+  [[ "$d" =~ ^[a-z0-9.-]+(,[a-z0-9.-]+)*$ ]] || die "usage: shopctl domains NAME a.ch,b.ch"
+  echo "$d" > "$SHOPS/$n/domains"
+  sed -i "s#^APP_URL=.*#APP_URL=https://${d%%,*}#" "$SHOPS/$n/.env"
+  site_file "$n"; caddy_reload; run_shop "$n"; wait_healthy "$n" || die "shop-$n unhealthy after restart"
+  say "$n → $d (licence domains must include them: issue a new key if needed)"
+}
+
+# backup NAME [reason] → prints the file
+backup_one() {
+  local n="$1" reason="${2:-nightly}" dir tmp f
+  dir="$BACKUPS/$n"; mkdir -p "$dir"; tmp="$(mktemp -d)"
+  # explicit checks: callers use it in `if`/`||`, where `set -e` does not apply
+  docker exec shophost-postgres-1 pg_dump -U postgres --format=custom --no-owner "shop_$n" > "$tmp/db.pgdump" && [ -s "$tmp/db.pgdump" ] \
+    || { rm -rf "$tmp"; echo "pg_dump shop_$n failed" >&2; return 1; }
+  cp "$SHOPS/$n/.env" "$SHOPS/$n/version" "$SHOPS/$n/domains" "$tmp/"
+  f="$dir/$n-$(now)-$reason.tar.gz"
+  # uploads and optimized images; the app's own backups and caches are not needed
+  tar -czf "$f" --exclude='data/backups' --exclude='data/db' --exclude='data/mail.log' -C "$tmp" . -C "$SHOPS/$n" data \
+    || { rm -rf "$tmp" "$f"; echo "tar $n failed" >&2; return 1; }
+  rm -rf "$tmp"; chmod 600 "$f"
+  echo "$f"
+}
+offsite() { # FILE NAME
+  [ -n "${OFFSITE:-}" ] || return 0
+  [ -n "${BACKUP_PASSPHRASE:-}" ] || { alert "Off-site backup skipped" "BACKUP_PASSPHRASE is empty — backups are never sent unencrypted."; return 1; }
+  command -v rclone >/dev/null || { alert "Off-site backup failed" "rclone is not installed"; return 1; }
+  openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass env:BACKUP_PASSPHRASE -in "$1" \
+    | rclone rcat --s3-no-check-bucket "$OFFSITE/$2/$(basename "$1").enc"
+}
+cmd_backup() {
+  need_conf; local target="${1:---all}" list failed=""
+  if [ "$target" = --all ]; then list="$(shops)"; else exists "$target" || die "no shop $target"; list="$target"; fi
+  for n in $list; do
+    if f="$(backup_one "$n")"; then
+      echo "✓ $n → $f ($(du -h "$f" | cut -f1))"
+      offsite "$f" "$n" || failed+="$n (off-site) "
+      date -u +%s > "$STATE/$n.backup"
+    else failed+="$n "; fi
+  done
+  find "$BACKUPS" -name '*.tar.gz' -mtime +"${BACKUP_KEEP_DAYS:-14}" ! -name '*pre-update*' -delete
+  find "$BACKUPS" -name '*pre-update*.tar.gz' -mtime +60 -delete
+  [ -n "${OFFSITE:-}" ] && [ "$target" = --all ] && rclone delete --min-age "${OFFSITE_KEEP_DAYS:-60}d" "$OFFSITE" 2>/dev/null || true
+  [ -z "$failed" ] || { alert "Backup failed: $failed" "See: journalctl -u shopctl-backup"; return 1; }
+}
+
+cmd_restore() {
+  need_conf; local n="${1:-}" f="${2:-}"; exists "$n" || die "no shop $n"; [ -f "$f" ] || die "usage: shopctl restore NAME FILE"
+  local tmp; tmp="$(mktemp -d)"
+  case "$f" in *.enc) openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE -in "$f" | tar -xz -C "$tmp";; *) tar -xzf "$f" -C "$tmp";; esac
+  [ -f "$tmp/db.pgdump" ] || die "not a shopctl backup"
+  say "safety backup of the current state"; backup_one "$n" pre-restore >/dev/null || die "safety backup failed — nothing changed"
+  docker stop "shop-$n" >/dev/null 2>&1 || true
+  psql_admin -c "DROP DATABASE IF EXISTS \"shop_$n\" WITH (FORCE)" -c "CREATE DATABASE \"shop_$n\" OWNER \"shop_$n\""
+  docker exec -i shophost-postgres-1 pg_restore -U postgres --no-owner --no-comments --exit-on-error --role="shop_$n" -d "shop_$n" < "$tmp/db.pgdump"
+  rm -rf "$SHOPS/$n/data"; mv "$tmp/data" "$SHOPS/$n/data"; chown -R 1000:1000 "$SHOPS/$n/data" 2>/dev/null || true
+  cp "$tmp/version" "$SHOPS/$n/version"; rm -rf "$tmp"
+  run_shop "$n"; wait_healthy "$n" || die "shop-$n unhealthy after restore"
+  say "$n restored from $(basename "$f") ($(version_of "$n"))"
+}
+
+# update one shop to TAG; on failure: restore the pre-update backup and the old version
+update_one() {
+  local n="$1" tag="$2" old f
+  old="$(version_of "$n")"; [ "$old" = "$tag" ] && { echo "= $n already $tag"; return 0; }
+  f="$(backup_one "$n" "pre-update-$old")" || { alert "Update $n → $tag skipped" "The backup before the update failed; $n stays on $old."; return 1; }
+  echo "$tag" > "$SHOPS/$n/version"
+  run_shop "$n"
+  if wait_healthy "$n" 180; then echo "✓ $n $old → $tag"; return 0; fi
+  local log; log="$(docker logs --tail 30 "shop-$n" 2>&1)"
+  echo "✗ $n: $tag unhealthy — rolling back to $old" >&2
+  docker stop "shop-$n" >/dev/null 2>&1 || true
+  psql_admin -c "DROP DATABASE IF EXISTS \"shop_$n\" WITH (FORCE)" -c "CREATE DATABASE \"shop_$n\" OWNER \"shop_$n\""
+  tar -xzf "$f" -O ./db.pgdump | docker exec -i shophost-postgres-1 pg_restore -U postgres --no-owner --no-comments --exit-on-error --role="shop_$n" -d "shop_$n"
+  echo "$old" > "$SHOPS/$n/version"; run_shop "$n"
+  wait_healthy "$n" && alert "Update $n → $tag failed, rolled back to $old" "$log" \
+                    || alert "Update $n → $tag failed AND rollback unhealthy — shop down" "$log"
+  return 1
+}
+allowed() { # CURRENT CANDIDATE → policy check (never a new major)
+  local c="${1#v}" v="${2#v}"
+  [ "$(printf '%s\n%s\n' "$c" "$v" | sort -V | tail -1)" = "$v" ] && [ "$c" != "$v" ] || return 1
+  [ "${c%%.*}" = "${v%%.*}" ] || return 1
+  case "${UPDATE_POLICY:-minor}" in minor) return 0;; patch) [ "${c%.*}" = "${v%.*}" ];; *) return 1;; esac
+}
+cmd_update() {
+  need_conf; local target="" to="" auto=0 failed=0
+  while [ $# -gt 0 ]; do case "$1" in --all) target=--all; shift;; --to) to="$2"; shift 2;; --auto) auto=1; target=--all; shift;; *) target="$1"; shift;; esac; done
+  [ -n "$target" ] || die "usage: shopctl update NAME|--all [--to vX.Y.Z] | --auto"
+  [ "$auto" = 1 ] && [ "${UPDATE_POLICY:-minor}" = off ] && { echo "UPDATE_POLICY=off"; return 0; }
+  if [ -z "$to" ]; then to="v$(image_version latest)" || die "cannot pull $IMAGE:latest"; else pull "$to" || die "cannot pull $IMAGE:$to"; fi
+  local list; if [ "$target" = --all ]; then list="$(shops)"; else exists "$target" || die "no shop $target"; list="$target"; fi
+  for n in $list; do
+    if [ "$auto" = 1 ] && ! allowed "$(version_of "$n")" "$to"; then echo "= $n stays $(version_of "$n") (policy ${UPDATE_POLICY:-minor}, available $to)"; continue; fi
+    update_one "$n" "$to" || failed=1
+  done
+  docker image prune -f --filter "label=org.opencontainers.image.title=Vine Import Shop" --filter "until=720h" >/dev/null 2>&1 || true
+  return $failed
+}
+
+# ── monitoring: every 2 minutes; alerts on state change only (2 failed checks = down)
+check_shop() { # NAME → "ok <version>" or "fail <reason>"
+  local n="$1" d body; d="$(primary_of "$n")"
+  body="$(curl -sS --max-time 15 ${MONITOR_INSECURE:+-k} --resolve "$d:443:127.0.0.1" "https://$d/api/health" 2>&1)" || { echo "fail ${body:0:120}"; return; }
+  grep -q '"ok":true' <<<"$body" && echo "ok $(sed -E 's/.*"version":"([^"]+)".*/\1/' <<<"$body")" || echo "fail ${body:0:120}"
+}
+cert_days() { # DOMAIN → days until the certificate expires (cached 12 h)
+  local d="$1" c="$STATE/cert-$1"
+  if [ ! -f "$c" ] || [ -n "$(find "$c" -mmin +720)" ]; then
+    local end; end="$(echo | timeout 10 openssl s_client -connect 127.0.0.1:443 -servername "$d" 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)"
+    [ -n "$end" ] && echo $(( ($(date -d "$end" +%s) - $(date +%s)) / 86400 )) > "$c" || echo "?" > "$c"
+  fi
+  cat "$c"
+}
+cmd_monitor() {
+  need_conf; mkdir -p "$STATE"
+  local rows="" n r st prev fails days last age disk tags
+  for n in $(shops); do
+    r="$(check_shop "$n")"; st="${r%% *}"; prev="$(cat "$STATE/$n.state" 2>/dev/null || echo ok)"; fails="$(cat "$STATE/$n.fails" 2>/dev/null || echo 0)"
+    if [ "$st" = ok ]; then
+      [ "$prev" = down ] && alert "UP: $n ($(primary_of "$n"))" "$n is reachable again (${r#ok })."
+      echo ok > "$STATE/$n.state"; echo 0 > "$STATE/$n.fails"; date -u +%s > "$STATE/$n.lastok"
+    else
+      fails=$((fails + 1)); echo "$fails" > "$STATE/$n.fails"
+      if [ "$fails" -ge 2 ] && [ "$prev" != down ]; then
+        echo down > "$STATE/$n.state"; date -u +%s > "$STATE/$n.since"
+        alert "DOWN: $n ($(primary_of "$n"))" "$(printf 'Check: https://%s/api/health\nError: %s\n\nContainer: %s\n%s' "$(primary_of "$n")" "${r#fail }" "$(docker inspect -f '{{.State.Status}} {{.State.Health.Status}}' "shop-$n" 2>&1)" "$(docker logs --tail 20 "shop-$n" 2>&1)")"
+      fi
+    fi
+    days="$(cert_days "$(primary_of "$n")")"
+    tags=""
+    if [ "${TLS:-acme}" != internal ] && [[ "$days" =~ ^[0-9]+$ ]] && [ "$days" -lt 14 ] && [ ! -f "$STATE/$n.certwarn" ]; then alert "Certificate $n expires in $days days" "Check DNS of $(domains_of "$n") and the Caddy log."; touch "$STATE/$n.certwarn"; fi
+    [[ "$days" =~ ^[0-9]+$ ]] && [ "$days" -ge 14 ] && rm -f "$STATE/$n.certwarn"
+    last="$(cat "$STATE/$n.backup" 2>/dev/null || echo 0)"
+    age=$(( ($(date -u +%s) - (last > 0 ? last : $(stat -c %Y "$SHOPS/$n/.env"))) / 3600 ))  # new shop: counted from creation
+    if [ "$age" -gt 30 ] && [ ! -f "$STATE/$n.backupwarn" ]; then alert "No backup of $n for ${age} h" "Run: shopctl backup $n"; touch "$STATE/$n.backupwarn"; fi
+    [ "$age" -le 30 ] && rm -f "$STATE/$n.backupwarn"
+    rows+="<tr><td>$n</td><td>$(domains_of "$n" | sed 's/,/<br>/g')</td><td>$(version_of "$n")</td>"
+    if [ "$(cat "$STATE/$n.state" 2>/dev/null)" = down ]; then rows+="<td class=bad>down seit $(date -d @"$(cat "$STATE/$n.since")" '+%d.%m. %H:%M')</td>"; elif [ "$st" = ok ]; then rows+="<td class=ok>ok</td>"; else rows+="<td class=warn>Störung?</td>"; fi
+    rows+="<td>$([ "$last" = 0 ] && echo — || date -d @"$last" '+%d.%m. %H:%M')</td><td>${days} d</td></tr>"
+  done
+  disk="$(df -P "$ROOT" | awk 'NR==2 {print $5}' | tr -d %)"
+  if [ "$disk" -ge 85 ] && [ ! -f "$STATE/diskwarn" ]; then alert "Disk ${disk}% full" "$(df -h "$ROOT")"; touch "$STATE/diskwarn"; fi
+  [ "$disk" -lt 85 ] && rm -f "$STATE/diskwarn"
+  cat > "$STATUS/index.html.tmp" <<HTML
+<!doctype html><html lang=de><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=refresh content=60><meta name=robots content=noindex>
+<title>Shop-Status</title><style>
+:root{color-scheme:light dark;--ok:#1a7f37;--bad:#cf222e;--warn:#9a6700}body{font:15px/1.5 system-ui,sans-serif;max-width:960px;margin:2rem auto;padding:0 1rem}
+table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid #8884;vertical-align:top}th{font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;opacity:.7}
+.ok{color:var(--ok);font-weight:600}.bad{color:var(--bad);font-weight:600}.warn{color:var(--warn);font-weight:600}small{opacity:.7}.wrap{overflow-x:auto}
+</style><h1>Shop-Status</h1><p><small>$(hostname) · Stand $(date '+%d.%m.%Y %H:%M') · Disk ${disk}% · Updates: ${UPDATE_POLICY:-minor}</small></p>
+<div class=wrap><table><tr><th>Shop</th><th>Domains</th><th>Version</th><th>Status</th><th>Backup</th><th>Zertifikat</th></tr>${rows:-<tr><td colspan=6>Noch keine Shops.</td></tr>}</table></div>
+HTML
+  mv "$STATUS/index.html.tmp" "$STATUS/index.html"
+  # dead man's switch: an external service (e.g. healthchecks.io) alerts when these pings stop — server down or offline
+  if [ -n "${HEARTBEAT_URL:-}" ]; then curl -fsS -m 10 "$HEARTBEAT_URL" >/dev/null 2>&1 || true; fi
+}
+
+cmd_rm() {
+  need_conf; local n="${1:-}" purge="${2:-}"; exists "$n" || die "no shop $n"
+  say "final backup"; backup_one "$n" final >/dev/null || die "final backup failed — nothing removed"
+  docker rm -f "shop-$n" >/dev/null 2>&1 || true; rm -f "$SITES/$n.caddy"; caddy_reload
+  if [ "$purge" = --purge ]; then
+    psql_admin -c "DROP DATABASE IF EXISTS \"shop_$n\" WITH (FORCE)" -c "DROP ROLE IF EXISTS \"shop_$n\""
+    rm -rf "${SHOPS:?}/$n"; say "$n removed (backups kept in $BACKUPS/$n)"
+  else mv "$SHOPS/$n/.env" "$SHOPS/$n/.env.removed"; say "$n stopped; data and database kept (--purge deletes them)"; fi
+}
+
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+  init) cmd_init;; new) cmd_new "$@";; list|ls) cmd_list;; domains) cmd_domains "$@";;
+  update) cmd_update "$@";; backup) cmd_backup "$@";; restore) cmd_restore "$@";;
+  monitor) cmd_monitor;; status) cmd_monitor; cmd_list;; rm) cmd_rm "$@";;
+  restart) need_conf; exists "${1:-}" || die "no shop ${1:-}"; run_shop "$1"; wait_healthy "$1" && say "$1 restarted";;
+  logs) docker logs --tail 200 -f "shop-${1:?NAME}";;
+  env) exists "${1:-}" || die "no shop ${1:-}"; "${EDITOR:-nano}" "$SHOPS/$1/.env";;
+  *) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//';;
+esac

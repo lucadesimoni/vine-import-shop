@@ -9,7 +9,7 @@ Dieses Dokument beschreibt, was zum Vertrieb gehört. **Keine Rechtsberatung** �
 |---|---|---|
 | Archiv für eigene Server / Hoster | `npm run release` → `release/shop-<version>.tar.gz` | Build, Migrationen, Doku, LICENSE, NOTICE, THIRD_PARTY_LICENSES |
 | Docker-Image | `docker build .` (Standard: `SHOP_DIST=customer`) | dito, als Image |
-| Gehosteter Betrieb (SaaS / Managed) | eigene Installation je Kunde, gebaut mit `SHOP_DIST=customer` | Kunde erhält keinen Code |
+| Gehosteter Betrieb (SaaS / Managed) | Shop-Host mit `shopctl`, ein Befehl pro Kunde: `npm run customer:new` ([HOSTING.md](HOSTING.md)) | Kunde erhält keinen Code |
 
 Die Kundendistribution (`SHOP_DIST=customer`) enthält **keine Demo-Inhalte**: Der De-Simoni-Seed wird nicht gebündelt, `public/demo` (Logos, Fotos, Produzentenmarken) wird entfernt. Eine neue Installation startet mit neutralen Vorlagen. Die Demo (Vercel) wird ohne diese Variable gebaut und bleibt unverändert.
 

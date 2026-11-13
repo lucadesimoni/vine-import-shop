@@ -1,0 +1,7 @@
+[Unit]
+Description=Shop host: automatic updates (UPDATE_POLICY) with rollback
+After=shopctl-backup.service
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/shopctl update --auto
+Nice=10

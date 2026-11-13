@@ -13,8 +13,10 @@ COPY . .
 RUN npm run build && npm prune --omit=dev && if [ "$SHOP_DIST" = customer ]; then rm -rf public/demo; fi
 
 FROM node:22-alpine
+# pg_dump for the automatic backup before database migrations (PostgreSQL installations)
+RUN apk add --no-cache postgresql-client
 ENV NODE_ENV=production PORT=3000
-LABEL org.opencontainers.image.licenses="LicenseRef-Proprietary" org.opencontainers.image.source="https://github.com/lucadesimoni/vine-import-shop" org.opencontainers.image.description="White-label wine & speciality shop (B2B + B2C)"
+LABEL org.opencontainers.image.licenses="LicenseRef-Proprietary" org.opencontainers.image.source="https://github.com/lucadesimoni/vine-import-shop" org.opencontainers.image.title="Vine Import Shop" org.opencontainers.image.vendor="Luca De Simoni" org.opencontainers.image.description="White-label wine & speciality shop (B2B + B2C)"
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/build ./build
