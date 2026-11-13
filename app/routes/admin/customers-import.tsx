@@ -24,7 +24,7 @@ export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
   if (form.get("intent") === "preview") {
     const file = form.get("file");
-    if (!(file instanceof File) || !file.size) return data({ error: "Bitte eine Datei wählen (CSV, Excel .xlsx oder XML)." }, { status: 400 });
+    if (!(file instanceof File) || !file.size) return data({ error: "Bitte eine Datei wählen (CSV oder XML)." }, { status: 400 });
     if (file.size > 15 * 1024 * 1024) return data({ error: "Datei zu gross (max. 15 MB)." }, { status: 400 });
     try {
       const table = readTable(file.name, new Uint8Array(await file.arrayBuffer()));
@@ -55,7 +55,7 @@ export default function CustomersImport({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <Link to="/admin/customers" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-fg hover:text-fg"><ArrowLeft size={14} /> Kunden</Link>
-      <PageHeader title="Kunden importieren" subtitle="Aus einem alten Shop, einer ERP-Exportdatei oder einer Excel-Liste. Bestehende Kunden werden über Kundennummer oder E-Mail erkannt." />
+      <PageHeader title="Kunden importieren" subtitle="CSV oder XML — aus einem alten Shop, einem ERP-Export oder einer Tabelle. Bestehende Kunden werden über Kundennummer oder E-Mail erkannt." />
       {res && "error" in res && <Notice tone="danger" className="mb-6">{res.error}</Notice>}
 
       {res && "step" in res && res.step === "done" ? (
@@ -115,11 +115,11 @@ export default function CustomersImport({ loaderData }: Route.ComponentProps) {
       ) : (
         <Form method="post" encType="multipart/form-data" className="grid gap-6">
           <input type="hidden" name="intent" value="preview" />
-          <Panel title="Datei wählen" description="CSV (Semikolon, Komma oder Tab), Excel (.xlsx) oder XML. Erste Zeile = Spaltennamen.">
+          <Panel title="Datei wählen" description="CSV (Semikolon, Komma oder Tab — z. B. aus Excel «CSV UTF-8») oder XML (ein Element pro Kunde). Bei CSV: erste Zeile = Spaltennamen.">
             <label className="flex cursor-pointer flex-col items-center gap-3 rounded-surface border border-dashed border-border-strong px-6 py-10 text-center transition-colors hover:border-primary">
               <Upload size={22} strokeWidth={1.5} className="text-muted-fg" />
               <span className="text-sm">Datei auswählen</span>
-              <input type="file" name="file" accept=".csv,.tsv,.txt,.xlsx,.xml,text/csv,application/xml,text/xml,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="max-w-full text-note" required />
+              <input type="file" name="file" accept=".csv,.tsv,.txt,.xml,text/csv,application/xml,text/xml" className="max-w-full text-note" required />
             </label>
             <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-muted-fg">
               <FileSpreadsheet size={14} /> Erkannte Spalten u. a.:

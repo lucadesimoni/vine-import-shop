@@ -136,11 +136,11 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
           {JOBS.map(([intent, label, Icon]) => (
             <Form method="post" key={intent}>
               <input type="hidden" name="intent" value={intent} />
-              <Button type="submit" variant="secondary" size="sm" disabled={!!running}><Icon size={13} className={running === intent ? "animate-pulse" : ""} /> {label}</Button>
+              <Button type="submit" variant="secondary" size="sm" disabled={!!running} className="h-auto min-h-9 max-w-full whitespace-normal py-1.5 text-left"><Icon size={13} className={running === intent ? "animate-pulse" : ""} /> {label}</Button>
             </Form>
           ))}
           {extraJobs.map((j) => (
-            <Form method="post" key={j.id}><input type="hidden" name="intent" value={`job:${j.id}`} /><Button type="submit" variant="secondary" size="sm" disabled={!!running}><Play size={13} /> {j.label}</Button></Form>
+            <Form method="post" key={j.id}><input type="hidden" name="intent" value={`job:${j.id}`} /><Button type="submit" variant="secondary" size="sm" disabled={!!running} className="h-auto min-h-9 max-w-full whitespace-normal py-1.5 text-left"><Play size={13} /> {j.label}</Button></Form>
           ))}
           <Form method="post"><input type="hidden" name="intent" value="articles" /><input type="hidden" name="full" value="1" /><Button type="submit" variant="secondary" size="sm" disabled={!!running}><RotateCw size={13} /> Artikel (Vollabgleich)</Button></Form>
         </div>
@@ -227,7 +227,7 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
           <Panel title="Endpunkte & Geheimnisse">
             <dl className="grid gap-2 text-note">
               {[["POST /api/cron", secrets.cron ? "CRON_SECRET ✓" : "CRON_SECRET fehlt"], ["POST /api/vinx/import", "CSV-Upload (Bearer CRON_SECRET)"], ["POST /api/vinx/webhook", secrets.webhook ? "VINX_WEBHOOK_SECRET ✓" : "optional — VINX_WEBHOOK_SECRET"]].map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-4"><dt className="font-mono">{k}</dt><dd className="text-muted-fg">{v}</dd></div>
+                <div key={k} className="flex flex-wrap justify-between gap-x-4 gap-y-0.5"><dt className="font-mono [overflow-wrap:anywhere]">{k}</dt><dd className="text-muted-fg">{v}</dd></div>
               ))}
             </dl>
           </Panel>

@@ -110,6 +110,11 @@
 }
 
 @layer base {
+  /* Grid items may shrink below their content width (default min-width:auto lets one long word or a
+     nowrap row blow a single-column phone layout wider than the screen). */
+  :where(.grid, .inline-grid) > * {
+    min-width: 0;
+  }
   html {
     -webkit-text-size-adjust: 100%;
     overflow-x: clip; /* safety net: nothing may ever cause sideways scrolling on phones */

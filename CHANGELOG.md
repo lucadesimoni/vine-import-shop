@@ -12,11 +12,20 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Changed
+- Customer import accepts **CSV and XML** only, no Excel (from Excel: "Save as › CSV UTF-8"). XML now handles namespaced ERP exports and CDATA.
+
+### Fixed
+- **Phones.**
+  - Checkout and order list could be wider than the screen with items in the cart, especially in Italian.
+  - Cause: grid items kept the width of their longest content. All grid items may now shrink (design-system base rule).
+- Long job buttons in Admin › Integrationen wrap instead of overflowing. The footer language switch has no stray divider on phones.
+
 ## [1.1.0] - 2026-11-13
 
 ### Added
 - **Customer import** (Admin › Kunden › Importieren).
-  - Reads CSV (any delimiter), Excel (.xlsx) and XML.
+  - Reads CSV (any delimiter; from Excel via "CSV UTF-8") and XML, including namespaced ERP exports with CDATA.
   - Columns are recognised automatically (DE / IT / FR / EN) and can be adjusted, with a preview.
   - Customers are matched by customer number, then e-mail, and updated.
   - B2B customers can be approved directly, invitations sent and records pushed to vinX.

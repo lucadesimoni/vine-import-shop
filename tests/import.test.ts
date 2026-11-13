@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { readCsv, readTable, readXml } from "~/.server/import/table";
 import { detectMapping, toRows } from "~/.server/import/customers";
@@ -13,10 +12,12 @@ describe("customer import — file readers", () => {
   it("reads comma CSV", () => {
     expect(readCsv("email,name\nx@y.ch,X").rows[0]).toEqual({ email: "x@y.ch", name: "X" });
   });
-  it("reads Excel .xlsx (shared strings + numbers)", () => {
-    const t = readTable("kunden.xlsx", new Uint8Array(readFileSync("tests/fixtures/customers.xlsx")));
-    expect(t.headers).toEqual(["E-Mail", "Firma", "Ort", "Kundennummer"]);
-    expect(t.rows[0]).toEqual({ "E-Mail": "anna@example.ch", Firma: "Osteria Bella & Co", Ort: "Luzern", Kundennummer: "41077" });
+  it("asks for CSV or XML instead of Excel files", () => {
+    expect(() => readTable("kunden.xlsx", new Uint8Array([80, 75]))).toThrow(/CSV oder XML/);
+  });
+  it("reads namespaced XML with CDATA (typical ERP export)", () => {
+    const t = readXml('<?xml version="1.0"?><ns:Export xmlns:ns="urn:x"><ns:Customer><ns:Email>e@f.ch</ns:Email><ns:Company><![CDATA[Bar & Co]]></ns:Company></ns:Customer><ns:Customer><ns:Email>g@h.ch</ns:Email></ns:Customer></ns:Export>');
+    expect(t.rows[0]).toMatchObject({ Email: "e@f.ch", Company: "Bar & Co" });
   });
   it("reads XML records (elements and attributes)", () => {
     const t = readXml('<?xml version="1.0"?><kunden><kunde nr="7"><email>a@b.ch</email><firma>A &amp; B</firma></kunde><kunde nr="8"><email>c@d.ch</email></kunde></kunden>');

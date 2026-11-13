@@ -6,7 +6,7 @@ import { sendTokenMail } from "../password-reset";
 import type { Table } from "./table";
 
 /**
- * Customer import (Admin › Kunden › Import): CSV, Excel or XML from any source — an old shop, an ERP export,
+ * Customer import (Admin › Kunden › Import): CSV or XML from any source — an old shop, an ERP export,
  * a spreadsheet. Columns are recognised by name (DE/IT/FR/EN); existing customers are matched by ERP number,
  * then e-mail. Imported customers get no usable password until they follow an invitation link.
  */

@@ -3,6 +3,7 @@ const GROUPS: [string, RegExp][] = [
   ["display", /^(hidden|block|inline|inline-block|flex|inline-flex|grid|inline-grid|contents|table|flow-root)$/],
   ["width", /^w-/],
   ["height", /^h-/],
+  ["whitespace", /^whitespace-/],
 ];
 
 /**

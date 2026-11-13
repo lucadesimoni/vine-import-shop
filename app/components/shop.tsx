@@ -253,7 +253,7 @@ export function Footer() {
               <Link key={p.slug} to={`/page/${p.slug}`} className="hover:text-on-inverse">{p.title}</Link>
             ))}
             {locales.length > 1 && (
-              <span className="flex items-center gap-1 border-l border-on-inverse/20 pl-5" role="group" aria-label={t("footer.language")}>
+              <span className="flex items-center gap-1 sm:border-l sm:border-on-inverse/20 sm:pl-5" role="group" aria-label={t("footer.language")}>
                 {locales.map((l) => (
                   <Form key={l} method="post" action="/set-locale" className="contents">
                     <input type="hidden" name="locale" value={l} />
