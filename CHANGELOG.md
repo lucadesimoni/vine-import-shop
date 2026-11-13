@@ -12,6 +12,16 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Vercel + Supabase (Zurich):** connect a Supabase project to the Vercel project and redeploy. Database, uploads and the image optimizer then work with no further settings.
+  - `POSTGRES_URL` from the Vercel integration is used when `DATABASE_URL` is empty.
+  - Integration-only URL parameters (`supa=…`, `pgbouncer=…`) are ignored, SSL is required for remote hosts, and the connection pool is sized for serverless.
+  - New storage driver **`supabase`**, chosen automatically when `SUPABASE_URL` and a service key are present. It works with the new secret keys and the legacy `service_role` keys. The public bucket is created on first use.
+
+### Fixed
+- **PostgreSQL, several instances starting at once** (serverless): migrations and the first seed now run in one transaction with an advisory lock. Concurrent cold starts wait instead of migrating or seeding twice, and an interrupted first seed is rolled back completely instead of leaving a half-filled shop.
+- On Vercel with PostgreSQL, a pending migration no longer fails on the missing `pg_dump`. The provider's backups are the rollback point.
+
 ## [1.11.0] - 2026-11-13
 
 ### Added

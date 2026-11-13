@@ -47,9 +47,19 @@ The button in the README opens Elestio's CI/CD deploy for this repository, confi
 
 ### Vercel
 - Uses the official `@vercel/react-router` preset (enabled automatically when `VERCEL=1`). `.npmrc` sets `legacy-peer-deps` because the preset still declares React Router 7 as its peer; it builds and runs with React Router 8.
-- **Database:** add Neon (Vercel Marketplace › Storage). It sets `DATABASE_URL`. Without it the app starts as an **ephemeral demo** (embedded DB in `/tmp`, reset on cold start).
-- **Migrations** are bundled into the build and run on first request.
-- **Uploads:** `STORAGE_DRIVER=s3` with Cloudflare R2, AWS S3, Exoscale SOS or another S3-compatible store.
+- **Database and files: Supabase, region Zurich (recommended, data at rest in Switzerland).**
+  1. Create a project at supabase.com with the region **Central EU (Zurich)**.
+  2. In Vercel › Integrations › Supabase, connect it to this project. This sets `POSTGRES_URL` (transaction pooler), `SUPABASE_URL` and the service key.
+  3. Redeploy.
+
+  Nothing else is needed:
+  - The app uses `POSTGRES_URL` when `DATABASE_URL` is empty. Pooler-only URL parameters are ignored, and SSL is required.
+  - **Uploads and optimized images** go to Supabase Storage automatically. The public bucket `media` is created on first use; set `SUPABASE_BUCKET` for another name.
+  - The image optimizer runs.
+
+  Neon or any other Postgres works the same way through `DATABASE_URL`. Files can also go to `STORAGE_DRIVER=s3` (R2, S3 …). Without a database the app starts as an **ephemeral demo** (embedded DB in `/tmp`, reset on cold start).
+- **Migrations and the first seed** are bundled and run on the first request. They run in one transaction with an advisory lock, so instances that start together wait instead of migrating twice, and an interrupted first seed leaves nothing half done.
+- **Function region** `fra1` (vercel.json) is the closest to Zurich.
 - **Jobs (cron):** three ways to call `/api/cron` (each call needs `Authorization: Bearer $CRON_SECRET`):
   - **Vercel Cron** (`vercel.json`, daily at 04:00 — the Hobby plan allows nothing more frequent). On Pro, set `*/10 * * * *` in `vercel.json`.
   - **GitHub Actions** (`.github/workflows/cron.yml`, every 15 min, any plan): set the repository secrets `SHOP_URL` and `CRON_SECRET`.
@@ -64,8 +74,9 @@ The button in the README opens Elestio's CI/CD deploy for this repository, confi
   - Price lists are written per complete article, never half.
   - Every vinX request has a timeout inside the budget.
 - **Do not use per-route `export const config`** without `DATABASE_URL`: Vercel would build a separate function with its own temporary database.
-- **Backups:** automatic file backups are off on Vercel (`/tmp` is temporary). Use the managed Postgres backups (Neon: point-in-time restore).
-- **Image optimizer:** runs on Vercel only with `STORAGE_DRIVER=s3`; without it the job skips itself (files in `/tmp` would vanish).
+- **Backups:** automatic file backups are off on Vercel (`/tmp` is temporary, there is no `pg_dump`). Migrations then run without their own backup; the rollback point is the database provider's backup (Supabase: daily backups, point-in-time recovery on Pro; Neon: history/branches).
+- **Supabase free plan:** projects pause after a week without activity. The scheduler (Vercel Cron + GitHub Actions) keeps the demo active; customer shops belong on Pro.
+- **Image optimizer:** needs persistent storage (Supabase Storage or `STORAGE_DRIVER=s3`); without it the job skips itself (files in `/tmp` would vanish).
 - **vinX firewall:** if vinX only accepts known IP addresses, Vercel needs Static IPs (Pro / Secure Compute), or use a host with a fixed IP.
 
 ### Render
