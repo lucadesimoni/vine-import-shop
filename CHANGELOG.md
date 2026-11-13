@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.12.1] - 2026-11-13
+
 ### Fixed
 - **Accessibility, from a sweep of every page as guest, consumer, B2B customer and admin** (desktop and mobile, light and dark):
   - Every admin field now has a label for screen readers: multilingual fields per language, product image and producer logo (file and URL), shipping JSON, and the design preview.
@@ -360,7 +362,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.12.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.12.1...HEAD
+[1.12.1]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.12.0...v1.12.1
 [1.12.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.9.0...v1.10.0
