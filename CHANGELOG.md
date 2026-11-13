@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-13
+
 ### Added
 - **Storefronts:** further B2C shops on their own domain (e.g. for a subsidiary) on the same platform.
   - Each storefront has its own brand, design and settings. The same admin editors work with a «Gilt für» switch; anything not overridden is inherited from the main shop.
@@ -216,7 +218,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.0.0...v1.1.0
