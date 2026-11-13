@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-13
+
 ### Added
 - **Customer import** (Admin › Kunden › Importieren).
   - Reads CSV (any delimiter), Excel (.xlsx) and XML.
@@ -156,5 +158,6 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/lucadesimoni/vine-import-shop/releases/tag/v1.0.0
