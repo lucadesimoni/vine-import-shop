@@ -12,6 +12,12 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Commercial distribution.**
+  - `SHOP_DIST=customer` (default for `npm run release` and the Docker image) builds without the De Simoni demo content: the demo seed is not bundled and `public/demo` is removed.
+  - Licence keys: Ed25519-signed and checked offline (`npm run licence -- keygen | issue | verify`, env `LICENSE_KEY`). Admin › System shows the licensee, plan, domains and expiry; the go-live checklist flags missing or invalid keys. A shop is never blocked.
+  - `docs/LICENSING.md`: what to sell and how, issuing keys, licence models, outline of a licence agreement, checklist before the first sale.
+
 ## [1.3.0] - 2026-11-13
 
 ### Added

@@ -6,6 +6,7 @@ import { requireStaff, verifyPassword } from "~/.server/auth";
 import { dbInfo, getDb, schema } from "~/.server/db";
 import { knownMigrations } from "~/.server/db/migrate";
 import { getSettings } from "~/.server/settings";
+import { licenceStatus } from "~/.server/licence";
 import { APP_VERSION, cancelRestore, createBackup, latestRelease, listBackups, newer, pendingRestore, requestRestore } from "~/.server/maintenance";
 import { Badge, Button, Notice } from "~/components/ui";
 import { DataTable, PageHeader, Panel } from "~/components/admin";
@@ -29,6 +30,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const online = (["stripe", "mollie", "datatrans", "payrexx"] as const).some((k) => p[k].enabled);
   const lastBackup = backups[0] ? Date.parse(backups[0].createdAt) : 0;
   const demo = (process.env.DEMO_DATA ?? "true") !== "false";
+  const licence = licenceStatus(url.host);
 
   const checks: Check[] = [
     { id: "password", label: "Admin-Passwort geändert", ok: !admin || !(await verifyPassword("admin-demo-1234", admin.passwordHash)), hint: "Das Standardpasswort ist noch aktiv.", to: "/admin/password", severity: "required" },
@@ -40,12 +42,13 @@ export async function loader({ request }: Route.LoaderArgs) {
     { id: "backup", label: "Backup der letzten 26 h vorhanden", ok: Date.now() - lastBackup < 26 * 3600e3, hint: "Backups laufen automatisch täglich — oder jetzt eines erstellen.", severity: "required" },
     { id: "demo", label: "Demodaten ausgeschaltet", ok: !demo, hint: "Für den Live-Betrieb DEMO_DATA=false und eigene Produkte (vinX-Import oder Admin).", severity: "recommended" },
     { id: "erp", label: "ERP verbunden oder bewusst deaktiviert", ok: !vinx.enabled || vinx.driver !== "mock", hint: "vinX-Treiber steht auf Demo.", to: "/admin/integrations", severity: "recommended" },
+    { id: "licence", label: "Lizenz gültig", ok: licence.state === "development" || (licence.state === "valid" && licence.domainOk), hint: licence.state === "missing" ? "LICENSE_KEY fehlt — beim Hersteller anfordern." : licence.state === "invalid" ? `Lizenzschlüssel ungültig (${licence.reason}).` : licence.state === "expired" ? "Lizenz abgelaufen." : "Domain nicht in der Lizenz enthalten.", severity: "required" },
     { id: "db", label: "Datenbank passend zur Grösse", ok: info?.kind === "postgres" || !process.env.VERCEL, hint: "Serverless ohne DATABASE_URL ist nur eine Demo (Daten werden zurückgesetzt).", severity: "required" },
   ];
   return {
     version: APP_VERSION, schema: knownMigrations, db: info?.kind ?? "unknown",
     update: release && newer(release.latest, APP_VERSION) ? release : null,
-    backups: backups.slice(0, 20), restore: pendingRestore(), checks, demo,
+    backups: backups.slice(0, 20), restore: pendingRestore(), checks, demo, licence,
   };
 }
 
@@ -67,7 +70,7 @@ export async function action({ request }: Route.ActionArgs) {
 export const meta: Route.MetaFunction = () => [{ title: "System · Admin" }];
 
 export default function System({ loaderData, actionData }: Route.ComponentProps) {
-  const { version, schema: schemaVersion, db, update, backups, restore, checks } = loaderData;
+  const { version, schema: schemaVersion, db, update, backups, restore, checks, licence } = loaderData;
   const open = checks.filter((c) => !c.ok);
   const required = open.filter((c) => c.severity === "required").length;
   return (
@@ -102,6 +105,21 @@ export default function System({ loaderData, actionData }: Route.ComponentProps)
           </ul>
         </Panel>
 
+        <Panel title="Lizenz" description="Schlüssel in der Umgebungsvariable LICENSE_KEY, offline geprüft (Ed25519).">
+          {licence.state === "development" ? (
+            <p className="text-sm text-muted-fg">Demo-/Entwicklungs-Build — kein Lizenzschlüssel nötig.</p>
+          ) : licence.state === "valid" || licence.state === "expired" ? (
+            <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 gap-y-2 text-sm">
+              <dt className="text-muted-fg">Status</dt><dd><Badge tone={licence.state === "valid" && licence.domainOk ? "success" : "warning"}>{licence.state === "expired" ? "abgelaufen" : licence.domainOk ? "gültig" : "andere Domain"}</Badge></dd>
+              <dt className="text-muted-fg">Lizenznehmer</dt><dd>{licence.licence.licensee}</dd>
+              <dt className="text-muted-fg">Paket</dt><dd>{licence.licence.plan}</dd>
+              <dt className="text-muted-fg">Domains</dt><dd className="[overflow-wrap:anywhere]">{licence.licence.domains.join(", ") || "alle"}</dd>
+              <dt className="text-muted-fg">Gültig bis</dt><dd className="tabular-nums">{licence.licence.expires ?? "unbefristet"}</dd>
+            </dl>
+          ) : (
+            <Notice tone="warning">{licence.state === "missing" ? "Keine Lizenz hinterlegt (LICENSE_KEY)." : `Lizenzschlüssel ungültig: ${licence.reason}`}</Notice>
+          )}
+        </Panel>
         <Panel title="Backups" description="Automatisch täglich und vor jedem Update; die neuesten 14 bleiben erhalten. Für Offsite-Kopien herunterladen.">
           <Form method="post" className="mb-4"><input type="hidden" name="intent" value="backup" /><Button size="sm"><HardDriveDownload size={14} /> Backup jetzt erstellen</Button></Form>
           <DataTable head={["Backup", "Version", "Grösse", ""]} empty={!backups.length}>

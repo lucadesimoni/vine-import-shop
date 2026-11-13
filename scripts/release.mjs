@@ -7,7 +7,8 @@ import { cpSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 const run = (c) => execSync(c, { stdio: "inherit" });
-run("npm run build");
+// the archive is the licensed customer distribution: no demo content (SHOP_DIST=customer, see docs/LICENSING.md)
+execSync("npm run build", { stdio: "inherit", env: { ...process.env, SHOP_DIST: process.env.SHOP_DIST ?? "customer" } });
 rmSync("release", { recursive: true, force: true });
 const dir = "release/shop";
 mkdirSync(dir, { recursive: true });

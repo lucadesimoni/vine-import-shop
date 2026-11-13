@@ -29,7 +29,8 @@
     "i18n:check": "node scripts/check-i18n.mjs",
     "licenses": "node scripts/licenses.mjs",
     "licenses:check": "node scripts/licenses.mjs --check",
-    "changelog:check": "node scripts/check-changelog.mjs"
+    "changelog:check": "node scripts/check-changelog.mjs",
+    "licence": "node scripts/licence.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",

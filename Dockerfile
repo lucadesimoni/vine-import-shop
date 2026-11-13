@@ -6,8 +6,11 @@ COPY package.json package-lock.json .npmrc ./
 RUN npm ci
 
 FROM deps AS build
+# customer distribution by default (no demo content); --build-arg SHOP_DIST=demo for a demo image
+ARG SHOP_DIST=customer
+ENV SHOP_DIST=$SHOP_DIST
 COPY . .
-RUN npm run build && npm prune --omit=dev
+RUN npm run build && npm prune --omit=dev && if [ "$SHOP_DIST" = customer ]; then rm -rf public/demo; fi
 
 FROM node:22-alpine
 ENV NODE_ENV=production PORT=3000

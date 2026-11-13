@@ -26,11 +26,12 @@ export async function ensureSeeded(db: DB) {
     });
   });
 
-  if ((process.env.DEMO_DATA ?? "true") !== "false") {
+  // __DEMO__ is false in the customer distribution (SHOP_DIST=customer): the demo content is not even bundled
+  if ((typeof __DEMO__ === "undefined" || __DEMO__) && (process.env.DEMO_DATA ?? "true") !== "false") {
     const { seedDeSimoniDemo } = await import("./desimoni");
     await seedDeSimoniDemo(db);
   } else {
-    const { seedLegalStubs } = await import("./desimoni");
+    const { seedLegalStubs } = await import("./legal");
     await seedLegalStubs(db, "Your Company");
   }
 }

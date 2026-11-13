@@ -8,3 +8,7 @@ node_modules/
 .DS_Store
 release/
 .vercel/
+
+# licence signing key (owner only)
+licence-private.pem
+*.pem
