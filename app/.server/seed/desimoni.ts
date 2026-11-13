@@ -303,7 +303,9 @@ export async function seedDeSimoniDemo(db: DB) {
     { id: "cta-trade", type: "cta", enabled: true, data: { eyebrow: { de: "Gastronomie", it: "Ristorazione" }, title: { de: "Ihre Konditionen, Ihr Portal.", it: "Le vostre condizioni, il vostro portale." }, text: { de: "Kundenpreise, Schnellbestellung und Bestellhistorie — für Restaurants, Hotels und Fachhandel.", it: "Prezzi cliente, ordine rapido e storico ordini — per ristoranti, hotel e rivenditori." }, buttonLabel: { de: "B2B-Konto eröffnen", it: "Aprire un conto B2B" }, buttonHref: "/trade#apply", tone: "primary" } },
   ];
 
-  for (const [key, value] of Object.entries({ brand, shop, home, trade, story })) {
+  // vinX demo mapping (mock driver): payment terms ↔ payment methods, see Admin › vinX
+  const vinx = parseSettings("vinx", { defaultDeliveryConditionId: 1, defaultPaymentConditionId: 2, paymentConditionMap: { invoice: 2, prepayment: 1, stripe: 7 }, deliveryConditionMap: { post: 1, delivery: 2, pickup: 4 } });
+  for (const [key, value] of Object.entries({ brand, shop, home, trade, story, vinx })) {
     await db.insert(schema.settings).values({ key, value }).onConflictDoNothing();
   }
 
@@ -312,6 +314,7 @@ export async function seedDeSimoniDemo(db: DB) {
     {
       email: "gastro@demo.ch", passwordHash: await hashPassword("gastro-demo-1234"), name: "Marco Rossi", company: "Trattoria Demo GmbH",
       uidNumber: "CHE-123.456.789", role: "customer", groupId: gastro.id, tradeStatus: "approved", locale: "de", erpId: "41001", // vinX address id
+      erpPaymentConditionId: 2, // vinX payment terms "Rechnung 30 Tage" → invoice allowed
       billing: { company: "Trattoria Demo GmbH", name: "Marco Rossi", street: "Pilatusstrasse 12", zip: "6003", city: "Luzern", country: "CH", phone: "+41 41 000 00 00" },
     },
     {

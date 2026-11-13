@@ -24,7 +24,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   if (!summary.lines.length) throw redirect(channelPath("/order-list", ctx.channel.portal));
   return {
     summary,
-    payments: summary.isRequest ? [] : availablePayments(ctx),
+    payments: summary.isRequest ? [] : await availablePayments(ctx),
     billing: ctx.user?.billing ?? null,
     email: ctx.user?.email ?? "",
     company: ctx.user?.company ?? "",
@@ -59,7 +59,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const shipDifferent = form.shipDifferent === "on";
   const shipping = shipDifferent ? address.safeParse(pick("shipping.")) : null;
   if (shipping && !shipping.success) for (const i of shipping.error.issues) errors[`shipping.${String(i.path[0])}`] = ctx.t("form.invalid");
-  const payments = summary.isRequest ? ["request"] : availablePayments(ctx);
+  const payments = summary.isRequest ? ["request"] : await availablePayments(ctx);
   if (!payments.includes(form.payment)) errors.payment = ctx.t("common.required");
   if (form.terms !== "on") errors.terms = ctx.t("common.required");
   if (summary.ageRestricted && ctx.shop.ageGate && form.age !== "on") errors.age = ctx.t("common.required");

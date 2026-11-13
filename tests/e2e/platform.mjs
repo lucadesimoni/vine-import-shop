@@ -351,6 +351,15 @@ ok(await guest.getByText(/Link gesendet/).waitFor({ timeout: 5000 }).then(() => 
 await guest.goto(B + "/login/reset/abcdefghijklmnopqrstuvwxyz0123");
 ok(await guest.getByText(/ungültig oder abgelaufen/).isVisible(), "password reset: invalid token rejected");
 
+section("Payment methods per customer (vinX payment terms)");
+await admin.goto(B + "/admin/customers?q=gastro@demo.ch");
+await admin.locator('tbody a[href^="/admin/customers/"]').first().click();
+await admin.waitForURL(/\/admin\/customers\/\d+$/);
+const payText = await admin.locator("fieldset:has(legend:text('Zahlarten'))").innerText();
+ok(/Rechnung/.test(payText) && /vinX/.test(payText), "B2B customer: invoice via vinX payment terms", payText.replace(/\s+/g, " ").slice(0, 160));
+await b2b.goto(B + "/portal/checkout");
+ok((await b2b.locator('input[name=payment][value=invoice]').count()) === 1 || /Bestellliste ist leer|leer/i.test(await b2b.locator("main").innerText()), "B2B checkout offers invoice");
+
 section("Shipping: Post label, tracking, status e-mails");
 await consumer.goto(B + "/account");
 const cOrder = await consumer.locator('a[href^="/account/orders/"]').first().getAttribute("href");

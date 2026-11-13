@@ -56,6 +56,8 @@ export async function action({ request }: Route.ActionArgs) {
       defaultPaymentConditionId: Number(form.get("defaultPaymentConditionId")) || null,
       deliveryConditionMap: parseMap(form.get("deliveryConditionMap")),
       paymentConditionMap: parseMap(form.get("paymentConditionMap")),
+      // "2=invoice+stripe, 1=prepayment+stripe" → { "2": ["invoice", "stripe"], "1": [...] }
+      paymentConditionMethods: Object.fromEntries(String(form.get("paymentConditionMethods") ?? "").split(/[,\n]/).map((p) => p.split("=").map((x) => x.trim())).filter(([k, v]) => /^\d+$/.test(k ?? "") && v).map(([k, v]) => [k, v.split(/[+\s]+/).filter(Boolean)])),
       requestsToErp: form.get("requestsToErp") === "order" ? "order" : "skip",
       syncConditions: form.has("syncConditions"),
     });
@@ -178,6 +180,9 @@ export default function Integrations({ loaderData }: Route.ComponentProps) {
                 <Field label="Zahlungskondition (Standard)" hint="BaseData/PaymentCondition id — Pflicht im Warenkorb">{(id) => <Input id={id} name="defaultPaymentConditionId" defaultValue={vinx.defaultPaymentConditionId ?? ""} inputMode="numeric" />}</Field>
                 <Field label="Versandart → Lieferbedingung" hint="z. B. post=1, pickup=4">{(id) => <Input id={id} name="deliveryConditionMap" defaultValue={fmtMap(vinx.deliveryConditionMap)} />}</Field>
                 <Field label="Zahlart → Zahlungskondition" hint="z. B. invoice=2, prepayment=5, stripe=7">{(id) => <Input id={id} name="paymentConditionMap" defaultValue={fmtMap(vinx.paymentConditionMap)} />}</Field>
+                <Field label="Zahlungsbedingung → Zahlarten im Shop" hint="vinX-Zahlungsbedingung des Kunden bestimmt, was er im Checkout sieht, z. B. 2=invoice+stripe, 1=prepayment+stripe. Leer: Rechnung nur bei der Bedingung, die oben «invoice» zugeordnet ist." className="sm:col-span-2">
+                  {(id) => <Input id={id} name="paymentConditionMethods" defaultValue={Object.entries(vinx.paymentConditionMethods).map(([k, v]) => `${k}=${v.join("+")}`).join(", ")} />}
+                </Field>
                 <Field label="Offertanfragen" hint="vinX kennt im Warenkorb nur calculate | order">{(id) => <Select id={id} name="requestsToErp" defaultValue={vinx.requestsToErp}><option value="skip">Im Shop bearbeiten (nicht senden)</option><option value="order">Als Bestellung mit Vermerk senden</option></Select>}</Field>
               </div>
               <Field label="Feld-Mapping (vinX → Shop)" hint="Geprüft gegen Shop API v2.0 (Swagger). Pfade mit «|» = Fallback; producer/region/country/category/filling/tradingUnit werden aufgelöst.">

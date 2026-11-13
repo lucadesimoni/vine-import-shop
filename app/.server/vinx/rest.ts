@@ -250,7 +250,7 @@ export class Rest3Client implements ErpClient {
     const customerId = b.customerErpId ? Number(b.customerErpId) : undefined;
     const o = b.online;
     const delivery = this.cfg.deliveryConditionMap[b.shippingCode] ?? this.cfg.defaultDeliveryConditionId;
-    const payment = (b.paymentMethod && this.cfg.paymentConditionMap[b.paymentMethod]) ?? this.cfg.defaultPaymentConditionId;
+    const payment = b.online?.order.paymentConditionId ?? (b.paymentMethod && this.cfg.paymentConditionMap[b.paymentMethod]) ?? this.cfg.defaultPaymentConditionId;
     const notes = o ? [o.order.kind === "request" ? "OFFERTANFRAGE / RICHIESTA D'OFFERTA" : "", o.order.poNumber && `Ref: ${o.order.poNumber}`, o.order.notes].filter(Boolean).join("\n") : undefined;
     return {
       action: b.action,

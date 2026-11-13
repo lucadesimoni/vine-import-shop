@@ -71,6 +71,8 @@ export const customerGroups = pgTable("customer_groups", {
   discountPct: numeric("discount_pct", { precision: 5, scale: 2, mode: "number" }).notNull().default(0),
   minOrderCents: integer("min_order_cents").notNull().default(0),
   erpCode: text("erp_code"),
+  /** payment methods for the group (null = all the shop offers) */
+  paymentMethods: jsonb("payment_methods").$type<string[]>(),
 });
 
 export const users = pgTable(
@@ -93,6 +95,10 @@ export const users = pgTable(
     resetExpires: timestamp("reset_expires", { withTimezone: true }),
     /** customers belong to the shop they registered in (null = main shop); staff and admins are platform-wide */
     storefrontId: integer("storefront_id"),
+    /** payment methods for this customer (null = from the vinX payment condition, else the group) — see .server/payments.ts */
+    paymentMethods: jsonb("payment_methods").$type<string[]>(),
+    /** vinX BaseData/Address.paymentConditionId (synced) */
+    erpPaymentConditionId: integer("erp_payment_condition_id"),
     ...timestamps,
   },
   (t) => [uniqueIndex("users_email_idx").on(sql`lower(${t.email})`, sql`coalesce(${t.storefrontId}, 0)`)],

@@ -22,7 +22,40 @@ export type PaymentProvider = {
 
 const providers = new Map<string, PaymentProvider>();
 export const registerProvider = (p: PaymentProvider) => void providers.set(p.code, p);
-export const availablePayments = (ctx: ShopContext) => [...providers.values()].filter((p) => p.available(ctx)).map((p) => p.code);
+/** Methods enabled in the shop (settings + secrets), before any customer rules. */
+export const enabledPayments = (ctx: ShopContext) => [...providers.values()].filter((p) => p.available(ctx)).map((p) => p.code);
+
+/**
+ * Payment methods for this customer — the most specific rule wins:
+ *   1. customer (Admin › Kunden: set by hand)
+ *   2. vinX payment condition of the customer (Address.paymentConditionId, synced): vinx.paymentConditionMethods,
+ *      else derived from vinx.paymentConditionMap — invoice only if invoice orders go to vinX with this condition
+ *   3. customer group (Admin › Einstellungen › Kundengruppen)
+ *   4. everything the shop offers
+ * Never empty: if a rule matches nothing that is enabled, the customer can still pay in advance / online (no invoice).
+ */
+export function customerPaymentRule(user: ShopContext["user"], vinx: { enabled: boolean; paymentConditionMethods: Record<string, string[]>; paymentConditionMap: Record<string, number> }, enabled: string[]): { methods: string[] | null; source: "customer" | "vinx" | "group" | null } {
+  if (user?.paymentMethods?.length) return { methods: user.paymentMethods, source: "customer" };
+  if (vinx.enabled && user?.erpPaymentConditionId != null) {
+    const id = user.erpPaymentConditionId;
+    const explicit = vinx.paymentConditionMethods[String(id)];
+    if (explicit?.length) return { methods: explicit, source: "vinx" };
+    // invoice only if invoice orders go to vinX with this very condition (no invoice mapping configured → no restriction)
+    const invoiceOk = vinx.paymentConditionMap.invoice == null || vinx.paymentConditionMap.invoice === id;
+    return { methods: enabled.filter((m) => m !== "invoice" || invoiceOk), source: "vinx" };
+  }
+  if (user?.group?.paymentMethods?.length) return { methods: user.group.paymentMethods, source: "group" };
+  return { methods: null, source: null };
+}
+
+export async function availablePayments(ctx: ShopContext) {
+  const enabled = enabledPayments(ctx);
+  const { getSetting } = await import("./settings");
+  const { methods } = customerPaymentRule(ctx.user, await getSetting("vinx"), enabled);
+  if (!methods) return enabled;
+  const allowed = enabled.filter((m) => methods.includes(m));
+  return allowed.length ? allowed : enabled.filter((m) => m !== "invoice");
+}
 export const getProvider = (code: string) => providers.get(code);
 
 const env = (k: string) => process.env[k] ?? "";

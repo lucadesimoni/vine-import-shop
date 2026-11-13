@@ -124,6 +124,8 @@ export class MockClient implements ErpClient {
         id: Number(u.erpId), addressNumber: Number(u.erpId), firstName: rest.length ? firstName : null, name: rest.length ? rest.join(" ") : firstName,
         companyName: u.company, street: u.billing?.street, zipCode: u.billing?.zip, city: u.billing?.city, country: { isoCode: u.billing?.country ?? "CH" },
         eMail: u.email, phoneBusiness: u.phone, language: u.locale.toUpperCase(), changedOn: u.updatedAt.toISOString(), isActive: true,
+        // demo payment terms: approved trade customers "Rechnung 30 Tage" (2), others "Vorauskasse" (1)
+        paymentConditionId: u.erpPaymentConditionId ?? (u.tradeStatus === "approved" ? 2 : 1),
       };
     }
   }

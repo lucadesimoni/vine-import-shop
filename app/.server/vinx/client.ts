@@ -79,6 +79,8 @@ export type BasketResult = { lines: BasketLine[]; extras: BasketLine[]; vat: { r
 export type OrderPayload = {
   order: {
     number: string; createdAt: string; kind: "order" | "request"; email: string; customerErpId: string | null; priceList: string | null;
+    /** set when the customer has own vinX payment terms that apply to this order */
+    paymentConditionId?: number | null;
     paymentMethod: string; shippingMethod: string; poNumber: string | null; deliveryDate: string | null; notes: string | null;
     currency: string; subtotalNet: number; shippingGross: number; discountGross: number; taxTotal: number; totalGross: number; locale: string; couponCode?: string | null;
   };

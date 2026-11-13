@@ -279,6 +279,12 @@ export const vinxSchema = z.object({
   livePrices: z.boolean().default(true),
   /** Authoritative cart calculation via Online/Basket action=calculate (conditions, deposits, LSVA, freight). */
   liveBasket: z.boolean().default(true),
+  /**
+   * vinX payment condition (Address.paymentConditionId) → payment methods offered to customers with it,
+   * e.g. { "2": ["invoice", "stripe"], "5": ["prepayment", "stripe"] }. Without an entry: invoice only where
+   * paymentConditionMap sends invoice orders with this condition, all other enabled methods always.
+   */
+  paymentConditionMethods: z.record(z.string(), z.array(z.string())).default({}),
   /** Price group used for guests/consumers (BaseData/PriceGroup id). */
   consumerPriceGroupId: z.number().int().nullable().default(null),
   /** vinX ArticleSelectionCode selection id of the e-commerce assortment (empty: all articles) */

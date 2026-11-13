@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { and, asc, desc, eq, isNull, ne, sql } from "drizzle-orm";
 import { data, Form, Link, redirect, useActionData } from "react-router";
 import { ArrowLeft, ArrowUpRight, Mail, RefreshCw, Trash2 } from "lucide-react";
@@ -7,9 +8,11 @@ import { emit } from "~/.server/events";
 import { sendTokenMail } from "~/.server/password-reset";
 import { erpConnected } from "~/.server/erp-ownership";
 import { getSettings } from "~/.server/settings";
+import { customerPaymentRule } from "~/.server/payments";
+import { PAYMENT_METHODS } from "~/lib/payment-methods";
 import { LOCALE_LABELS, LOCALES } from "~/lib/localized";
 import { formatMoney } from "~/lib/money";
-import { Badge, Button, Field, Input, Notice, Select } from "~/components/ui";
+import { Badge, Button, Checkbox, Field, Input, Notice, Select } from "~/components/ui";
 import { DataTable, label, PageHeader, Panel, SaveBar } from "~/components/admin";
 import { STATUS_TONE } from "~/components/status";
 
@@ -31,7 +34,13 @@ export async function loader({ params }: Route.LoaderArgs) {
   ]);
   const { passwordHash, resetToken: _r, resetExpires: _e, ...rest } = customer; // never send secrets to the browser
   const c = { ...rest, passwordSet: passwordHash.startsWith("scrypt$") };
-  return { customer: c, groups, orders, stats, sync: outbox[0] ?? null, conditions: conditions.n, erp, currency: shop.currency, locales: shop.locales };
+  // payment methods: what the shop offers, and what this customer gets (and why)
+  const { vinx } = await getSettings("vinx");
+  const offered = PAYMENT_METHODS.filter((m) => shop.payments[m].enabled);
+  const group = groups.find((g) => g.id === customer.groupId) ?? null;
+  const rule = customerPaymentRule({ ...customer, group } as never, vinx, offered);
+  const payments = { offered, effective: rule.methods ? offered.filter((m) => rule.methods!.includes(m)) : offered, source: rule.source, erpCondition: customer.erpPaymentConditionId };
+  return { customer: c, groups, orders, stats, sync: outbox[0] ?? null, conditions: conditions.n, erp, currency: shop.currency, locales: shop.locales, payments };
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -69,6 +78,8 @@ export async function action({ request, params }: Route.ActionArgs) {
     groupId: Number(s("groupId")) || null,
     tradeStatus: ["pending", "approved", "rejected"].includes(status) ? (status as "approved") : null,
     erpId: s("erpId") || null,
+    // own payment methods only when "automatic" is off (else vinX terms / group decide)
+    paymentMethods: form.has("payAuto") ? null : PAYMENT_METHODS.filter((m) => form.has(`pay.${m}`)),
     billing: { name: s("name"), company: s("company") || undefined, street: s("street"), zip: s("zip"), city: s("city"), country: s("country").toUpperCase() || "CH" },
     updatedAt: new Date(),
   }).where(eq(u.id, id));
@@ -78,7 +89,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
-  const { customer: c, groups, orders, stats, sync, conditions, erp, currency, locales } = loaderData;
+  const { customer: c, groups, orders, stats, sync, conditions, erp, currency, locales, payments } = loaderData;
   const result = useActionData<typeof action>();
   const b = c.billing;
   return (
@@ -116,6 +127,7 @@ export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
               <Field label="B2B-Status">{(id) => <Select id={id} name="tradeStatus" defaultValue={c.tradeStatus ?? ""}><option value="">Privatkunde</option><option value="pending">Offen</option><option value="approved">Freigegeben</option><option value="rejected">Abgelehnt</option></Select>}</Field>
               <Field label="vinX-Adressnummer" hint={erp ? "Leer = wird beim nächsten Senden angelegt" : undefined}>{(id) => <Input id={id} name="erpId" defaultValue={c.erpId ?? ""} className="font-mono" />}</Field>
             </div>
+            <PaymentMethodsField payments={payments} own={c.paymentMethods} />
             <p className="mt-4 text-note text-muted-fg">
               {conditions} kundenspezifische Kondition{conditions === 1 ? "" : "en"} · <Link to="/admin/conditions" className="underline underline-offset-4">Konditionen verwalten</Link>
             </p>
@@ -174,5 +186,27 @@ export default function AdminCustomer({ loaderData }: Route.ComponentProps) {
         </section>
       )}
     </>
+  );
+}
+
+const SOURCE: Record<string, string> = { customer: "für diesen Kunden festgelegt", vinx: "aus den Zahlungsbedingungen in vinX", group: "von der Kundengruppe", none: "alle Zahlarten des Shops" };
+
+/** Payment methods of a customer: automatic (vinX terms → group → shop) or set by hand. */
+function PaymentMethodsField({ payments, own }: { payments: { offered: string[]; effective: string[]; source: string | null; erpCondition: number | null }; own: string[] | null }) {
+  const [auto, setAuto] = useState(!own?.length);
+  return (
+    <fieldset className="mt-5 grid gap-3 border-t border-border pt-5">
+      <legend className="text-field-label">Zahlarten</legend>
+      <p className="text-note text-muted-fg">
+        Aktuell: <strong className="text-fg">{payments.effective.map((m) => label(m)).join(", ") || "—"}</strong> · {SOURCE[payments.source ?? "none"]}
+        {payments.erpCondition != null && <> · vinX-Zahlungsbedingung <code className="rounded-badge bg-muted px-1.5 py-0.5 text-xs">{payments.erpCondition}</code></>}
+      </p>
+      <Checkbox name="payAuto" label="Automatisch (vinX-Zahlungsbedingung, sonst Kundengruppe)" checked={auto} onChange={(e) => setAuto(e.target.checked)} />
+      {!auto && (
+        <div className="flex flex-wrap gap-x-5 gap-y-2 pl-7">
+          {payments.offered.map((m) => <Checkbox key={m} name={`pay.${m}`} label={label(m)} defaultChecked={(own ?? payments.effective).includes(m)} />)}
+        </div>
+      )}
+    </fieldset>
   );
 }

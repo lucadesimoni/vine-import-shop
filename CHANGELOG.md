@@ -12,6 +12,17 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Payment methods per customer.** The most specific rule wins:
+  1. **The customer's own setting** (Admin › Kunden › Zahlarten).
+  2. **vinX payment terms:** `Address.paymentConditionId` is synced, and «Zahlungsbedingung → Zahlarten» is mapped in Admin › vinX. Without a mapping, invoice is offered only to customers whose terms match the invoice condition.
+  3. **Customer group** (Admin › Einstellungen › Kundengruppen).
+  4. **Everything the shop offers.**
+  - A rule never leaves a customer without a way to pay: advance or online payment always remains.
+  - Invoice orders go to vinX with the customer's own payment terms.
+  - The admin customer page shows the effective methods and where they come from.
+  - Demo: the gastro customer has «Rechnung 30 Tage» in vinX → invoice; consumers → advance or online payment.
+
 ## [1.6.0] - 2026-11-13
 
 ### Added

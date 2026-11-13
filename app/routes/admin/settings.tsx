@@ -7,10 +7,11 @@ import { adminScope, resetScope } from "~/.server/admin-scope";
 import { listPriceSources } from "~/.server/price-sources";
 import { LOCALES, LOCALE_LABELS } from "~/lib/localized";
 import { REGION_MAP_COUNTRIES } from "~/lib/maps/regions";
+import { PAYMENT_METHODS } from "~/lib/payment-methods";
 import { PRESETS, PRODUCER_TERMS, TRADE_TERMS } from "~/lib/settings";
 import { parseMoneyInput } from "~/lib/money";
 import { Button, Checkbox, Field, Input, Notice, RadioCard, Select, Textarea } from "~/components/ui";
-import { formToObject, PageHeader, Panel, SaveBar, ScopeBar, Toggle } from "~/components/admin";
+import { formToObject, label, PageHeader, Panel, SaveBar, ScopeBar, Toggle } from "~/components/admin";
 
 const CHANNEL_HINTS: Record<string, string> = {
   combined: "Alle kaufen im Shop; Geschäftskunden erhalten zusätzlich das Portal.",
@@ -115,7 +116,11 @@ export async function action({ request }: Route.ActionArgs) {
   }, slug);
   const db = await getDb();
   for (const [id, g] of Object.entries((o.group ?? {}) as Record<string, Record<string, string>>)) {
-    await db.update(schema.customerGroups).set({ name: g.name, discountPct: Number(g.discount) || 0, minOrderCents: parseMoneyInput(g.minOrder ?? "0"), showNet: g.showNet === "on", erpCode: g.erpCode || null }).where(eq(schema.customerGroups.id, Number(id)));
+    // payment methods of the group: all ticked = no restriction (null)
+    const offered = PAYMENT_METHODS.filter((m) => shop.payments[m].enabled);
+    const ticked = form.getAll(`group.${id}.pay`).map(String).filter((m) => offered.includes(m as never));
+    const paymentMethods = ticked.length === offered.length ? null : ticked;
+    await db.update(schema.customerGroups).set({ name: g.name, discountPct: Number(g.discount) || 0, minOrderCents: parseMoneyInput(g.minOrder ?? "0"), showNet: g.showNet === "on", erpCode: g.erpCode || null, paymentMethods }).where(eq(schema.customerGroups.id, Number(id)));
   }
   return { ok: true };
 }
@@ -258,6 +263,13 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
                 <Input name={`group.${g.id}.minOrder`} defaultValue={(g.minOrderCents / 100).toFixed(2)} inputMode="decimal" size="sm" aria-label="Mindestbestellung" />
                 <Input name={`group.${g.id}.erpCode`} defaultValue={g.erpCode ?? ""} size="sm" aria-label="vinX-Code" />
                 <Checkbox name={`group.${g.id}.showNet`} defaultChecked={g.showNet} label={g.isTrade ? "B2B" : "B2C"} />
+                <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-border pb-3 text-note md:col-span-5">
+                  <span className="text-muted-fg">Zahlarten:</span>
+                  {PAYMENT_METHODS.filter((m) => shop.payments[m].enabled).map((m) => (
+                    <Checkbox key={m} name={`group.${g.id}.pay`} value={m} label={label(m)} defaultChecked={!g.paymentMethods?.length || g.paymentMethods.includes(m)} className="text-note" />
+                  ))}
+                  <span className="text-muted-fg">· Kunden mit vinX-Zahlungsbedingung oder eigener Auswahl übersteuern die Gruppe</span>
+                </div>
               </div>
             ))}
           </div>

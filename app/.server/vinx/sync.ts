@@ -291,6 +291,8 @@ export async function orderPayload(orderId: number): Promise<OrderPayload> {
   return {
     order: {
       number: o.number, createdAt: o.createdAt.toISOString(), kind: o.kind, email: o.email, customerErpId: user?.erpId ?? null, priceList: group?.erpCode ?? null,
+      // invoice orders keep the customer's own vinX payment terms (e.g. 60 days) instead of the generic mapping
+      paymentConditionId: o.paymentMethod === "invoice" && user?.erpPaymentConditionId != null ? user.erpPaymentConditionId : null,
       couponCode: o.couponCode, paymentMethod: o.paymentMethod, shippingMethod: o.shippingMethod, poNumber: o.poNumber, deliveryDate: o.deliveryDate, notes: o.notes,
       currency: o.currency, subtotalNet: o.subtotalNet, shippingGross: o.shippingGross, discountGross: o.discountGross, taxTotal: o.taxTotal, totalGross: o.totalGross, locale: o.locale,
     },
@@ -335,6 +337,8 @@ export async function syncCustomers(client: ErpClient) {
         phone: str(a.phoneBusiness) ?? str(a.phoneDirect) ?? str(a.mobile) ?? u.phone,
         billing: { ...(u.billing ?? {}), name, company: str(a.companyName) ?? u.billing?.company, street: str(a.street) ?? u.billing?.street ?? "", zip: str(a.zipCode) ?? u.billing?.zip ?? "", city: str(a.city) ?? u.billing?.city ?? "", country },
         groupId: group?.id ?? u.groupId,
+        // the customer's payment terms in vinX decide which payment methods the shop offers (see payments.ts)
+        erpPaymentConditionId: a.paymentConditionId != null ? Number(a.paymentConditionId) : u.erpPaymentConditionId,
         locale: language && ["de", "it", "fr", "en"].includes(language) ? language : u.locale,
         updatedAt: changed ?? new Date(),
       };
@@ -409,6 +413,7 @@ export async function importErpCustomers(client: ErpClient) {
         passwordHash: `invite$${randomBytes(18).toString("base64url")}`,
         groupId: groups.find((g) => g.code === groupCode)?.id ?? groups.find((g) => g.code === (company ? "trade" : "consumer"))?.id ?? null,
         tradeStatus: company ? "approved" : null,
+        erpPaymentConditionId: a.paymentConditionId != null ? Number(a.paymentConditionId) : null,
         locale: ["de", "it", "fr", "en"].includes(lang) ? lang : "de",
         billing: { name, company: company ?? undefined, street: str(a.street) ?? "", zip: str(a.zipCode) ?? "", city: str(a.city) ?? "", country: str((a.country as Raw | undefined)?.isoCode) ?? "CH" },
       });
