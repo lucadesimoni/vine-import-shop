@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-13
+
 ### Added
 - **Status e-mails to customers:** confirmed, in progress, shipped, completed, cancelled. You choose which in Admin › Einstellungen › Versand & Kundenbenachrichtigung.
   - Each status is sent once per order, in the order's language and with the brand of its shop. It doesn't matter whether the status comes from the admin, a bulk action, a Post label or the vinX sync.
@@ -249,7 +251,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.2.0...v1.3.0
