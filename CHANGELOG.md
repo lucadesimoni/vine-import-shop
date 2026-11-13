@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-13
+
 ### Added
 - **Serverless-ready jobs (Vercel):**
   - Each cron and admin job run has a time budget below the function limit: `JOB_BUDGET_SECONDS`, default 50 s on Vercel, 900 s elsewhere.
@@ -299,7 +301,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.5.0...v1.6.0
