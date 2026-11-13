@@ -148,4 +148,5 @@ More: [Architecture](docs/ARCHITECTURE.md) · [vinX integration](docs/VINX.md) �
 
 Proprietary — all rights reserved; use under a written licence agreement only ([LICENSE](LICENSE)).
 Open-source dependencies keep their own licences ([THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)); data and demo-content notices are in [NOTICE.md](NOTICE.md).
+Further shops on their own domain (subsidiaries): [docs/STOREFRONTS.md](docs/STOREFRONTS.md).
 Selling the platform (customer distribution without demo content, licence keys, contract outline): [docs/LICENSING.md](docs/LICENSING.md).

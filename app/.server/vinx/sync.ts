@@ -393,7 +393,7 @@ export async function importErpCustomers(client: ErpClient) {
       const email = String(a.eMail ?? "").trim().toLowerCase();
       const erpId = String(a.id ?? a.addressNumber ?? "");
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || a.isActive === false) { skipped++; continue; }
-      const found = (await db.query.users.findFirst({ where: eq(schema.users.erpId, erpId) })) ?? (await db.query.users.findFirst({ where: sql`lower(${schema.users.email}) = ${email}` }));
+      const found = (await db.query.users.findFirst({ where: eq(schema.users.erpId, erpId) })) ?? (await db.query.users.findFirst({ where: sql`lower(${schema.users.email}) = ${email} and ${schema.users.storefrontId} is null` }));
       if (found) {
         if (!found.erpId) await db.update(schema.users).set({ erpId }).where(eq(schema.users.id, found.id));
         existing++;

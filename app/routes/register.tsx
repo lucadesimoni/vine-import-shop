@@ -21,10 +21,11 @@ export async function action({ request, context }: Route.ActionArgs) {
   const parsed = schemaIn.safeParse(Object.fromEntries(await request.formData()));
   if (!parsed.success) return data({ errors: Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), ctx.t(i.path[0] === "password" ? "form.passwordHint" : "form.invalid")])) }, { status: 400 });
   const { name, email, password } = parsed.data;
-  if (await findUserByEmail(email)) return data({ errors: { email: ctx.t("auth.emailTaken") } }, { status: 409 });
+  if (await findUserByEmail(email, ctx.storefront?.id ?? null)) return data({ errors: { email: ctx.t("auth.emailTaken") } }, { status: 409 });
   const db = await getDb();
   const consumer = await db.query.customerGroups.findFirst({ where: eq(schema.customerGroups.code, "consumer") });
-  const [user] = await db.insert(schema.users).values({ email: email.toLowerCase(), name, passwordHash: await hashPassword(password), groupId: consumer?.id, locale: ctx.locale }).returning();
+  const groupId = ctx.storefront?.guestGroupId ?? consumer?.id;
+  const [user] = await db.insert(schema.users).values({ email: email.toLowerCase(), name, passwordHash: await hashPassword(password), groupId, locale: ctx.locale, storefrontId: ctx.storefront?.id ?? null }).returning();
   await emit("customer.registered", { userId: user.id });
   return login(request, user.id, "/account");
 }

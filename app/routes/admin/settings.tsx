@@ -2,14 +2,15 @@ import { asc, eq } from "drizzle-orm";
 import { data, Form, useActionData } from "react-router";
 import type { Route } from "./+types/settings";
 import { getDb, schema } from "~/.server/db";
-import { getSettings, saveSetting } from "~/.server/settings";
+import { getScopedSettings, saveSetting } from "~/.server/settings";
+import { adminScope, resetScope } from "~/.server/admin-scope";
 import { listPriceSources } from "~/.server/price-sources";
 import { LOCALES, LOCALE_LABELS } from "~/lib/localized";
 import { REGION_MAP_COUNTRIES } from "~/lib/maps/regions";
 import { PRESETS, PRODUCER_TERMS, TRADE_TERMS } from "~/lib/settings";
 import { parseMoneyInput } from "~/lib/money";
 import { Button, Checkbox, Field, Input, Notice, RadioCard, Select, Textarea } from "~/components/ui";
-import { formToObject, PageHeader, Panel, SaveBar, Toggle } from "~/components/admin";
+import { formToObject, PageHeader, Panel, SaveBar, ScopeBar, Toggle } from "~/components/admin";
 
 const CHANNEL_HINTS: Record<string, string> = {
   combined: "Alle kaufen im Shop; Geschäftskunden erhalten zusätzlich das Portal.",
@@ -18,9 +19,10 @@ const CHANNEL_HINTS: Record<string, string> = {
   "shop-only": "Kein Portal; Geschäftskunden nutzen Konto & Schnellbestellung im Shop.",
 };
 
-export async function loader() {
+export async function loader({ request }: Route.LoaderArgs) {
   const db = await getDb();
-  const [{ shop }, groups] = await Promise.all([getSettings("shop"), db.select().from(schema.customerGroups).orderBy(asc(schema.customerGroups.id))]);
+  const { slug, scope } = await adminScope(request, ["shop"]);
+  const [{ shop }, groups] = await Promise.all([getScopedSettings(slug, "shop"), db.select().from(schema.customerGroups).orderBy(asc(schema.customerGroups.id))]);
   const e = process.env;
   const keys = {
     stripe: !!e.STRIPE_SECRET_KEY && !!e.STRIPE_WEBHOOK_SECRET,
@@ -28,17 +30,19 @@ export async function loader() {
     datatrans: !!e.DATATRANS_MERCHANT_ID && !!e.DATATRANS_PASSWORD && !!e.DATATRANS_HMAC_KEY,
     payrexx: !!e.PAYREXX_INSTANCE && !!e.PAYREXX_API_SECRET,
   };
-  return { shop, groups, keys, priceSources: listPriceSources() };
+  return { shop, groups, keys, priceSources: listPriceSources(), scope };
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  const { slug } = await adminScope(request, []);
   const form = await request.formData();
+  if (form.get("intent") === "scope-reset") { await resetScope(slug, ["shop"]); return { ok: true }; }
   const o = formToObject(form) as Record<string, any>;
-  const { shop } = await getSettings("shop");
+  const { shop } = await getScopedSettings(slug, "shop");
   if (form.get("intent") === "preset") {
     const key = String(form.get("profile")) as keyof typeof PRESETS;
     if (!PRESETS[key]) return data({ error: "Unbekanntes Profil" }, { status: 400 });
-    await saveSetting("shop", { ...shop, ...PRESETS[key].patch, profile: key });
+    await saveSetting("shop", { ...shop, ...PRESETS[key].patch, profile: key }, slug);
     return { ok: true };
   }
   let shipping = shop.shipping;
@@ -92,7 +96,7 @@ export async function action({ request }: Route.ActionArgs) {
       payrexx: { enabled: form.has("pay.payrexx"), methods: list(o.pay?.payrexxMethods) },
     },
     trade: { ...shop.trade, requireUid: form.has("trade.requireUid"), defaultGroup: o.trade.defaultGroup, quickOrder: form.has("trade.quickOrder"), priceListExport: form.has("trade.priceListExport") },
-  });
+  }, slug);
   const db = await getDb();
   for (const [id, g] of Object.entries((o.group ?? {}) as Record<string, Record<string, string>>)) {
     await db.update(schema.customerGroups).set({ name: g.name, discountPct: Number(g.discount) || 0, minOrderCents: parseMoneyInput(g.minOrder ?? "0"), showNet: g.showNet === "on", erpCode: g.erpCode || null }).where(eq(schema.customerGroups.id, Number(id)));
@@ -108,10 +112,12 @@ function cleanHost(v: unknown) {
 }
 
 export default function Settings({ loaderData }: Route.ComponentProps) {
-  const { shop, groups, keys, priceSources } = loaderData;
+  const { shop, groups, keys, priceSources, scope } = loaderData;
   const result = useActionData<typeof action>();
   return (
     <>
+    <ScopeBar scope={scope} keys={["shop"]} label="Einstellungen" />
+    <div key={scope.current ?? "main"}>
     <Panel title="Geschäftsmodell" description="Ein Profil setzt passende Module, Begriffe und die Alterskontrolle — alles bleibt danach einzeln anpassbar." className="mb-6">
       <Form method="post" className="grid gap-4">
         <input type="hidden" name="intent" value="preset" />
@@ -289,6 +295,7 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
       </div>
       <SaveBar saved={!!result && "ok" in result} />
     </Form>
+    </div>
     </>
   );
 }

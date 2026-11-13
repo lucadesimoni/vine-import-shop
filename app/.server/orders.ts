@@ -43,6 +43,7 @@ export async function placeOrder(
         poNumber: input.poNumber || null,
         deliveryDate: input.deliveryDate || null,
         locale: ctx.locale,
+        storefrontId: ctx.storefront?.id ?? null,
       })
       .returning();
     const number = `${ctx.shop.orderPrefix}-${new Date().getFullYear()}-${String(o.id).padStart(6, "0")}`;

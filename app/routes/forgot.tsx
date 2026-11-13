@@ -12,7 +12,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const key = `reset|${request.headers.get("X-Forwarded-For") ?? "local"}`;
   if (throttle(key)) return data({ error: ctx.t("auth.throttled") }, { status: 429 });
   registerFailure(key); // counts requests per client to limit mail flooding
-  const user = email ? await findUserByEmail(email) : null;
+  const user = email ? await findUserByEmail(email, ctx.storefront?.id ?? null) : null;
   if (user) await sendTokenMail(user.id, "reset", new URL(request.url).origin);
   return { sent: true }; // same answer whether or not the address exists
 }

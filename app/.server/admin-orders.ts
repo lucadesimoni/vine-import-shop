@@ -6,6 +6,9 @@ const o = schema.orders;
 /** Admin order filters from URL params (shared by the list and the CSV export). */
 export function orderFilters(url: URLSearchParams, like?: string) {
   const where: SQL[] = [];
+  // shop: "main" = main shop, otherwise a storefront id
+  if (url.get("shop") === "main") where.push(sql`${o.storefrontId} is null`);
+  else if (Number(url.get("shop"))) where.push(eq(o.storefrontId, Number(url.get("shop"))));
   if (url.get("status")) where.push(eq(o.status, url.get("status") as "new"));
   if (url.get("type") === "trade") where.push(eq(o.isTrade, true));
   if (url.get("type") === "consumer") where.push(eq(o.isTrade, false));

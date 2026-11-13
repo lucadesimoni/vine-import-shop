@@ -8,6 +8,7 @@ import { bulkIds, countAll, listParams } from "~/.server/admin-list";
 import { orderFilters } from "~/.server/admin-orders";
 import { ORDER_STATUSES } from "~/lib/orders";
 import { getSetting } from "~/.server/settings";
+import { listStorefronts } from "~/.server/storefronts";
 import { ButtonLink, Input, Notice, Select } from "~/components/ui";
 import { label, ListToolbar, PageHeader } from "~/components/admin";
 import { OrdersTable } from "~/components/orders-table";
@@ -28,7 +29,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     db.select({ n: countAll }).from(o).where(cond),
     db.select({ total: sql<number>`coalesce(sum(${o.totalGross}) filter (where ${o.status} <> 'cancelled' and ${o.kind} <> 'request'), 0)::int` }).from(o).where(cond),
   ]);
-  return { orders, list: list.meta(n), sum: sum.total, currency: (await getSetting("shop")).currency, statuses: ORDER_STATUSES };
+  const shops = (await listStorefronts()).map((s) => ({ id: s.id, name: s.name }));
+  return { orders, list: list.meta(n), sum: sum.total, currency: (await getSetting("shop")).currency, statuses: ORDER_STATUSES, shops };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -43,7 +45,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Orders({ loaderData }: Route.ComponentProps) {
-  const { orders, list, sum, currency, statuses } = loaderData;
+  const { orders, list, sum, currency, statuses, shops } = loaderData;
   const result = useActionData<typeof action>();
   const [params] = useSearchParams();
   const exportUrl = `/admin/orders.csv${params.size ? `?${params}` : ""}`;
@@ -60,6 +62,12 @@ export default function Orders({ loaderData }: Route.ComponentProps) {
           <option value="">Alle Status</option>
           {statuses.map((s) => <option key={s} value={s}>{label(s)}</option>)}
         </Select>
+        {shops.length > 0 && (
+          <Select name="shop" defaultValue={params.get("shop") ?? ""} size="sm" className="w-40" aria-label="Shop">
+            <option value="">Alle Shops</option><option value="main">Hauptshop</option>
+            {shops.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </Select>
+        )}
         <Select name="type" defaultValue={params.get("type") ?? ""} size="sm" className="w-36" aria-label="Kanal">
           <option value="">B2B + B2C</option><option value="trade">Nur B2B</option><option value="consumer">Nur B2C</option><option value="request">Anfragen</option>
         </Select>
@@ -73,6 +81,7 @@ export default function Orders({ loaderData }: Route.ComponentProps) {
         <Input type="date" name="to" defaultValue={params.get("to") ?? ""} size="sm" className="w-40" aria-label="Bis" />
       </ListToolbar>
       <OrdersTable
+        shops={shops}
         orders={orders}
         currency={currency}
         meta={list}

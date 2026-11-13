@@ -22,8 +22,8 @@ const newPage = async () => {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   page.errors = [];
-  page.on("pageerror", (e) => page.errors.push(`${e.message} @ ${page.url()}`));
-  page.on("console", (m) => m.type() === "error" && !/caret-color|Failed to load resource/.test(m.text()) && page.errors.push(`${m.text()} @ ${page.url()}`));
+  page.on("pageerror", (e) => !/BodyStreamBuffer was aborted/.test(e.message) && page.errors.push(`${e.message} @ ${page.url()}`)); // aborted fetch when navigating away mid-request
+  page.on("console", (m) => m.type() === "error" && !/caret-color|Failed to load resource|BodyStreamBuffer was aborted/.test(m.text()) && page.errors.push(`${m.text()} @ ${page.url()}`));
   return page;
 };
 const login = async (page, path, email, password, urlRe) => {
@@ -345,8 +345,67 @@ ok(await guest.getByText(/Link gesendet/).waitFor({ timeout: 5000 }).then(() => 
 await guest.goto(B + "/login/reset/abcdefghijklmnopqrstuvwxyz0123");
 ok(await guest.getByText(/ungültig oder abgelaufen/).isVisible(), "password reset: invalid token rejected");
 
+section("Storefronts (subsidiary on its own domain)");
+// preview without DNS: ?storefront=<slug> (cookie); on its own domain the host selects it
+const sf = await newPage();
+await sf.goto(B + "/?storefront=daferrari");
+ok(/Da Ferrari/.test(await sf.locator("header").innerText()), "storefront: own brand in the header");
+ok(!/B2B-Portal/i.test(await sf.locator("header").innerText()), "storefront: B2C only (no portal button)");
+await sf.goto(B + "/shop");
+const sfTotal = chf(await sf.getByText(/\d Artikel/).first().innerText());
+await guest.goto(B + "/shop");
+const mainTotal = chf(await guest.getByText(/\d Artikel/).first().innerText());
+ok(sfTotal > 0 && sfTotal < mainTotal, "storefront: own assortment (food & wine only)", `${sfTotal} vs ${mainTotal}`);
+ok(!/Spirituosen/.test(await sf.locator("aside, nav").first().innerText()), "storefront: categories outside the assortment hidden");
+await guest.goto(B + "/shop?kind=spirit");
+const spirit = await guest.locator('article a[href^="/product/"]').first().getAttribute("href");
+ok((await sf.goto(B + spirit))?.status() === 404, "storefront: product outside the assortment → 404");
+ok(/Da Ferrari/.test(await (await sf.goto(B + "/page/impressum"), sf.locator("main").innerText())), "storefront: own imprint");
+// customers are separate per shop: the main shop's account does not sign in here, the same e-mail can register
+await sf.goto(B + "/login");
+await sf.fill("input[name=email]", "kunde@demo.ch");
+await sf.fill("input[name=password]", "kunde-demo-1234");
+await sf.click("form button[type=submit]");
+ok(await sf.getByText(/E-Mail oder Passwort/).waitFor({ timeout: 5000 }).then(() => true, () => false), "storefront: main-shop account not valid here");
+await sf.goto(B + "/register");
+await sf.fill("input[name=name]", "Anna Muster");
+await sf.fill("input[name=email]", "kunde@demo.ch");
+await sf.fill("input[name=password]", "storefront-1234");
+await sf.check("input[name=terms]");
+await Promise.all([sf.waitForURL(/\/account/), sf.click("form button[type=submit]")]);
+ok(true, "storefront: same e-mail registers as a separate customer");
+await sf.goto(B + "/shop?q=10476");
+await sf.goto(B + (await sf.locator('article a[href^="/product/"]').first().getAttribute("href")));
+await sf.locator("form[action='/cart'] button[type=submit]:not([disabled])").first().click();
+await sf.waitForTimeout(600);
+await sf.goto(B + "/checkout");
+for (const [k, v] of [["name", "Anna Muster"], ["street", "Via Roma 1"], ["zip", "6900"], ["city", "Lugano"]]) {
+  const f = sf.locator(`input[name="billing.${k}"]`);
+  if (!(await f.inputValue())) await f.fill(v);
+}
+await sf.check("input[name=terms]");
+if (await sf.locator("input[name=age]").count()) await sf.check("input[name=age]");
+await Promise.all([sf.waitForURL(/checkout\/done/), sf.click("aside button[type=submit]")]);
+const sfOrder = new URL(sf.url()).pathname.split("/").pop();
+ok(/^DF-/.test(sfOrder ?? ""), "storefront: order with its own number prefix", sfOrder);
+// admin: storefront list, filters, scoped design with reset
+await admin.goto(B + "/admin/storefronts");
+ok(/Da Ferrari/.test(await admin.locator("main").innerText()), "admin: storefront listed");
+await admin.goto(B + "/admin/orders?shop=" + (await admin.locator('a[href^="/admin/storefronts/"]').first().getAttribute("href")).split("/").pop());
+ok((await admin.locator("tbody tr").count()) === 1 && (await admin.locator("tbody").innerText()).includes(sfOrder), "admin: orders filtered by storefront", `${admin.url()} ${await admin.locator("tbody tr").count()} ${(await admin.locator("tbody").innerText()).slice(0, 200)}`);
+await admin.goto(B + "/admin/design?sf=daferrari");
+ok((await admin.locator('input[name="name"]').inputValue()) === "Da Ferrari", "admin design: storefront scope shows its brand");
+await admin.locator('input[name="claim"]').fill("Bottega di prova");
+await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.getByRole("button", { name: "Speichern" }).last().click()]);
+await sf.goto(B + "/");
+ok(/Bottega di prova/i.test(await sf.locator("header").innerText()), "admin design: change applies to the storefront only");
+await guest.goto(B + "/");
+ok(!/Bottega di prova/i.test(await guest.locator("header").innerText()), "admin design: main shop unchanged");
+await sf.goto(B + "/?storefront=main");
+ok(/DE SIMONI/i.test(await sf.locator("header").innerText()), "preview: back to the main shop");
+
 // ─────────────────────────────────────────────────────────────────────────
-const errs = [guest, consumer, b2b, admin].flatMap((p) => p.errors);
+const errs = [guest, consumer, b2b, admin, sf].flatMap((p) => p.errors);
 ok(errs.length === 0, "no browser errors", JSON.stringify(errs.slice(0, 3)));
 await browser.close();
 receiver.close();

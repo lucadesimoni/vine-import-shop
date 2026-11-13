@@ -29,6 +29,13 @@
       "when": 1794550624472,
       "tag": "0003_erp_details",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794566628575,
+      "tag": "0004_storefronts",
+      "breakpoints": true
     }
   ]
 }

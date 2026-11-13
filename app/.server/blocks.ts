@@ -100,7 +100,7 @@ export async function resolveBlocks(ctx: ShopContext, blocks: Block[]): Promise<
           return { ...b, res: p ? { card: p.card } : {} };
         }
         case "brands":
-          return { ...b, res: { brands: (await producersList()).filter((p) => p.featured && p.count > 0).slice(0, 12).map((p) => ({ slug: p.slug, name: p.name, logo: p.logo })) } };
+          return { ...b, res: { brands: (await producersList(ctx)).filter((p) => p.featured && p.count > 0).slice(0, 12).map((p) => ({ slug: p.slug, name: p.name, logo: p.logo })) } };
         case "origin": {
           if (ctx.shop.originMap.mode === "off" || !ctx.shop.modules.producers) return { ...b, enabled: false };
           const f = await originFacets(ctx);

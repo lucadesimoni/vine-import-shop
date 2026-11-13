@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Form, Link, NavLink, Outlet, redirect, useLocation } from "react-router";
-import { ExternalLink, Grape, Menu, X, Percent, ShieldCheck, FileText, LayoutDashboard, LogOut, Package, Palette, PlugZap, Settings, ShoppingCart, Users } from "lucide-react";
+import { ExternalLink, FileText, Grape, LayoutDashboard, LogOut, Menu, Package, Palette, Percent, PlugZap, Settings, ShieldCheck, ShoppingCart, Store, Users, X } from "lucide-react";
 import { count, eq } from "drizzle-orm";
 import type { Route } from "./+types/layout";
 import { requireStaff, verifyPassword } from "~/.server/auth";
@@ -38,6 +38,7 @@ const NAV = [
   { to: "/admin/design", label: "Design & Marke", icon: Palette },
   { to: "/admin/content", label: "Inhalte", icon: FileText },
   { to: "/admin/settings", label: "Einstellungen", icon: Settings },
+  { to: "/admin/storefronts", label: "Storefronts", icon: Store },
   { to: "/admin/integrations", label: "vinX ERP", icon: PlugZap, badge: "integrations" },
   { to: "/admin/system", label: "System & Backups", icon: ShieldCheck },
 ] as const;

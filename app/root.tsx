@@ -3,10 +3,11 @@ import { data, redirect, isRouteErrorResponse, Links, Meta, Outlet, Scripts, Scr
 import type { Route } from "./+types/root";
 import "./app.css";
 import { buildShopContext, shopContext } from "./.server/context";
+import { shopPages } from "./.server/pages";
+import { previewCookie } from "./.server/storefronts";
 import { bootExtensions } from "./.server/extensions";
 import { getSession, commit } from "./.server/auth";
 import { getCart } from "./.server/cart";
-import { getDb, schema } from "./.server/db";
 import { I18nContext, makeT, messagesFor } from "./lib/i18n";
 import { tl, type Locale } from "./lib/localized";
 import { fontsHref, themeCss } from "./lib/theme";
@@ -79,11 +80,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const session = await getSession(request);
   const toast = session.get("toast") ?? null;
   const cart = await getCart(request, ctx);
-  const db = await getDb();
-  const pages = await db.select({ slug: schema.pages.slug, title: schema.pages.title, showInFooter: schema.pages.showInFooter }).from(schema.pages);
+  const pages = await shopPages(ctx.storefront?.id ?? null);
   const headers = new Headers();
   if (toast) headers.append("Set-Cookie", await commit(session));
   else if (cart.setCookie) headers.append("Set-Cookie", cart.setCookie);
+  const preview = previewCookie(request);
+  if (preview) headers.append("Set-Cookie", preview);
 
   return data(
     {

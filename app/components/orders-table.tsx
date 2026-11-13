@@ -8,7 +8,7 @@ import { STATUS_TONE } from "./status";
 
 type Bulk = { value: string; label: string; tone?: "danger" }[];
 
-export function OrdersTable({ orders, currency, meta, bulk }: { orders: (typeof schema.orders.$inferSelect)[]; currency: string; meta?: ListMeta; bulk?: Bulk }) {
+export function OrdersTable({ orders, currency, meta, bulk, shops = [] }: { orders: (typeof schema.orders.$inferSelect)[]; currency: string; meta?: ListMeta; bulk?: Bulk; shops?: { id: number; name: string }[] }) {
   return (
     <DataTable
       meta={meta}
@@ -19,7 +19,7 @@ export function OrdersTable({ orders, currency, meta, bulk }: { orders: (typeof 
       {orders.map((o) => (
         <tr key={o.id}>
           {bulk && <RowCheck id={o.id} label={o.number} />}
-          <td><Link to={`/admin/orders/${o.id}`} className="font-medium hover:underline">{o.number}</Link>{o.isTrade && <Badge tone="primary" className="ml-2">B2B</Badge>}{o.kind === "request" && <Badge className="ml-1">Anfrage</Badge>}</td>
+          <td><Link to={`/admin/orders/${o.id}`} className="font-medium hover:underline">{o.number}</Link>{o.isTrade && <Badge tone="primary" className="ml-2">B2B</Badge>}{o.kind === "request" && <Badge className="ml-1">Anfrage</Badge>}{o.storefrontId && <Badge tone="outline" className="ml-1">{shops.find((s) => s.id === o.storefrontId)?.name ?? "Storefront"}</Badge>}</td>
           <td className="whitespace-nowrap tabular-nums text-muted-fg">{new Date(o.createdAt).toLocaleString("de-CH", { dateStyle: "short", timeStyle: "short" })}</td>
           <td>{o.billing.company || o.billing.name}<span className="block text-xs text-muted-fg">{o.email}</span></td>
           <td><Badge tone={STATUS_TONE[o.status]}>{label(o.status)}</Badge></td>

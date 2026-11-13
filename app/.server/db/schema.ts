@@ -35,6 +35,33 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Storefronts: further B2C shops on their own domains (e.g. a subsidiary) on the same platform —
+ * own branding and settings (settings rows "<key>@<slug>", falling back to the main shop), own assortment,
+ * own customers, orders and legal pages. The main shop is the platform itself (storefront = null).
+ */
+export type StorefrontCatalog = {
+  /** empty = all kinds / categories / producers */
+  kinds: string[];
+  categoryIds: number[];
+  producerIds: number[];
+  /** always offered resp. never offered, regardless of the rules above */
+  includeIds: number[];
+  excludeIds: number[];
+};
+export const storefronts = pgTable("storefronts", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  /** host names served by this storefront, e.g. ["daferrari.ch", "www.daferrari.ch"] */
+  hosts: jsonb("hosts").$type<string[]>().notNull().default([]),
+  active: boolean("active").notNull().default(true),
+  catalog: jsonb("catalog").$type<StorefrontCatalog>().notNull().default({ kinds: [], categoryIds: [], producerIds: [], includeIds: [], excludeIds: [] }),
+  /** customer group for guests and new customers of this storefront (prices / conditions / ERP price list) */
+  guestGroupId: integer("guest_group_id"),
+  ...timestamps,
+});
+
 export const customerGroups = pgTable("customer_groups", {
   id: serial("id").primaryKey(),
   code: text("code").notNull().unique(),
@@ -64,9 +91,11 @@ export const users = pgTable(
     erpId: text("erp_id"),
     resetToken: text("reset_token"),
     resetExpires: timestamp("reset_expires", { withTimezone: true }),
+    /** customers belong to the shop they registered in (null = main shop); staff and admins are platform-wide */
+    storefrontId: integer("storefront_id"),
     ...timestamps,
   },
-  (t) => [uniqueIndex("users_email_idx").on(sql`lower(${t.email})`)],
+  (t) => [uniqueIndex("users_email_idx").on(sql`lower(${t.email})`, sql`coalesce(${t.storefrontId}, 0)`)],
 );
 
 export const categories = pgTable("categories", {
@@ -222,6 +251,7 @@ export const orders = pgTable(
     locale: text("locale").notNull().default("de"),
     erpId: text("erp_id"),
     erpStatus: text("erp_status", { enum: ["pending", "transferred", "failed"] }).notNull().default("pending"),
+    storefrontId: integer("storefront_id"),
     ...timestamps,
   },
   (t) => [index("orders_user_idx").on(t.userId), index("orders_created_idx").on(t.createdAt)],
@@ -301,14 +331,16 @@ export const inquiries = pgTable("inquiries", {
 /** Editable pages (legal, about …): markdown per locale. */
 export const pages = pgTable("pages", {
   id: serial("id").primaryKey(),
-  slug: text("slug").notNull().unique(),
+  /** unique per storefront (see the index below); a storefront page replaces the main page with the same slug */
+  slug: text("slug").notNull(),
+  storefrontId: integer("storefront_id"),
   title: jsonb("title").$type<Localized>().notNull(),
   body: jsonb("body").$type<Localized>().notNull(),
   /** page builder blocks (lib/blocks.ts); when set, they replace the markdown body */
   blocks: jsonb("blocks").$type<Block[]>(),
   showInFooter: boolean("show_in_footer").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [uniqueIndex("pages_slug_sf_idx").on(t.slug, sql`coalesce(${t.storefrontId}, 0)`)]);
 
 /** Reliable ERP hand-off: every outbound message is persisted and retried. */
 export const erpOutbox = pgTable(

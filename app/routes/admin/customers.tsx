@@ -9,6 +9,7 @@ import { erpConnected } from "~/.server/erp-ownership";
 import { bulkIds, countAll, listParams } from "~/.server/admin-list";
 import { formatMoney } from "~/lib/money";
 import { getSetting } from "~/.server/settings";
+import { listStorefronts } from "~/.server/storefronts";
 import { Badge, Button, ButtonLink, Notice, Select } from "~/components/ui";
 import { DataTable, label, ListToolbar, PageHeader, Panel, RowCheck } from "~/components/admin";
 
@@ -26,6 +27,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (url.get("status") === "consumer") where.push(isNull(u.tradeStatus));
   else if (url.get("status")) where.push(eq(u.tradeStatus, url.get("status") as "pending"));
   if (url.get("group")) where.push(eq(u.groupId, Number(url.get("group"))));
+  if (url.get("shop") === "main") where.push(isNull(u.storefrontId));
+  else if (Number(url.get("shop"))) where.push(eq(u.storefrontId, Number(url.get("shop"))));
   if (url.get("erp") === "linked") where.push(isNotNull(u.erpId));
   if (url.get("erp") === "unlinked") where.push(isNull(u.erpId));
   if (list.like) where.push(or(ilike(u.email, list.like), ilike(u.name, list.like), ilike(u.company, list.like), ilike(u.erpId, list.like), ilike(u.uidNumber, list.like), sql`${u.billing}->>'city' ilike ${list.like}`)!);
@@ -34,7 +37,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const [customers, [{ n }], groups, inquiries, erp, currency] = await Promise.all([
     db.select({
       id: u.id, email: u.email, name: u.name, company: u.company, uid: u.uidNumber, groupId: u.groupId, city: sql<string | null>`${u.billing}->>'city'`,
-      tradeStatus: u.tradeStatus, erpId: u.erpId, createdAt: u.createdAt, orders: ORDERS, revenue: REVENUE,
+      tradeStatus: u.tradeStatus, erpId: u.erpId, createdAt: u.createdAt, orders: ORDERS, revenue: REVENUE, storefrontId: u.storefrontId,
     }).from(u).where(cond).orderBy(...list.orderBy, desc(u.createdAt)).limit(list.limit).offset(list.offset),
     db.select({ n: countAll }).from(u).where(cond),
     db.select().from(schema.customerGroups).orderBy(asc(schema.customerGroups.id)),
@@ -42,7 +45,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     erpConnected(),
     getSetting("shop").then((s) => s.currency),
   ]);
-  return { customers, list: list.meta(n), groups, inquiries, erp, currency };
+  const shops = (await listStorefronts()).map((s) => ({ id: s.id, name: s.name }));
+  return { customers, list: list.meta(n), groups, inquiries, erp, currency, shops };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -88,7 +92,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Customers({ loaderData }: Route.ComponentProps) {
-  const { customers, list, groups, inquiries, erp, currency } = loaderData;
+  const { customers, list, groups, inquiries, erp, currency, shops } = loaderData;
   const result = useActionData<typeof action>();
   const [params] = useSearchParams();
   const groupName = (id: number | null) => groups.find((g) => g.id === id)?.name ?? "—";
@@ -112,6 +116,12 @@ export default function Customers({ loaderData }: Route.ComponentProps) {
         <Select name="status" defaultValue={params.get("status") ?? ""} size="sm" className="w-44" aria-label="Status">
           <option value="">Alle Kunden</option><option value="pending">B2B offen</option><option value="approved">B2B freigegeben</option><option value="rejected">B2B abgelehnt</option><option value="consumer">Privatkunden</option>
         </Select>
+        {shops.length > 0 && (
+          <Select name="shop" defaultValue={params.get("shop") ?? ""} size="sm" className="w-40" aria-label="Shop">
+            <option value="">Alle Shops</option><option value="main">Hauptshop</option>
+            {shops.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </Select>
+        )}
         <Select name="group" defaultValue={params.get("group") ?? ""} size="sm" className="w-40" aria-label="Gruppe">
           <option value="">Alle Gruppen</option>
           {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
@@ -131,7 +141,7 @@ export default function Customers({ loaderData }: Route.ComponentProps) {
         {customers.map((c) => (
           <tr key={c.id} className={c.tradeStatus === "pending" ? "bg-warning-soft/50" : undefined}>
             <RowCheck id={c.id} label={c.name || c.email} />
-            <td><Link to={`/admin/customers/${c.id}`} className="font-medium hover:underline">{c.name || c.email}</Link><span className="block text-xs text-muted-fg">{c.email}</span></td>
+            <td><Link to={`/admin/customers/${c.id}`} className="font-medium hover:underline">{c.name || c.email}</Link><span className="block text-xs text-muted-fg">{c.email}{c.storefrontId ? ` · ${shops.find((s) => s.id === c.storefrontId)?.name ?? "Storefront"}` : ""}</span></td>
             <td>{c.company ?? "—"}<span className="block text-xs text-muted-fg">{[c.city, c.uid].filter(Boolean).join(" · ")}</span></td>
             <td>{c.tradeStatus ? <Badge tone={c.tradeStatus === "approved" ? "success" : c.tradeStatus === "pending" ? "warning" : "danger"}>{label(c.tradeStatus)}</Badge> : <span className="text-muted-fg">Privat</span>}</td>
             <td className="whitespace-nowrap">{groupName(c.groupId)}{c.erpId && <Badge className="ml-2" title="vinX-Adressnummer">vinX {c.erpId}</Badge>}</td>

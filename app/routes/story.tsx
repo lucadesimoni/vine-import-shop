@@ -9,7 +9,7 @@ import { Eyebrow, Lines } from "~/components/ui";
 
 export async function loader({ context }: Route.LoaderArgs) {
   if (!context.get(shopContext).shop.modules.story) throw new Response("Not found", { status: 404 });
-  const story = await getSetting("story");
+  const story = await getSetting("story", context.get(shopContext).storefront?.slug);
   return { story, blocks: await resolveBlocks(context.get(shopContext), story.blocks) };
 }
 

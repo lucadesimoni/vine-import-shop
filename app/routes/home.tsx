@@ -7,7 +7,7 @@ import { Blocks } from "~/components/blocks";
 /** Home page = page-builder blocks (Admin › Inhalte › Startseite). */
 export async function loader({ context }: Route.LoaderArgs) {
   const ctx = context.get(shopContext);
-  const home = await getSetting("home");
+  const home = await getSetting("home", ctx.storefront?.slug);
   return { blocks: await resolveBlocks(ctx, homeBlocks(home)) };
 }
 

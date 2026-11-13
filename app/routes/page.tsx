@@ -1,8 +1,7 @@
-import { eq } from "drizzle-orm";
 import { data } from "react-router";
 import type { Route } from "./+types/page";
 import { shopContext } from "~/.server/context";
-import { getDb, schema } from "~/.server/db";
+import { findPage } from "~/.server/pages";
 import { resolveBlocks } from "~/.server/blocks";
 import { tl } from "~/lib/localized";
 import { renderMarkdown } from "~/lib/markdown";
@@ -11,8 +10,7 @@ import { Blocks } from "~/components/blocks";
 /** Content pages: page-builder blocks when set, otherwise the classic markdown body (legal pages etc.). */
 export async function loader({ params, context }: Route.LoaderArgs) {
   const ctx = context.get(shopContext);
-  const db = await getDb();
-  const page = await db.query.pages.findFirst({ where: eq(schema.pages.slug, params.slug) });
+  const page = await findPage(params.slug, ctx.storefront?.id ?? null);
   if (!page) throw data("Not found", { status: 404 });
   const blocks = page.blocks?.length ? await resolveBlocks(ctx, page.blocks) : null;
   return { title: tl(page.title, ctx.locale), html: blocks ? "" : renderMarkdown(tl(page.body, ctx.locale)), blocks };

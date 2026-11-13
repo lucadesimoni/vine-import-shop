@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, ne, sql } from "drizzle-orm";
 import { data, Form, Link, redirect, useActionData } from "react-router";
 import { ArrowLeft, ArrowUpRight, Mail, RefreshCw, Trash2 } from "lucide-react";
 import type { Route } from "./+types/customer";
@@ -57,7 +57,9 @@ export async function action({ request, params }: Route.ActionArgs) {
   const s = (k: string) => String(form.get(k) ?? "").trim();
   const email = s("email").toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return data({ error: "Ungültige E-Mail-Adresse" }, { status: 400 });
-  const taken = await db.query.users.findFirst({ where: and(sql`lower(${u.email}) = ${email}`, ne(u.id, id)) });
+  const self = await db.query.users.findFirst({ where: eq(u.id, id), columns: { storefrontId: true } });
+  // e-mails are unique per shop (main shop / each storefront)
+  const taken = await db.query.users.findFirst({ where: and(sql`lower(${u.email}) = ${email}`, ne(u.id, id), self?.storefrontId ? eq(u.storefrontId, self.storefrontId) : isNull(u.storefrontId)) });
   if (taken) return data({ error: "Diese E-Mail-Adresse wird bereits verwendet" }, { status: 400 });
   const status = s("tradeStatus");
   const before = await db.query.users.findFirst({ where: eq(u.id, id) });

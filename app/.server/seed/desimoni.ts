@@ -337,6 +337,7 @@ export async function seedDeSimoniDemo(db: DB) {
     { type: "promotion_discount", targetType: "category", target: String(catIds.get("olivenoel")), calc: "percent", value: "10", validTo: in60, onNetPrices: true, label: { de: "Aktion Olivenöl −10 %", it: "Promozione olio −10 %" } },
   ]);
   await seedLegalStubs(db, brand.legalName);
+  await seedDaFerrari(db, { brand, home, D });
 
   // A page built from blocks (Admin › Inhalte › Seiten)
   await db.insert(schema.pages).values({
@@ -352,6 +353,62 @@ export async function seedDeSimoniDemo(db: DB) {
       { id: "faq-cta", type: "cta", enabled: true, data: { eyebrow: {}, title: { de: "Noch Fragen?", it: "Altre domande?" }, text: { de: "Wir sind persönlich für Sie da.", it: "Siamo a vostra disposizione." }, buttonLabel: { de: "Kontakt", it: "Contatto" }, buttonHref: "/contact", tone: "muted" } },
     ],
   }).onConflictDoNothing();
+}
+
+/**
+ * Demo storefront for a subsidiary: own domain (here: preview via /?storefront=daferrari), own brand,
+ * a B2C-only delicatessen & wine assortment, own home page and legal pages, own customers and orders.
+ */
+async function seedDaFerrari(db: DB, main: { brand: ReturnType<typeof parseSettings<"brand">>; home: ReturnType<typeof parseSettings<"home">>; D: string }) {
+  // runs inside the database bootstrap → write with `db` directly (getDb() would wait for itself)
+  const consumer = await db.query.customerGroups.findFirst({ where: eq(schema.customerGroups.code, "consumer") });
+  const [sf] = await db.insert(schema.storefronts).values({
+    name: "Da Ferrari", slug: "daferrari", hosts: [], guestGroupId: consumer?.id ?? null,
+    catalog: { kinds: ["food", "wine"], categoryIds: [], producerIds: [], includeIds: [], excludeIds: [] },
+  }).returning();
+  const mainShop = (await db.query.settings.findFirst({ where: eq(schema.settings.key, "shop") }))?.value;
+  const shop = parseSettings("shop", mainShop);
+  const saveSetting = async (key: "brand" | "shop" | "home", value: unknown) => {
+    await db.insert(schema.settings).values({ key: `${key}@${sf.slug}`, value: parseSettings(key, value) }).onConflictDoNothing();
+  };
+  await seedLegalStubs(db, "Da Ferrari (Demo)", sf.id);
+  await saveSetting("brand", {
+    ...main.brand,
+    name: "Da Ferrari",
+    legalName: "Da Ferrari (Demo)",
+    claim: "Gastronomia italiana",
+    tagline: { de: "Italienische Feinkost & Weine für zu Hause", it: "Gastronomia e vini italiani per la casa" },
+    logoUrl: "", logoInverseUrl: "", faviconUrl: "",
+    colors: {
+      background: "#f6f2e9", foreground: "#1f2a22", primary: "#2f5d46", primaryForeground: "#ffffff",
+      muted: "#ece5d6", mutedForeground: "#5f675f", accent: "#c8873a", border: "#e0d8c7", card: "#fffdf8",
+      inverse: "#1f3a2d", inverseForeground: "#f6f2e9",
+    },
+    fonts: { display: "Playfair Display", body: "Lato", displayUppercaseEyebrows: true },
+    radius: 10, buttonStyle: "pill", buttonCase: "normal",
+    contact: { ...main.brand.contact, email: "ciao@daferrari.example", phone: "" },
+    announcement: { de: "Demo-Storefront einer Tochterfirma · gleiche Plattform, eigene Marke", it: "Storefront demo di una consociata · stessa piattaforma, marchio proprio" },
+    footerQuote: { de: "Was in Italien auf den Tisch kommt — für Ihre Küche ausgewählt.", it: "Quello che in Italia arriva in tavola — scelto per la vostra cucina." },
+  });
+  await saveSetting("shop", {
+    ...shop, locales: ["de", "it"], orderPrefix: "DF", channels: { mode: "shop-only", portalHost: "", shopHost: "" },
+    originMap: { ...shop.originMap, world: false }, modules: { ...shop.modules, story: false, trade: false },
+  });
+  await saveSetting("home", {
+    ...main.home,
+    blocks: undefined,
+    hero: {
+      eyebrow: { de: "Gastronomia · Online", it: "Gastronomia · Online" },
+      title: { de: "Italien für die eigene Küche.", it: "L'Italia nella vostra cucina." },
+      text: { de: "Pasta, Öl, Antipasti und Weine aus kleinen Betrieben — ausgewählt für zu Hause, geliefert in 1–3 Tagen.", it: "Pasta, olio, antipasti e vini da piccole aziende — scelti per la casa, consegnati in 1–3 giorni." },
+      imageUrl: `${main.D}/pasta-farine.jpg`,
+      primary: { label: { de: "Zum Sortiment", it: "All'assortimento" }, href: "/shop" },
+      secondary: null,
+    },
+    stats: [],
+    story: { ...main.home.story, show: false },
+    spotlight: { ...main.home.spotlight, show: false },
+  });
 }
 
 type DemoProduct = {

@@ -6,7 +6,8 @@ import { getDb, schema } from "./db";
 import { on } from "./events";
 import { esc, layout, sendMail } from "./mail";
 import { getOrder } from "./orders";
-import { getSettings } from "./settings";
+import { getSettings, getScopedSettings } from "./settings";
+import { storefrontById } from "./storefronts";
 import { customerPayload, enqueue, orderPayload, processOutbox } from "./vinx/sync";
 
 /** Wiring between modules. Imported lazily by events.emit(). */
@@ -38,7 +39,7 @@ on("order.placed", async ({ orderId }) => {
 on("order.placed", async ({ orderId }) => {
   const order = await getOrder({ id: orderId });
   if (!order) return;
-  const { brand, shop } = await getSettings("brand", "shop");
+  const { brand, shop } = await getScopedSettings((await storefrontById(order.storefrontId))?.slug, "brand", "shop");
   const t = getT(isLocale(order.locale) ? order.locale : shop.defaultLocale);
   const money = (c: number) => formatMoney(c, order.currency, order.locale);
   const rows = order.items.map((i) => `<tr><td style="padding:6px 0">${i.qty}×</td><td>${esc(i.name)}<br><small style="color:#888">${esc(i.sku)}</small></td><td align="right">${order.kind === "request" ? "" : money(i.lineGross)}</td></tr>`).join("");
@@ -68,7 +69,7 @@ on("trade.approved", async ({ userId }) => {
   await pushCustomer(userId);
   const db = await getDb();
   const user = await db.query.users.findFirst({ where: eq(schema.users.id, userId) });
-  const { brand } = await getSettings("brand");
+  const { brand } = await getScopedSettings((await storefrontById(user?.storefrontId))?.slug, "brand");
   if (user) {
     const t = getT(isLocale(user.locale) ? user.locale : "de");
     await sendMail(user.email, `${brand.name} · ${t("account.tradeApproved", { group: "" }).replace(/ · $/, "")}`, layout(brand, t("account.tradeApproved", { group: "" }).replace(/ · $/, ""), `<p>${esc(t("auth.tradeText"))}</p>`));

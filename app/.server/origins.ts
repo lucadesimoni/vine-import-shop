@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { and, eq, sql, type SQL } from "drizzle-orm";
 import world from "~/lib/maps/world.json";
+import { catalogScope } from "./storefronts";
 import type { RegionMapData } from "~/lib/maps/regions";
 import { regionLabel } from "~/lib/maps/regions";
 import type { Locale } from "~/lib/localized";
@@ -99,7 +100,7 @@ export async function originFacets(ctx: ShopContext, kind?: string | null): Prom
     })
     .from(p)
     .leftJoin(schema.producers, eq(schema.producers.id, p.producerId))
-    .where(and(eq(p.active, true), ctx.isTrade ? undefined : eq(p.tradeOnly, false), kind ? eq(p.kind, kind as "wine") : undefined))
+    .where(and(eq(p.active, true), ctx.isTrade ? undefined : eq(p.tradeOnly, false), catalogScope(ctx.storefront), kind ? eq(p.kind, kind as "wine") : undefined))
     .groupBy(sql`1`, sql`2`, schema.producers.slug, schema.producers.name);
 
   const regions = new Map<string, OriginFacets["regions"][number]>();

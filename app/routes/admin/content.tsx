@@ -4,7 +4,9 @@ import { data, Form, Link, redirect, useActionData, useSearchParams } from "reac
 import { ExternalLink, FileText, Plus, Trash2 } from "lucide-react";
 import type { Route } from "./+types/content";
 import { getDb, schema } from "~/.server/db";
-import { getSettings, saveSetting } from "~/.server/settings";
+import { getScopedSettings, saveSetting } from "~/.server/settings";
+import { adminScope, resetScope } from "~/.server/admin-scope";
+import { shopPages } from "~/.server/pages";
 import { homeBlocks, sanitizeBlocks } from "~/.server/blocks";
 import { SETTINGS } from "~/lib/settings";
 import { slugify } from "~/lib/slug";
@@ -12,7 +14,7 @@ import { cn } from "~/lib/cn";
 import { newBlockId, type Block } from "~/lib/blocks";
 import type { Localized } from "~/lib/localized";
 import { Button, ButtonLink, Field, Input, Notice, Textarea } from "~/components/ui";
-import { formToObject, LocalizedInput, PageHeader, Panel, SaveBar, Toggle } from "~/components/admin";
+import { formToObject, LocalizedInput, PageHeader, Panel, SaveBar, ScopeBar, Toggle } from "~/components/admin";
 import { BlockEditor } from "~/components/block-editor";
 
 const SECTIONS = [
@@ -25,15 +27,17 @@ const SECTIONS = [
 export async function loader({ request }: Route.LoaderArgs) {
   const tab = new URL(request.url).searchParams.get("tab") ?? "home";
   const db = await getDb();
+  const { slug, storefront, scope } = await adminScope(request, ["home", "trade", "story"]);
   const [settings, pages, products, categories, producers] = await Promise.all([
-    getSettings("home", "trade", "story", "shop"),
-    db.select().from(schema.pages).orderBy(asc(schema.pages.id)),
+    getScopedSettings(slug, "home", "trade", "story", "shop"),
+    shopPages(storefront?.id ?? null),
     db.select({ slug: schema.products.slug, name: schema.products.name }).from(schema.products).where(eq(schema.products.active, true)).orderBy(asc(schema.products.slug)),
     db.select({ slug: schema.categories.slug, name: schema.categories.name }).from(schema.categories).orderBy(asc(schema.categories.sort)),
     db.select({ slug: schema.producers.slug, name: schema.producers.name }).from(schema.producers).orderBy(asc(schema.producers.name)),
   ]);
   return {
     tab,
+    scope,
     homeBlocks: homeBlocks(settings.home),
     trade: settings.trade,
     story: settings.story,
@@ -51,28 +55,31 @@ export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
   const intent = String(form.get("intent"));
   const db = await getDb();
+  const { slug: sf, storefront } = await adminScope(request, []);
+  const back = (q: string) => `/admin/content?${q}${sf ? `&sf=${sf}` : ""}`;
+  if (intent === "scope-reset") { await resetScope(sf, ["home", "trade", "story"]); return { ok: "Übernimmt wieder Startseite, Geschichte und B2B-Seite des Hauptshops." }; }
   const blocks = () => sanitizeBlocks(String(form.get("blocks") ?? "[]"));
 
   try {
     if (intent === "blocks") {
       const key = String(form.get("key"));
-      const s = await getSettings("home", "trade", "story");
-      if (key === "home") await saveSetting("home", { ...s.home, blocks: blocks() });
-      else if (key === "trade") await saveSetting("trade", { ...s.trade, blocks: blocks() });
-      else if (key === "story") await saveSetting("story", { ...s.story, blocks: blocks() });
+      const s = await getScopedSettings(sf, "home", "trade", "story");
+      if (key === "home") await saveSetting("home", { ...s.home, blocks: blocks() }, sf);
+      else if (key === "trade") await saveSetting("trade", { ...s.trade, blocks: blocks() }, sf);
+      else if (key === "story") await saveSetting("story", { ...s.story, blocks: blocks() }, sf);
       return { ok: "Gespeichert." };
     }
     if (intent === "home-reset") {
-      const { home } = await getSettings("home");
-      await saveSetting("home", { ...home, blocks: undefined });
+      const { home } = await getScopedSettings(sf, "home");
+      await saveSetting("home", { ...home, blocks: undefined }, sf);
       return { ok: "Startseite auf die Standard-Bausteine zurückgesetzt." };
     }
     if (intent === "json") {
       const key = String(form.get("key")) as "trade" | "story";
       const parsed = SETTINGS[key].safeParse(JSON.parse(String(form.get("json"))));
       if (!parsed.success) return data({ error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).slice(0, 5).join(" · ") }, { status: 400 });
-      const cur = await getSettings("trade", "story");
-      await saveSetting(key, { ...parsed.data, blocks: cur[key].blocks }); // blocks are edited in the block editor
+      const cur = await getScopedSettings(sf, "trade", "story");
+      await saveSetting(key, { ...parsed.data, blocks: cur[key].blocks }, sf); // blocks are edited in the block editor
       return { ok: "Gespeichert." };
     }
     if (intent === "page") {
@@ -82,18 +89,22 @@ export async function action({ request }: Route.ActionArgs) {
       const mode = form.get("mode") === "blocks" ? "blocks" : "text";
       const values = { title: clean(o.title), body: clean(o.body), blocks: mode === "blocks" ? blocks() : null, showInFooter: form.has("showInFooter"), updatedAt: new Date() };
       if (!values.title.de && !Object.values(values.title)[0]) return data({ error: "Titel ist erforderlich" }, { status: 400 });
-      if (id) {
+      const existing = id ? await db.query.pages.findFirst({ where: eq(schema.pages.id, id) }) : null;
+      if (existing && (existing.storefrontId ?? null) === (storefront?.id ?? null)) {
         await db.update(schema.pages).set(values).where(eq(schema.pages.id, id));
         return { ok: "Gespeichert." };
       }
-      const slug = slugify(String(o.slug || values.title.de || Object.values(values.title)[0]));
-      if (await db.query.pages.findFirst({ where: eq(schema.pages.slug, slug) })) return data({ error: `Die Adresse /page/${slug} ist schon vergeben` }, { status: 400 });
-      const [row] = await db.insert(schema.pages).values({ ...values, slug }).returning();
-      return redirect(`/admin/content?tab=pages&page=${row.id}`);
+      // new page — or a storefront's own version of an inherited main-shop page (same address)
+      const slug = existing?.slug ?? slugify(String(o.slug || values.title.de || Object.values(values.title)[0]));
+      if (!existing && (await shopPages(storefront?.id ?? null)).some((p) => p.slug === slug && (p.storefrontId ?? null) === (storefront?.id ?? null))) return data({ error: `Die Adresse /page/${slug} ist schon vergeben` }, { status: 400 });
+      const [row] = await db.insert(schema.pages).values({ ...values, slug, storefrontId: storefront?.id ?? null }).returning();
+      return redirect(back(`tab=pages&page=${row.id}`));
     }
     if (intent === "page-delete") {
-      await db.delete(schema.pages).where(eq(schema.pages.id, Number(form.get("id"))));
-      return redirect("/admin/content?tab=pages");
+      const page = await db.query.pages.findFirst({ where: eq(schema.pages.id, Number(form.get("id"))) });
+      // a storefront can only delete its own pages (the main shop's version becomes visible again)
+      if (page && (page.storefrontId ?? null) === (storefront?.id ?? null)) await db.delete(schema.pages).where(eq(schema.pages.id, page.id));
+      return redirect(back("tab=pages"));
     }
   } catch (e) {
     return data({ error: e instanceof SyntaxError ? `JSON ungültig: ${e.message}` : (e as Error).message }, { status: 400 });
@@ -102,26 +113,30 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Content({ loaderData }: Route.ComponentProps) {
-  const { tab, homeBlocks: home, trade, story, locales, pages, options } = loaderData;
+  const { tab, scope, homeBlocks: home, trade, story, locales, pages, options } = loaderData;
   const result = useActionData<typeof action>();
   const [params] = useSearchParams();
   const current = SECTIONS.find((s) => s.key === tab) ?? SECTIONS[0];
   const editPage = params.get("page");
+  const q = (query: string) => `?${query}${scope.current ? `&sf=${scope.current}` : ""}`;
+  const view = (href: string) => (scope.current ? `${href}${href.includes("?") ? "&" : "?"}storefront=${scope.current}` : href);
 
   return (
     <>
-      <PageHeader title="Inhalte" subtitle="Seiten aus Bausteinen zusammenstellen — ziehen, ein- und ausblenden, mehrsprachig bearbeiten." actions={current.href && <ButtonLink to={current.href} target="_blank" variant="secondary" size="sm"><ExternalLink size={14} /> Ansehen</ButtonLink>} />
+      <PageHeader title="Inhalte" subtitle="Seiten aus Bausteinen zusammenstellen — ziehen, ein- und ausblenden, mehrsprachig bearbeiten." actions={current.href && <ButtonLink to={view(current.href)} target="_blank" variant="secondary" size="sm"><ExternalLink size={14} /> Ansehen</ButtonLink>} />
       <nav className="scrollbar-none -mx-4 mb-6 flex gap-1 overflow-x-auto border-b border-border px-4 sm:mx-0 sm:px-0">
         {SECTIONS.map((s) => (
-          <Link key={s.key} to={`?tab=${s.key}`} className={cn("-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm transition-colors", tab === s.key ? "border-primary font-medium text-fg" : "border-transparent text-muted-fg hover:text-fg")}>{s.label}</Link>
+          <Link key={s.key} to={q(`tab=${s.key}`)} className={cn("-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm transition-colors", tab === s.key ? "border-primary font-medium text-fg" : "border-transparent text-muted-fg hover:text-fg")}>{s.label}</Link>
         ))}
       </nav>
       {result && "error" in result && <Notice tone="danger" className="mb-6">{result.error}</Notice>}
       {result && "ok" in result && <Notice tone="success" className="mb-6">{result.ok}</Notice>}
+      {tab !== "pages" && <ScopeBar scope={scope} keys={["home", "trade", "story"]} label="Startseite, Geschichte und B2B-Seite" />}
+      {tab === "pages" && scope.current && <Notice className="mb-6">Seiten ohne eigene Fassung übernimmt der Storefront vom Hauptshop (markiert mit «Hauptshop»). Speichern legt eine eigene Fassung an — z. B. Impressum und AGB der Tochterfirma.</Notice>}
 
       {tab === "home" && (
         <>
-          <Form method="post" key={JSON.stringify(home)}>
+          <Form method="post" key={`${scope.current}:${JSON.stringify(home)}`}>
             <input type="hidden" name="intent" value="blocks" />
             <input type="hidden" name="key" value="home" />
             <BlockEditor name="blocks" initial={home} locales={locales} options={options} />
@@ -135,7 +150,7 @@ export default function Content({ loaderData }: Route.ComponentProps) {
       )}
 
       {(tab === "trade" || tab === "story") && (
-        <div className="grid gap-6">
+        <div className="grid gap-6" key={`${tab}:${scope.current}`}>
           <Panel title="Zusätzliche Bausteine" description="Erscheinen unterhalb der Seite — z. B. Fragen & Antworten, Produkte, Call-to-Action.">
             <Form method="post">
               <input type="hidden" name="intent" value="blocks" />
@@ -154,23 +169,23 @@ export default function Content({ loaderData }: Route.ComponentProps) {
             <ul className="grid gap-1 text-sm">
               {pages.map((p) => (
                 <li key={p.id}>
-                  <Link to={`?tab=pages&page=${p.id}`} className={cn("flex items-start gap-2 rounded-control px-3 py-2 hover:bg-muted", editPage === String(p.id) && "bg-primary-soft font-medium text-primary")}>
+                  <Link to={q(`tab=pages&page=${p.id}`)} className={cn("flex items-start gap-2 rounded-control px-3 py-2 hover:bg-muted", editPage === String(p.id) && "bg-primary-soft font-medium text-primary")}>
                     <FileText size={14} className="mt-0.5 shrink-0" />
-                    <span className="grid">{p.title.de ?? p.slug}<span className="text-xs font-normal text-muted-fg">/page/{p.slug}{p.blocks?.length ? " · Bausteine" : ""}</span></span>
+                    <span className="grid">{p.title.de ?? p.slug}<span className="text-xs font-normal text-muted-fg">/page/{p.slug}{p.blocks?.length ? " · Bausteine" : ""}{scope.current && !p.storefrontId ? " · Hauptshop" : ""}</span></span>
                   </Link>
                 </li>
               ))}
-              <li><Link to="?tab=pages&page=new" className="flex items-center gap-2 rounded-control px-3 py-2 text-primary hover:bg-muted"><Plus size={14} /> Neue Seite</Link></li>
+              <li><Link to={q("tab=pages&page=new")} className="flex items-center gap-2 rounded-control px-3 py-2 text-primary hover:bg-muted"><Plus size={14} /> Neue Seite</Link></li>
             </ul>
           </Panel>
-          {editPage ? <PageEditor key={editPage} page={pages.find((p) => String(p.id) === editPage)} locales={locales} options={options} /> : <p className="text-sm text-muted-fg">Seite wählen oder neu anlegen. Seiten bestehen aus Bausteinen (z. B. Aktionen, Events, Über uns) oder aus einfachem Text (Impressum, AGB).</p>}
+          {editPage ? <PageEditor key={editPage} page={pages.find((p) => String(p.id) === editPage)} locales={locales} options={options} view={view} inherited={!!scope.current && !pages.find((p) => String(p.id) === editPage)?.storefrontId && editPage !== "new"} /> : <p className="text-sm text-muted-fg">Seite wählen oder neu anlegen. Seiten bestehen aus Bausteinen (z. B. Aktionen, Events, Über uns) oder aus einfachem Text (Impressum, AGB).</p>}
         </div>
       )}
     </>
   );
 }
 
-function PageEditor({ page, locales, options }: { page?: Route.ComponentProps["loaderData"]["pages"][number]; locales: string[]; options: Route.ComponentProps["loaderData"]["options"] }) {
+function PageEditor({ page, locales, options, view, inherited }: { page?: Route.ComponentProps["loaderData"]["pages"][number]; locales: string[]; options: Route.ComponentProps["loaderData"]["options"]; view: (href: string) => string; inherited: boolean }) {
   const initialBlocks: Block[] = page?.blocks?.length ? page.blocks : page ? [{ id: newBlockId(), type: "text", enabled: true, data: { title: {}, body: page.body, width: "narrow", align: "left" } }] : [];
   const [mode, setMode] = useState<"blocks" | "text">(page?.blocks?.length ? "blocks" : page ? "text" : "blocks");
   return (
@@ -179,7 +194,7 @@ function PageEditor({ page, locales, options }: { page?: Route.ComponentProps["l
         <input type="hidden" name="intent" value="page" />
         <input type="hidden" name="id" value={page?.id ?? ""} />
         <input type="hidden" name="mode" value={mode} />
-        <Panel title={page ? page.title.de ?? page.slug : "Neue Seite"} actions={page && <ButtonLink to={`/page/${page.slug}`} target="_blank" variant="secondary" size="sm"><ExternalLink size={14} /> Ansehen</ButtonLink>}>
+        <Panel title={page ? page.title.de ?? page.slug : "Neue Seite"} actions={page && <ButtonLink to={view(`/page/${page.slug}`)} target="_blank" variant="secondary" size="sm"><ExternalLink size={14} /> Ansehen</ButtonLink>}>
           <div className="grid gap-5">
             {!page && <Field label="Adresse (URL)" hint="z. B. aktionen → /page/aktionen">{(id) => <Input id={id} name="slug" size="sm" />}</Field>}
             <LocalizedInput label="Titel" name="title" value={page?.title} locales={locales} />
@@ -200,7 +215,7 @@ function PageEditor({ page, locales, options }: { page?: Route.ComponentProps["l
         )}
         <SaveBar saved={false} />
       </Form>
-      {page && (
+      {page && !inherited && (
         <Form method="post" onSubmit={(e) => !confirm(`Seite „${page.title.de ?? page.slug}“ löschen?`) && e.preventDefault()}>
           <input type="hidden" name="intent" value="page-delete" />
           <input type="hidden" name="id" value={page.id} />

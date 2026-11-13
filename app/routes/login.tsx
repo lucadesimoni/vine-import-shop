@@ -20,7 +20,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const password = String(form.get("password") ?? "");
   const key = `${request.headers.get("X-Forwarded-For") ?? "local"}|${email}`;
   if (throttle(key)) return data({ error: ctx.t("auth.throttled") }, { status: 429 });
-  const user = await findUserByEmail(email);
+  const user = await findUserByEmail(email, ctx.storefront?.id ?? null);
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     registerFailure(key);
     return data({ error: ctx.t("auth.failed") }, { status: 401 });

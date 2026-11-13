@@ -2,22 +2,26 @@ import { useMemo, useRef, useState } from "react";
 import { Form, useActionData } from "react-router";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 import type { Route } from "./+types/design";
-import { getSettings, saveSetting } from "~/.server/settings";
+import { getScopedSettings, saveSetting } from "~/.server/settings";
+import { adminScope, resetScope } from "~/.server/admin-scope";
 import { saveUpload } from "~/.server/storage";
 import { BODY_FONTS, DISPLAY_FONTS, type Brand } from "~/lib/settings";
 import { fontsHref, themeVars } from "~/lib/theme";
 import { Badge, Button, Field, Input, Select } from "~/components/ui";
-import { formToObject, LocalizedInput, PageHeader, Panel, SaveBar } from "~/components/admin";
+import { formToObject, LocalizedInput, PageHeader, Panel, SaveBar, ScopeBar } from "~/components/admin";
 
-export async function loader() {
-  const { brand, shop } = await getSettings("brand", "shop");
-  return { brand, locales: shop.locales };
+export async function loader({ request }: Route.LoaderArgs) {
+  const { slug, scope } = await adminScope(request, ["brand"]);
+  const { brand, shop } = await getScopedSettings(slug, "brand", "shop");
+  return { brand, locales: shop.locales, scope };
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  const { slug } = await adminScope(request, []);
   const form = await request.formData();
+  if (form.get("intent") === "scope-reset") return { ok: await resetScope(slug, ["brand"]) };
   const o = formToObject(form) as Record<string, any>;
-  const { brand: current } = await getSettings("brand");
+  const { brand: current } = await getScopedSettings(slug, "brand");
   for (const key of ["logo", "logoInverse", "favicon"] as const) {
     const f = form.get(`${key}File`);
     if (f instanceof File && f.size) o[`${key}Url`] = await saveUpload(f, "brand");
@@ -35,7 +39,7 @@ export async function action({ request }: Route.ActionArgs) {
     fonts: { ...current.fonts, ...o.fonts, displayUppercaseEyebrows: true },
     contact: { ...current.contact, ...o.contact, hours: hours.length ? hours : current.contact.hours },
   };
-  await saveSetting("brand", next);
+  await saveSetting("brand", next, slug);
   return { ok: true };
 }
 
@@ -54,7 +58,7 @@ const COLOR_FIELDS: [keyof Brand["colors"], string, string][] = [
 ];
 
 export default function Design({ loaderData }: Route.ComponentProps) {
-  const { brand, locales } = loaderData;
+  const { brand, locales, scope } = loaderData;
   const saved = useActionData<typeof action>();
   const [draft, setDraft] = useState<Brand>(brand);
   const formRef = useRef<HTMLFormElement>(null);
@@ -69,9 +73,11 @@ export default function Design({ loaderData }: Route.ComponentProps) {
   const vars = useMemo(() => themeVars(draft) as React.CSSProperties, [draft]);
 
   return (
-    <Form method="post" encType="multipart/form-data" ref={formRef} onChange={onChange}>
+    <>
+    <PageHeader title="Design & Marke" subtitle="Alle Farben, Schriften und Formen sind Design-Tokens — Änderungen gelten sofort im ganzen Shop und in E-Mails." />
+    <ScopeBar scope={scope} keys={["brand"]} label="Marke & Design" />
+    <Form method="post" encType="multipart/form-data" ref={formRef} onChange={onChange} key={scope.current ?? "main"}>
       <link rel="stylesheet" href={fontsHref(draft)} />
-      <PageHeader title="Design & Marke" subtitle="Alle Farben, Schriften und Formen sind Design-Tokens — Änderungen gelten sofort im ganzen Shop und in E-Mails." />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="grid content-start gap-6">
           <Panel title="Identität">
@@ -181,5 +187,6 @@ export default function Design({ loaderData }: Route.ComponentProps) {
       </div>
       <SaveBar saved={!!saved} />
     </Form>
+    </>
   );
 }

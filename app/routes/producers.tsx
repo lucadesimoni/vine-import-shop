@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, Globe2, List, Map as MapIcon, X } from "lucide-r
 import { sql } from "drizzle-orm";
 import type { Route } from "./+types/producers";
 import { shopContext } from "~/.server/context";
-import { producersList, searchProducts } from "~/.server/catalog";
+import { producersList, searchProducts, visibleProducts } from "~/.server/catalog";
 import { originFacets } from "~/.server/origins";
 import { getDb, schema } from "~/.server/db";
 import { metaT, useI18n, type MessageKey } from "~/lib/i18n";
@@ -29,8 +29,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   const [facets, producers, kindRows] = await Promise.all([
     originFacets(ctx, kind),
-    producersList(),
-    db.select({ kind: schema.products.kind, n: sql<number>`count(*)::int` }).from(schema.products).where(sql`${schema.products.active}`).groupBy(schema.products.kind),
+    producersList(ctx),
+    db.select({ kind: schema.products.kind, n: sql<number>`count(*)::int` }).from(schema.products).where(visibleProducts(ctx)).groupBy(schema.products.kind),
   ]);
 
   // Which views make sense: region map of the home country (if a map exists and it has products), world map, A–Z

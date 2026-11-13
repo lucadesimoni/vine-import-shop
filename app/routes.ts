@@ -74,6 +74,8 @@ export default [
     route("design", "routes/admin/design.tsx"),
     route("content", "routes/admin/content.tsx"),
     route("settings", "routes/admin/settings.tsx"),
+    route("storefronts", "routes/admin/storefronts.tsx"),
+    route("storefronts/:id", "routes/admin/storefront.tsx"),
     route("integrations", "routes/admin/integrations.tsx"),
     route("system", "routes/admin/system.tsx"),
     route("system/backups/:name", "routes/admin/backup-download.ts"),

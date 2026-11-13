@@ -1,14 +1,16 @@
-import { eq } from "drizzle-orm";
 import type { Route } from "./+types/sitemap";
 import { getDb, schema } from "~/.server/db";
-import { getSetting } from "~/.server/settings";
+import { shopContext } from "~/.server/context";
+import { visibleProducts } from "~/.server/catalog";
+import { shopPages } from "~/.server/pages";
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
   const origin = new URL(request.url).origin;
   const db = await getDb();
-  const shop = await getSetting("shop");
-  const products = await db.select({ slug: schema.products.slug, updatedAt: schema.products.updatedAt }).from(schema.products).where(eq(schema.products.active, true));
-  const pages = await db.select({ slug: schema.pages.slug }).from(schema.pages);
+  const ctx = context.get(shopContext);
+  const shop = ctx.shop;
+  const products = await db.select({ slug: schema.products.slug, updatedAt: schema.products.updatedAt }).from(schema.products).where(visibleProducts({ isTrade: false, storefront: ctx.storefront }));
+  const pages = await shopPages(ctx.storefront?.id ?? null);
   const m = shop.modules;
   const urls = ["/", "/shop", ...(m.producers ? ["/producers"] : []), ...(m.trade ? ["/trade"] : []), ...(m.story ? ["/story"] : []), "/contact", ...pages.map((p) => `/page/${p.slug}`), ...products.map((p) => `/product/${p.slug}`)];
   const alt = (u: string) => shop.locales.map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${origin}${u}?lang=${l}"/>`).join("");

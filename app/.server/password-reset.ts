@@ -4,7 +4,8 @@ import { getT } from "~/lib/i18n";
 import { isLocale } from "~/lib/localized";
 import { getDb, schema } from "./db";
 import { esc, layout, sendMail } from "./mail";
-import { getSettings } from "./settings";
+import { getScopedSettings } from "./settings";
+import { storefrontById } from "./storefronts";
 
 /**
  * Password reset & invitations. Only a SHA-256 hash of the token is stored; links expire
@@ -36,7 +37,7 @@ export async function sendTokenMail(userId: number, kind: "reset" | "invite", or
   const user = await db.query.users.findFirst({ where: eq(schema.users.id, userId) });
   if (!user) return false;
   const token = await issueToken(user.id, kind);
-  const { brand } = await getSettings("brand");
+  const { brand } = await getScopedSettings((await storefrontById(user.storefrontId))?.slug, "brand");
   const t = getT(isLocale(user.locale) ? user.locale : "de");
   const url = `${origin.replace(/\/$/, "")}/login/reset/${token}`;
   const title = kind === "invite" ? t("auth.inviteTitle", { brand: brand.name }) : t("auth.resetTitle");

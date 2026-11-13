@@ -17,7 +17,7 @@ import { Button, ButtonLink, Card, Eyebrow, Field, Input, Lines, Notice, Textare
 
 export async function loader({ context }: Route.LoaderArgs) {
   if (!context.get(shopContext).shop.modules.trade) throw new Response("Not found", { status: 404 });
-  const trade = await getSetting("trade");
+  const trade = await getSetting("trade", context.get(shopContext).storefront?.slug);
   return { trade, blocks: await resolveBlocks(context.get(shopContext), trade.blocks) };
 }
 
@@ -46,10 +46,10 @@ export async function action({ request, context }: Route.ActionArgs) {
   let userId = ctx.user?.id ?? null;
   if (ctx.user) {
     await db.update(schema.users).set({ company: f.business, uidNumber: f.uid || null, phone: f.phone || null, groupId: group?.id, tradeStatus: "pending" }).where(eq(schema.users.id, ctx.user.id));
-  } else if (f.password.length >= 10 && !(await findUserByEmail(f.email))) {
+  } else if (f.password.length >= 10 && !(await findUserByEmail(f.email, ctx.storefront?.id ?? null))) {
     const [u] = await db.insert(schema.users).values({
       email: f.email.toLowerCase(), name: f.contact, company: f.business, uidNumber: f.uid || null, phone: f.phone || null,
-      passwordHash: await hashPassword(f.password), groupId: group?.id, tradeStatus: "pending", locale: ctx.locale,
+      passwordHash: await hashPassword(f.password), groupId: group?.id, tradeStatus: "pending", locale: ctx.locale, storefrontId: ctx.storefront?.id ?? null,
     }).returning();
     userId = u.id;
   }

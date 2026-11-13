@@ -70,7 +70,7 @@ export async function importCustomers(rows: ImportRow[], o: ImportOptions): Prom
     seen.add(r.email);
     const existing =
       (r.erpId ? await db.query.users.findFirst({ where: eq(schema.users.erpId, r.erpId) }) : undefined) ??
-      (await db.query.users.findFirst({ where: sql`lower(${schema.users.email}) = ${r.email}` }));
+      (await db.query.users.findFirst({ where: sql`lower(${schema.users.email}) = ${r.email} and ${schema.users.storefrontId} is null` }));
     if (existing && existing.role !== "customer") { res.errors.push({ line: r.line, message: "Adresse gehört zu einem Mitarbeiter-Konto" }); continue; }
     const trade = r.b2b && o.approveB2b ? ("approved" as const) : r.b2b ? ("pending" as const) : null;
     const gid = groupId(r.groupCode) ?? (trade === "approved" ? groups.find((g) => g.code === "trade")?.id : undefined) ?? o.defaultGroup ?? groups.find((g) => g.code === "consumer")?.id ?? null;

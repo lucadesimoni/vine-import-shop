@@ -13,6 +13,14 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 ## [Unreleased]
 
 ### Added
+- **Storefronts:** further B2C shops on their own domain (e.g. for a subsidiary) on the same platform.
+  - Each storefront has its own brand, design and settings. The same admin editors work with a «Gilt für» switch; anything not overridden is inherited from the main shop.
+  - Own assortment (product kinds, categories, producers, include/exclude lists) and its own customer group for prices.
+  - Separate customer accounts (the same e-mail can be used per shop), orders with their own number prefix, e-mails in the storefront's brand.
+  - Own home page and pages; its imprint, terms and privacy pages replace the main shop's.
+  - Admin › Storefronts lists customers, orders and revenue per shop, with a «Shop» filter in orders and customers. Preview without DNS: `/?storefront=<slug>`.
+  - Demo storefront «Da Ferrari» (`/?storefront=daferrari`).
+  - See `docs/STOREFRONTS.md`.
 - **Commercial distribution.**
   - `SHOP_DIST=customer` (default for `npm run release` and the Docker image) builds without the De Simoni demo content: the demo seed is not bundled and `public/demo` is removed.
   - Licence keys: Ed25519-signed and checked offline (`npm run licence -- keygen | issue | verify`, env `LICENSE_KEY`). Admin › System shows the licensee, plan, domains and expiry; the go-live checklist flags missing or invalid keys. A shop is never blocked.

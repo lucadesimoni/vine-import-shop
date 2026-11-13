@@ -1,8 +1,9 @@
 import { randomBytes, scrypt as _scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { createCookieSessionStorage, redirect } from "react-router";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { getDb, schema } from "./db";
+import { resolveStorefront } from "./storefronts";
 
 const scrypt = promisify(_scrypt) as (pw: string, salt: Buffer, len: number, opts: object) => Promise<Buffer>;
 const PARAMS = { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
@@ -59,7 +60,13 @@ async function loadUser(id: number) {
 export async function getUser(request: Request) {
   const session = await getSession(request);
   const id = session.get("userId");
-  return id ? loadUser(id) : null;
+  const user = id ? await loadUser(id) : null;
+  // customers belong to one shop: a main-shop account is not signed in on a storefront and vice versa (staff: everywhere)
+  if (user?.role === "customer") {
+    const sf = await resolveStorefront(request);
+    if ((user.storefrontId ?? null) !== (sf?.id ?? null)) return null;
+  }
+  return user;
 }
 
 export async function requireUser(request: Request) {
@@ -77,9 +84,15 @@ export async function requireStaff(request: Request) {
   return user;
 }
 
-export async function findUserByEmail(email: string) {
+/** The account for this e-mail in this shop (storefrontId null = main shop); staff and admins sign in everywhere. */
+export async function findUserByEmail(email: string, storefrontId: number | null = null) {
   const db = await getDb();
-  return db.query.users.findFirst({ where: eq(sql`lower(${schema.users.email})`, email.trim().toLowerCase()) });
+  const u = schema.users;
+  const rows = await db.select().from(u).where(and(
+    eq(sql`lower(${u.email})`, email.trim().toLowerCase()),
+    or(storefrontId ? eq(u.storefrontId, storefrontId) : isNull(u.storefrontId), inArray(u.role, ["staff", "admin"])),
+  ));
+  return rows.find((r) => (r.storefrontId ?? null) === storefrontId) ?? rows[0];
 }
 
 /** Very small in-memory login throttle (per instance). Use a shared store when scaling out. */

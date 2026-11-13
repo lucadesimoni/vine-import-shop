@@ -5,6 +5,7 @@ import { computeTotals, type Coupon, type Tier } from "~/lib/pricing";
 import { tl } from "~/lib/localized";
 import { commit, getSession } from "./auth";
 import type { ShopContext } from "./context";
+import { visibleProducts } from "./catalog";
 import { getDb, schema } from "./db";
 import type { CartItem } from "./db/schema";
 import { liveBasket } from "./vinx/live";
@@ -106,9 +107,9 @@ export async function cartSummary(ctx: ShopContext, items: CartItem[], couponCod
         .from(v)
         .innerJoin(p, eq(p.id, v.productId))
         .leftJoin(pr, eq(pr.id, p.producerId))
-        .where(and(inArray(v.id, ids), eq(v.active, true), eq(p.active, true)))
+        .where(and(inArray(v.id, ids), eq(v.active, true), visibleProducts(ctx)))
     : [];
-  const visible = rows.filter((r) => !r.p.tradeOnly || ctx.isTrade);
+  const visible = rows;
   const tierRows = ctx.group && visible.length
     ? await db.select().from(prices).where(and(eq(prices.groupId, ctx.group.id), inArray(prices.variantId, visible.map((r) => r.v.id))))
     : [];

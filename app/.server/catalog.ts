@@ -6,6 +6,7 @@ import { and, asc, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
 import { priceFor, stockLevel, withConditions, type PriceInfo, type StockLevel, type Tier } from "~/lib/pricing";
 import { tl } from "~/lib/localized";
 import type { ShopContext } from "./context";
+import { catalogScope } from "./storefronts";
 import { getDb, schema } from "./db";
 
 const { products: p, variants: v, producers: pr, categories: c, prices } = schema;
@@ -142,10 +143,14 @@ export async function categoryAndDescendants(slug: string): Promise<number[]> {
   return out;
 }
 
+/** Products this request may see: active, trade-only only for trade customers, within the storefront's assortment. */
+export function visibleProducts(ctx: Pick<ShopContext, "isTrade" | "storefront">): SQL {
+  return and(eq(p.active, true), ctx.isTrade ? undefined : eq(p.tradeOnly, false), catalogScope(ctx.storefront))!;
+}
+
 export async function searchProducts(ctx: ShopContext, params: SearchParams) {
   const db = await getDb();
-  const where: SQL[] = [eq(p.active, true)];
-  if (!ctx.isTrade) where.push(eq(p.tradeOnly, false));
+  const where: SQL[] = [visibleProducts(ctx)];
   if (params.kind) where.push(eq(p.kind, params.kind as "wine"));
   if (params.promo) where.push(eq(p.promo, true));
   if (params.category) {
@@ -192,9 +197,11 @@ export async function categoryTree(ctx: ShopContext) {
   const rows = await db
     .select({
       id: c.id, slug: c.slug, parentId: c.parentId, name: c.name, image: c.image, sort: c.sort, showOnHome: c.showOnHome,
-      count: sql<number>`${sql.raw("(select count(*)::int from products pc where pc.category_id = categories.id and pc.active)")}`,
+      count: sql<number>`count(${p.id})::int`,
     })
     .from(c)
+    .leftJoin(p, and(eq(p.categoryId, c.id), visibleProducts(ctx)))
+    .groupBy(c.id)
     .orderBy(asc(c.sort));
   const nodes = rows.map((r) => ({ ...r, name: tl(r.name, ctx.locale), total: r.count }));
   // roll counts up to parents
@@ -202,7 +209,8 @@ export async function categoryTree(ctx: ShopContext) {
     const parent = nodes.find((x) => x.id === n.parentId);
     if (parent) parent.total += n.total;
   }
-  return nodes;
+  // a storefront shows only the categories of its assortment
+  return ctx.storefront ? nodes.filter((n) => n.total > 0) : nodes;
 }
 
 export async function producerFacets(ctx: ShopContext, limit = 8) {
@@ -210,7 +218,7 @@ export async function producerFacets(ctx: ShopContext, limit = 8) {
   return db
     .select({ slug: pr.slug, name: pr.name, count: sql<number>`count(${p.id})::int` })
     .from(pr)
-    .innerJoin(p, and(eq(p.producerId, pr.id), eq(p.active, true), ctx.isTrade ? undefined : eq(p.tradeOnly, false)))
+    .innerJoin(p, and(eq(p.producerId, pr.id), visibleProducts(ctx)))
     .groupBy(pr.id)
     .orderBy(desc(sql`count(${p.id})`), asc(pr.name))
     .limit(limit);
@@ -218,15 +226,15 @@ export async function producerFacets(ctx: ShopContext, limit = 8) {
 
 export async function productDetail(ctx: ShopContext, slug: string) {
   const db = await getDb();
-  const row = await db.query.products.findFirst({ where: and(eq(p.slug, slug), eq(p.active, true)) });
-  if (!row || (row.tradeOnly && !ctx.isTrade)) return null;
+  const row = await db.query.products.findFirst({ where: and(eq(p.slug, slug), visibleProducts(ctx)) });
+  if (!row) return null;
   const [card] = await toCards(ctx, [row.id]);
   const producer = row.producerId ? await db.query.producers.findFirst({ where: eq(pr.id, row.producerId) }) : null;
   const sameProducer = producer
-    ? await db.select({ id: p.id }).from(p).where(and(eq(p.producerId, producer.id), eq(p.active, true), sql`${p.id} <> ${row.id}`)).limit(4)
+    ? await db.select({ id: p.id }).from(p).where(and(eq(p.producerId, producer.id), visibleProducts(ctx), sql`${p.id} <> ${row.id}`)).limit(4)
     : [];
   const sameCategory = row.categoryId
-    ? await db.select({ id: p.id }).from(p).where(and(eq(p.categoryId, row.categoryId), eq(p.active, true), sql`${p.id} <> ${row.id}`)).orderBy(desc(p.featured)).limit(4)
+    ? await db.select({ id: p.id }).from(p).where(and(eq(p.categoryId, row.categoryId), visibleProducts(ctx), sql`${p.id} <> ${row.id}`)).orderBy(desc(p.featured)).limit(4)
     : [];
   return {
     card,
@@ -244,20 +252,23 @@ export async function productDetail(ctx: ShopContext, slug: string) {
   };
 }
 
-export async function producersList() {
+/** All producers with the number of products visible in this shop (ctx omitted: all active products). */
+export async function producersList(ctx?: Pick<ShopContext, "isTrade" | "storefront">) {
   const db = await getDb();
   return db
     .select({
       id: pr.id, slug: pr.slug, name: pr.name, region: pr.region, country: pr.country, logo: pr.logo, featured: pr.featured, description: pr.description,
-      count: sql<number>`${sql.raw("(select count(*)::int from products pp where pp.producer_id = producers.id and pp.active)")}`,
+      count: sql<number>`count(${p.id})::int`,
     })
     .from(pr)
+    .leftJoin(p, and(eq(p.producerId, pr.id), ctx ? visibleProducts(ctx) : eq(p.active, true)))
+    .groupBy(pr.id)
     .orderBy(desc(pr.featured), asc(pr.name));
 }
 
 export async function homeCollections(ctx: ShopContext) {
   const db = await getDb();
-  const base = and(eq(p.active, true), ctx.isTrade ? undefined : eq(p.tradeOnly, false));
+  const base = visibleProducts(ctx);
   const promo = await db.select({ id: p.id }).from(p).where(and(base, eq(p.promo, true))).orderBy(desc(p.updatedAt)).limit(12);
   const featured = await db.select({ id: p.id }).from(p).where(and(base, eq(p.featured, true))).orderBy(desc(p.updatedAt)).limit(8);
   return {

@@ -258,3 +258,50 @@ export const LABELS: Record<string, string> = {
 export const label = (code: string) => LABELS[code] ?? code;
 
 export { Form };
+
+/**
+ * "Gilt für": main shop or one storefront (?sf=<slug>). Shown on editors whose settings a storefront can override.
+ * Storefront without own values: the form shows the main shop's values; saving creates the storefront's own copy.
+ */
+export function ScopeBar({ scope, keys, label }: { scope: { current: string | null; storefronts: { slug: string; name: string }[]; own: Partial<Record<string, boolean>> }; keys: string[]; label: string }) {
+  const [params] = useSearchParams();
+  if (!scope.storefronts.length) return null;
+  const to = (slug: string | null) => {
+    const next = new URLSearchParams(params);
+    if (slug) next.set("sf", slug);
+    else next.delete("sf");
+    const s = next.toString();
+    return s ? `?${s}` : "?";
+  };
+  const inherited = scope.current ? keys.filter((k) => !scope.own[k]) : [];
+  const name = scope.storefronts.find((s) => s.slug === scope.current)?.name;
+  return (
+    <div className="mb-6 grid gap-3 rounded-surface border border-border bg-card p-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:px-4">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <span className="text-field-label">Gilt für</span>
+        <nav className="flex flex-wrap gap-1" aria-label="Shop">
+          {[{ slug: null as string | null, name: "Hauptshop" }, ...scope.storefronts].map((s) => (
+            <Link key={s.slug ?? "main"} to={to(s.slug)} preventScrollReset aria-current={scope.current === s.slug ? "page" : undefined} className={cn("rounded-btn px-3 py-1.5 text-note transition-colors", scope.current === s.slug ? "bg-fg text-bg" : "text-muted-fg hover:bg-muted hover:text-fg")}>
+              {s.name}
+            </Link>
+          ))}
+        </nav>
+      </div>
+      {scope.current && (
+        <div className="flex min-w-0 flex-wrap items-center gap-3 text-note text-muted-fg">
+          {inherited.length === keys.length ? (
+            <span>{name} übernimmt {label} vom Hauptshop — Speichern legt eine eigene Fassung an.</span>
+          ) : (
+            <>
+              <span>{name}: eigene {label}{inherited.length ? " (teilweise vom Hauptshop)" : ""}.</span>
+              <Form method="post" onSubmit={(e) => { if (!confirm(`Eigene ${label} von ${name} verwerfen und wieder den Hauptshop übernehmen?`)) e.preventDefault(); }}>
+                <input type="hidden" name="intent" value="scope-reset" />
+                <Button type="submit" size="sm" variant="ghost">Auf Hauptshop zurücksetzen</Button>
+              </Form>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
