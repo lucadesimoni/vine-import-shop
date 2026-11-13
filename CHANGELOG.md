@@ -12,6 +12,23 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Status e-mails to customers:** confirmed, in progress, shipped, completed, cancelled. You choose which in Admin › Einstellungen › Versand & Kundenbenachrichtigung.
+  - Each status is sent once per order, in the order's language and with the brand of its shop. It doesn't matter whether the status comes from the admin, a bulk action, a Post label or the vinX sync.
+  - The shipping mail carries the carrier, tracking number and a «Sendung verfolgen» button.
+- **Shipping & tracking:**
+  - Carriers with tracking-link templates (Post, Planzer, DHL, DPD, UPS, own delivery — editable).
+  - On the order: carrier and tracking number, «Als versandt markieren».
+  - Customers see the tracking link in their account and portal.
+- **Swiss Post labels** (Digital Commerce API, Barcode `generateAddressLabel`):
+  - One click on the order creates the label with its tracking number, sets «versandt» and informs the customer. The label PDF is downloadable in the admin only.
+  - Configuration: franking licence, sender, services (A/B-Post, signature), label size, default weight. Credentials come from env `POST_CLIENT_ID` / `POST_CLIENT_SECRET`.
+  - Without them, a clearly marked demo label is created.
+
+### Changed
+- **Product cards have a fixed rhythm:**
+  - Category, title (max. 2 lines), producer · vintage · size, article number «+n Formate».
+  - Prices and availability line up across each row, also on phones and with many formats.
 ## [1.5.0] - 2026-11-13
 
 ### Added

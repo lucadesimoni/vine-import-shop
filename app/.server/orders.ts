@@ -83,9 +83,14 @@ export async function getOrder(where: { id?: number; number?: string }) {
 }
 export type OrderWithItems = NonNullable<Awaited<ReturnType<typeof getOrder>>>;
 
-export async function setOrderStatus(id: number, status: (typeof ORDER_STATUSES)[number]) {
+/** Set the status (admin, bulk action, ERP sync, label creation); "shipped" can carry carrier + tracking number. Customer mail: listeners.ts */
+export async function setOrderStatus(id: number, status: (typeof ORDER_STATUSES)[number], shipment?: { carrier?: string | null; trackingNumber?: string | null }) {
   const db = await getDb();
-  await db.update(schema.orders).set({ status, updatedAt: sql`now()` }).where(eq(schema.orders.id, id));
+  const patch: Partial<typeof schema.orders.$inferInsert> = { status, updatedAt: new Date() };
+  if (status === "shipped") patch.shippedAt = new Date();
+  if (shipment?.carrier !== undefined) patch.carrier = shipment.carrier || null;
+  if (shipment?.trackingNumber !== undefined) patch.trackingNumber = shipment.trackingNumber?.trim() || null;
+  await db.update(schema.orders).set(patch).where(eq(schema.orders.id, id));
   await emit("order.status", { orderId: id, status });
 }
 

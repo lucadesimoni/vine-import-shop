@@ -132,6 +132,36 @@ export const shopSchema = z.object({
       world: z.boolean().default(true),
     })
     .prefault({}),
+  /** Shipping & customer notifications: carriers with tracking links, status e-mails, Swiss Post labels */
+  fulfillment: z
+    .object({
+      carriers: z
+        .array(z.object({ code: z.string().min(1).max(20), label: z.string().max(40), trackingUrl: z.string().max(300).default("") }))
+        .default([
+          { code: "post", label: "Die Post", trackingUrl: "https://service.post.ch/ekp-web/external/view/{code}" },
+          { code: "planzer", label: "Planzer", trackingUrl: "https://tracking.planzer.ch/?trackingNumber={code}" },
+          { code: "dhl", label: "DHL", trackingUrl: "https://www.dhl.com/ch-de/home/tracking.html?tracking-id={code}" },
+          { code: "dpd", label: "DPD", trackingUrl: "https://www.dpdgroup.com/ch/mydpd/my-parcels/incoming?parcelNumber={code}" },
+          { code: "ups", label: "UPS", trackingUrl: "https://www.ups.com/track?tracknum={code}" },
+          { code: "own", label: "Eigene Auslieferung", trackingUrl: "" },
+        ]),
+      /** e-mail the customer when an order reaches these statuses (new orders always get a confirmation) */
+      notify: z.array(z.enum(["confirmed", "processing", "shipped", "completed", "cancelled"])).default(["confirmed", "shipped", "cancelled"]),
+      /** Swiss Post Digital Commerce API (Barcode): labels with tracking number. Credentials: env POST_CLIENT_ID / POST_CLIENT_SECRET */
+      post: z
+        .object({
+          enabled: z.boolean().default(false),
+          frankingLicense: z.string().max(12).default(""),
+          /** A-Post "PRI" or B-Post "ECO"; extra services e.g. "SI" (signature) */
+          services: z.array(z.string().max(6)).default(["PRI"]),
+          labelLayout: z.enum(["A5", "A6", "A7", "FE"]).default("A6"),
+          sender: z.object({ name1: z.string().default(""), name2: z.string().default(""), street: z.string().default(""), zip: z.string().default(""), city: z.string().default("") }).prefault({}),
+          /** default parcel weight in grams when the order has none */
+          defaultWeight: z.number().int().min(1).max(30000).default(2000),
+        })
+        .prefault({}),
+    })
+    .prefault({}),
   /** Who sees prices in the storefront (the portal always shows trade prices). Hidden prices turn checkout into a quote request. */
   priceVisibility: z.enum(["public", "login", "trade"]).default("public"),
   /** Where customer / customer-group prices come from — see .server/price-sources.ts */

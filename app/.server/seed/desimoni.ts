@@ -66,6 +66,7 @@ export async function seedDeSimoniDemo(db: DB) {
     ageGate: false,
     orderPrefix: "DS",
     notifyEmail: "",
+    fulfillment: { post: { enabled: true, sender: { name1: "De Simoni AG", street: "Schweighofstrasse 16", zip: "6010", city: "Kriens" }, defaultWeight: 1500 } },
     shipping: [
       { code: "delivery", label: { de: "Lieferung (eigene Tour)", it: "Consegna (giro proprio)", en: "Delivery (own route)", fr: "Livraison (tournée)" }, description: { de: "Wöchentlich in der ganzen Deutschschweiz", it: "Settimanale in tutta la Svizzera tedesca" }, priceCents: 0, rates: [], freeFromCents: null, audience: "trade", minUnits: 0 },
       { code: "post", label: { de: "Postversand", it: "Spedizione postale", en: "Postal delivery", fr: "Envoi postal" }, description: { de: "1–3 Werktage", it: "1–3 giorni lavorativi" }, priceCents: 1500, rates: [[1, 1500], [7, 2200], [19, 3400]], freeFromCents: 30000, audience: "consumer", minUnits: 0 },

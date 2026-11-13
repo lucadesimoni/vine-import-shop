@@ -79,3 +79,26 @@ on("trade.applied", async ({ email }) => {
   const { brand, shop } = await getSettings("brand", "shop");
   if (shop.notifyEmail) await sendMail(shop.notifyEmail, `[B2B] ${email}`, layout(brand, "B2B", `<p>${esc(email)}</p>`));
 });
+
+/**
+ * Status e-mails to the customer (Admin › Einstellungen › Versand: which statuses), once per status and order —
+ * whether the status comes from the admin, a bulk action, a Post label or the ERP sync. Shipped mails carry the tracking link.
+ */
+on("order.status", async ({ orderId, status }) => {
+  const order = await getOrder({ id: orderId });
+  if (!order || order.kind === "request" || order.notified.includes(status)) return;
+  const { brand, shop } = await getScopedSettings((await storefrontById(order.storefrontId))?.slug, "brand", "shop");
+  if (!(shop.fulfillment.notify as string[]).includes(status)) return;
+  const db = await getDb();
+  await db.update(schema.orders).set({ notified: [...order.notified, status] }).where(eq(schema.orders.id, orderId));
+  const { trackingUrl, carrierLabel } = await import("./shipping");
+  const t = getT(isLocale(order.locale) ? order.locale : shop.defaultLocale);
+  const key = status as "confirmed" | "processing" | "shipped" | "completed" | "cancelled";
+  const title = t(`mail.status.${key}`, { number: order.number });
+  const url = trackingUrl(shop, order.carrier, order.trackingNumber);
+  const tracking = status === "shipped" && order.trackingNumber
+    ? `<p style="background:${brand.colors.muted};padding:14px">${esc(t("mail.carrier", { carrier: carrierLabel(shop, order.carrier) }))}<br>${esc(t("mail.trackingNumber"))}: <strong>${esc(order.trackingNumber)}</strong></p>${url ? `<p style="margin:24px 0"><a href="${esc(url)}" style="background:${brand.colors.primary};color:${brand.colors.primaryForeground};padding:12px 22px;text-decoration:none;display:inline-block">${esc(t("mail.track"))}</a></p>` : ""}`
+    : "";
+  const html = layout(brand, title, `<p>${esc(t(`mail.statusText.${key}`, { number: order.number }))}</p>${tracking}`);
+  await sendMail(order.email, `${brand.name} · ${title}`, html);
+});

@@ -363,17 +363,18 @@ export function ProductCard({ product, priority = false }: { product: Card; prio
         </div>
       </Link>
       <div className="flex flex-1 flex-col pt-4">
-        {label && <p className="text-eyebrow mb-1.5 text-2xs text-muted-fg">{label}</p>}
-        <h3 className="text-body font-medium leading-snug">
-          <Link to={to(`/product/${product.slug}`)} className="after:absolute after:inset-0">{product.name}</Link>
+        {/* fixed rhythm: every card has the same lines, so prices and stock align across a row */}
+        <p className="text-eyebrow mb-1.5 truncate text-2xs text-muted-fg">{label || "\u00a0"}</p>
+        <h3 className="line-clamp-2 min-h-[2lh] text-body font-medium leading-snug">
+          <Link to={to(`/product/${product.slug}`)} className="after:absolute after:inset-0" title={product.name}>{product.name}</Link>
         </h3>
-        <p className="mt-1 text-note text-muted-fg">
+        <p className="mt-1 truncate text-note text-muted-fg">
           {[product.producer?.name, v?.vintage, v?.size].filter(Boolean).join(" · ")}
         </p>
-        {product.variants.length > 1 && (
-          <p className="mt-0.5 text-xs text-muted-fg">+ {product.variants.slice(1).map((x) => [x.vintage, x.size].filter(Boolean).join(" · ")).join(", ")}</p>
-        )}
-        {v && <p className="mt-1 text-label text-muted-fg tabular-nums">{t("product.art")} {v.sku}</p>}
+        <p className="mt-0.5 truncate text-xs text-muted-fg tabular-nums">
+          {v && <>{t("product.art")} {v.sku}</>}
+          {product.variants.length > 1 && <> · {t("product.moreFormats", { n: product.variants.length - 1 })}</>}
+        </p>
         <div className="mt-auto flex flex-wrap items-end justify-between gap-x-3 gap-y-2 pt-4">
           <PriceTag price={v?.price ?? null} />
           {v && <StockLabel level={v.stock} qty={v.stockQty} />}

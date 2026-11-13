@@ -1,9 +1,10 @@
 import { data, Form, redirect } from "react-router";
-import { RotateCcw } from "lucide-react";
+import { ArrowUpRight, RotateCcw } from "lucide-react";
 import type { Route } from "./+types/account-order";
 import { commit, getSession, requireUser } from "~/.server/auth";
 import { shopContext } from "~/.server/context";
 import { addItem, getCart, updateCart } from "~/.server/cart";
+import { carrierLabel, trackingUrl } from "~/.server/shipping";
 import { getOrder } from "~/.server/orders";
 import { useI18n, type MessageKey } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
@@ -19,8 +20,10 @@ async function load(request: Request, number: string) {
   return order;
 }
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  return { order: await load(request, params.number) };
+export async function loader({ request, params, context }: Route.LoaderArgs) {
+  const { shippingLabel: _label, ...order } = await load(request, params.number);
+  const shop = context.get(shopContext).shop;
+  return { order, tracking: order.trackingNumber ? { code: order.trackingNumber, carrier: carrierLabel(shop, order.carrier), url: trackingUrl(shop, order.carrier, order.trackingNumber) } : null };
 }
 
 export async function action({ request, params, context }: Route.ActionArgs) {
@@ -37,7 +40,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 }
 
 export default function AccountOrder({ loaderData }: Route.ComponentProps) {
-  const { order } = loaderData;
+  const { order, tracking } = loaderData;
   const { t, locale } = useI18n();
   const m = (c: number) => formatMoney(c, order.currency, locale);
   const request = order.kind === "request";
@@ -75,6 +78,13 @@ export default function AccountOrder({ loaderData }: Route.ComponentProps) {
               <p>{order.shippingMethod}</p>
               {order.poNumber && <p className="text-muted-fg">{t("checkout.po")}: {order.poNumber}</p>}
               {order.deliveryDate && <p className="text-muted-fg">{t("checkout.deliveryDate")}: {order.deliveryDate}</p>}
+              {tracking && (
+                <div className="mt-3 border-t border-border pt-3">
+                  <p className="text-muted-fg">{t("account.tracking")} · {tracking.carrier}</p>
+                  <p className="font-mono text-note">{tracking.code}</p>
+                  {tracking.url && <a href={tracking.url} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">{t("account.track")} <ArrowUpRight size={13} /></a>}
+                </div>
+              )}
             </Card>
           </div>
           <Form method="post"><Button type="submit"><RotateCcw size={15} /> {t("account.reorder")}</Button></Form>

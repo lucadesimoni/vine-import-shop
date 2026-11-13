@@ -36,6 +36,13 @@
       "when": 1794566628575,
       "tag": "0004_storefronts",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794569406331,
+      "tag": "0005_shipping",
+      "breakpoints": true
     }
   ]
 }

@@ -252,6 +252,13 @@ export const orders = pgTable(
     erpId: text("erp_id"),
     erpStatus: text("erp_status", { enum: ["pending", "transferred", "failed"] }).notNull().default("pending"),
     storefrontId: integer("storefront_id"),
+    /** shipping: carrier code (shop.fulfillment.carriers), tracking number, shipping label (PDF, base64; admin only) */
+    carrier: text("carrier"),
+    trackingNumber: text("tracking_number"),
+    shippedAt: timestamp("shipped_at", { withTimezone: true }),
+    shippingLabel: text("shipping_label"),
+    /** statuses the customer was already e-mailed about (no duplicates when ERP sync and admin both set a status) */
+    notified: jsonb("notified").$type<string[]>().notNull().default([]),
     ...timestamps,
   },
   (t) => [index("orders_user_idx").on(t.userId), index("orders_created_idx").on(t.createdAt)],

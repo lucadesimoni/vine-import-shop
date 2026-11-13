@@ -29,6 +29,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     mollie: !!e.MOLLIE_API_KEY,
     datatrans: !!e.DATATRANS_MERCHANT_ID && !!e.DATATRANS_PASSWORD && !!e.DATATRANS_HMAC_KEY,
     payrexx: !!e.PAYREXX_INSTANCE && !!e.PAYREXX_API_SECRET,
+    post: !!e.POST_CLIENT_ID && !!e.POST_CLIENT_SECRET,
   };
   return { shop, groups, keys, priceSources: listPriceSources(), scope };
 }
@@ -51,6 +52,9 @@ export async function action({ request }: Route.ActionArgs) {
   } catch {
     return data({ error: "Versand: JSON ungültig" }, { status: 400 });
   }
+  // carriers: one per line "code | Name | Tracking-URL mit {code}"
+  const carriers = String(o.carriersText ?? "").split("\n").map((l) => l.split("|").map((x) => x.trim())).filter(([c, n]) => c && n)
+    .map(([code, label, trackingUrl = ""]) => ({ code: code.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 20), label: label.slice(0, 40), trackingUrl: /^https?:\/\//.test(trackingUrl) ? trackingUrl : "" }));
   const locales = LOCALES.filter((l) => form.has(`locale.${l}`));
   await saveSetting("shop", {
     ...shop,
@@ -87,6 +91,18 @@ export async function action({ request }: Route.ActionArgs) {
     notifyEmail: o.notifyEmail,
     tax: { standard: Number(o.tax.standard), reduced: Number(o.tax.reduced) },
     shipping,
+    fulfillment: {
+      carriers: carriers.length ? carriers : shop.fulfillment.carriers,
+      notify: (["confirmed", "processing", "shipped", "completed", "cancelled"] as const).filter((k) => form.has(`notify.${k}`)),
+      post: {
+        enabled: form.has("post.enabled"),
+        frankingLicense: String(o.post?.frankingLicense ?? "").replace(/\D/g, "").slice(0, 12),
+        services: list(o.post?.services).map((x) => x.toUpperCase()),
+        labelLayout: ["A5", "A6", "A7", "FE"].includes(o.post?.labelLayout) ? o.post.labelLayout : "A6",
+        sender: { name1: o.post?.sender?.name1 ?? "", name2: o.post?.sender?.name2 ?? "", street: o.post?.sender?.street ?? "", zip: o.post?.sender?.zip ?? "", city: o.post?.sender?.city ?? "" },
+        defaultWeight: Number(o.post?.defaultWeight) || 2000,
+      },
+    },
     payments: {
       invoice: { enabled: form.has("pay.invoice"), tradeOnly: form.has("pay.invoiceTradeOnly"), termsDays: Number(o.invoiceDays) || 30 },
       prepayment: { enabled: form.has("pay.prepayment"), holder: o.bank.holder, iban: o.bank.iban, bank: o.bank.bank },
@@ -286,6 +302,39 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
             <Field label="Kontoinhaber">{(id) => <Input id={id} name="bank.holder" defaultValue={shop.payments.prepayment.holder} />}</Field>
             <Field label="IBAN">{(id) => <Input id={id} name="bank.iban" defaultValue={shop.payments.prepayment.iban} />}</Field>
             <Field label="Bank">{(id) => <Input id={id} name="bank.bank" defaultValue={shop.payments.prepayment.bank} />}</Field>
+          </div>
+        </Panel>
+
+        <Panel title="Versand & Kundenbenachrichtigung" description="Status-E-Mails an Kunden (je Status einmal, in der Sprache der Bestellung, mit Marke des Shops); Versanddienste mit Tracking-Link; Post-Etiketten über die Digital Commerce API." className="xl:col-span-2">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="grid content-start gap-5">
+              <fieldset className="grid gap-2">
+                <legend className="text-field-label mb-1">E-Mail an den Kunden bei</legend>
+                <p className="text-note text-muted-fg">Die Bestellbestätigung geht immer raus.</p>
+                <div className="flex flex-wrap gap-x-5 gap-y-2">
+                  {([["confirmed", "Bestätigt"], ["processing", "In Bearbeitung"], ["shipped", "Versandt (mit Tracking)"], ["completed", "Abgeschlossen"], ["cancelled", "Storniert"]] as const).map(([k, l]) => (
+                    <Checkbox key={k} name={`notify.${k}`} label={l} defaultChecked={(shop.fulfillment.notify as string[]).includes(k)} />
+                  ))}
+                </div>
+              </fieldset>
+              <Field label="Versanddienste" hint="Eine Zeile pro Dienst: Kürzel | Name | Tracking-URL mit {code}">
+                {(id) => <Textarea id={id} name="carriersText" rows={7} spellCheck={false} defaultValue={shop.fulfillment.carriers.map((c) => [c.code, c.label, c.trackingUrl].join(" | ")).join("\n")} className="font-mono text-note" />}
+              </Field>
+            </div>
+            <div className="grid content-start gap-4 rounded-control border border-border p-4">
+              <div className="divide-y divide-border"><Toggle name="post.enabled" label="Post-Etiketten (Swiss Post Barcode-API)" description={keys.post ? "POST_CLIENT_ID/SECRET gesetzt" : "Ohne POST_CLIENT_ID/POST_CLIENT_SECRET: Demo-Etiketten (Specimen)"} defaultChecked={shop.fulfillment.post.enabled} /></div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Frankierlizenz">{(id) => <Input id={id} name="post.frankingLicense" defaultValue={shop.fulfillment.post.frankingLicense} inputMode="numeric" className="font-mono" />}</Field>
+                <Field label="Leistungen" hint="PRI = A-Post, ECO = B-Post, + z. B. SI">{(id) => <Input id={id} name="post.services" defaultValue={shop.fulfillment.post.services.join(", ")} />}</Field>
+                <Field label="Etikettformat">{(id) => <Select id={id} name="post.labelLayout" defaultValue={shop.fulfillment.post.labelLayout}>{["A5", "A6", "A7", "FE"].map((x) => <option key={x}>{x}</option>)}</Select>}</Field>
+                <Field label="Standardgewicht (g)">{(id) => <Input id={id} name="post.defaultWeight" defaultValue={shop.fulfillment.post.defaultWeight} inputMode="numeric" />}</Field>
+                <Field label="Absender" className="sm:col-span-2">{(id) => <Input id={id} name="post.sender.name1" defaultValue={shop.fulfillment.post.sender.name1} placeholder="Firma" />}</Field>
+                <Field label="Zusatz">{(id) => <Input id={id} name="post.sender.name2" defaultValue={shop.fulfillment.post.sender.name2} />}</Field>
+                <Field label="Strasse">{(id) => <Input id={id} name="post.sender.street" defaultValue={shop.fulfillment.post.sender.street} />}</Field>
+                <Field label="PLZ">{(id) => <Input id={id} name="post.sender.zip" defaultValue={shop.fulfillment.post.sender.zip} inputMode="numeric" />}</Field>
+                <Field label="Ort">{(id) => <Input id={id} name="post.sender.city" defaultValue={shop.fulfillment.post.sender.city} />}</Field>
+              </div>
+            </div>
           </div>
         </Panel>
 

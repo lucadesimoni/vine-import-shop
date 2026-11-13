@@ -351,6 +351,22 @@ ok(await guest.getByText(/Link gesendet/).waitFor({ timeout: 5000 }).then(() => 
 await guest.goto(B + "/login/reset/abcdefghijklmnopqrstuvwxyz0123");
 ok(await guest.getByText(/ungültig oder abgelaufen/).isVisible(), "password reset: invalid token rejected");
 
+section("Shipping: Post label, tracking, status e-mails");
+await consumer.goto(B + "/account");
+const cOrder = await consumer.locator('a[href^="/account/orders/"]').first().getAttribute("href");
+await admin.goto(B + "/admin/orders?q=" + cOrder.split("/").pop());
+await admin.locator('tbody a[href^="/admin/orders/"]').first().click();
+await admin.waitForURL(/\/admin\/orders\/\d+$/);
+const orderAdminUrl = admin.url();
+await admin.getByRole("button", { name: "Etikett erstellen" }).click();
+ok(await admin.getByText(/Sendungsnummer 99\.00\./).waitFor({ timeout: 8000 }).then(() => true, () => false), "Post label (demo driver) → tracking number");
+const labelRes = await admin.request.get(orderAdminUrl + "/label");
+ok(labelRes.ok() && (await labelRes.body()).subarray(0, 5).toString() === "%PDF-", "label PDF downloadable in the admin");
+ok((await guest.request.get(orderAdminUrl + "/label", { maxRedirects: 0 })).status() !== 200, "label not accessible without admin login");
+await consumer.goto(B + cOrder);
+ok(/Sendung verfolgen/.test(await consumer.locator("main").innerText()) && (await consumer.locator('main a[href*="service.post.ch"]').count()) === 1, "customer: tracking link on the order");
+ok(/Versandt|unterwegs/i.test(await consumer.locator("main").innerText()), "customer: status shipped");
+
 section("Storefronts (subsidiary on its own domain)");
 // preview without DNS: ?storefront=<slug> (cookie); on its own domain the host selects it
 const sf = await newPage();

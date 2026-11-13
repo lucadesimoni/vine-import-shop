@@ -63,6 +63,7 @@ export default [
     route("orders", "routes/admin/orders.tsx"),
     route("orders.csv", "routes/admin/orders-csv.ts"),
     route("orders/:id", "routes/admin/order.tsx"),
+    route("orders/:id/label", "routes/admin/order-label.ts"),
     route("products", "routes/admin/products.tsx"),
     route("products/:id", "routes/admin/product.tsx"),
     route("producers", "routes/admin/producers.tsx"),
