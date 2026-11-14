@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-11-14
+
 ### Security
 - **Rate limits in the database** (table `rate_limits`, migration `0010`) instead of per-instance memory. They now hold on Vercel and with several containers, and keys are stored as SHA-256 hashes, so no IPs or e-mail addresses are kept.
   - Sign-in: 8 failures per client and address, 40 per client (password spraying), 30 per address (attack from many clients).
@@ -401,7 +403,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.14.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.15.0...HEAD
+[1.15.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.12.1...v1.13.0
 [1.12.1]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.12.0...v1.12.1
