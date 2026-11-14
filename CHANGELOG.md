@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-11-14
+
 ### Added
 - **Admin › Protokoll:** who changed what and when.
   - Covers all admin actions (product, image, bulk action, customer approval, order status, settings per storefront, design, import, jobs, backups) and staff sign-ins.
@@ -446,7 +448,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.18.1...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.19.0...HEAD
+[1.19.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.18.1...v1.19.0
 [1.18.1]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.18.0...v1.18.1
 [1.18.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.17.0...v1.18.0
 [1.17.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.16.0...v1.17.0
