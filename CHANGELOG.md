@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.20.1] - 2026-11-14
+
 ### Fixed
 - **Phones with a large system font size** (e.g. Android "font size" at 125 %): the shop could become wider than the screen, so the page moved sideways and showed a white strip on the right (seen on the Italian promotions page).
   - The logo group no longer refuses to shrink; the brand name is shortened with "…" if needed, and the header icons are a little smaller under 380 px.
@@ -483,7 +485,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.20.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.20.1...HEAD
+[1.20.1]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.20.0...v1.20.1
 [1.20.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.19.1...v1.20.0
 [1.19.1]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.19.0...v1.19.1
 [1.19.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.18.1...v1.19.0
