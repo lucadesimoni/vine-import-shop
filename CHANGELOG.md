@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.18.1] - 2026-11-14
+
 ### Security
 - **Critical: admin actions without a login.** The staff check was only in the admin layout's loader. In React Router an action runs before the loaders, so an anonymous POST to an admin page could change data (product, customer, order, settings, design …) and was redirected to the login only afterwards. The check now runs as middleware on every request under `/admin` (loaders, actions, resource routes) before anything else: anonymous requests go to the login, customers get 403. A regression test in the end-to-end suite covers it. **Please update all installations.**
 
@@ -438,7 +440,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.18.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.18.1...HEAD
+[1.18.1]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.18.0...v1.18.1
 [1.18.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.17.0...v1.18.0
 [1.17.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.16.0...v1.17.0
 [1.16.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.15.0...v1.16.0
