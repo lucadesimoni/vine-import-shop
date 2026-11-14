@@ -3,6 +3,7 @@ import { factsFor, rulesFor } from "./conditions";
 import { applyConditions } from "~/lib/conditions";
 import { originConditions } from "./origins";
 import { and, asc, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
+import { FOLD_FROM, FOLD_TO, searchTokens, typoPatterns } from "~/lib/search";
 import { priceFor, stockLevel, withConditions, type PriceInfo, type StockLevel, type Tier } from "~/lib/pricing";
 import { tl } from "~/lib/localized";
 import type { ShopContext } from "./context";
@@ -169,16 +170,18 @@ export async function searchProducts(ctx: ShopContext, params: SearchParams) {
     where.push(prod ? eq(p.producerId, prod.id) : sql`false`);
   }
   where.push(...(await originConditions(params)));
-  if (params.q?.trim()) {
-    const q = `%${params.q.trim().toLowerCase()}%`;
-    where.push(
-      or(
-        sql`lower(${p.name}::text) like ${q}`,
-        sql`lower(coalesce(products.grapes, '') || ' ' || coalesce(products.region, '') || ' ' || coalesce(products.appellation, '')) like ${q}`,
-        sql`exists (select 1 from producers pq where pq.id = products.producer_id and lower(pq.name) like ${q})`,
-        sql`exists (select 1 from variants vq where vq.product_id = products.id and lower(vq.sku) like ${q})`,
-      )!,
-    );
+  // search: every word must appear somewhere (name in all languages, producer, grape, region, appellation, country,
+  // article number) — accents and apostrophes folded on both sides; with no hit, one typo per word is tolerated
+  const tokens = searchTokens(params.q ?? "");
+  let nameFirst: SQL | null = null;
+  if (tokens.length) {
+    const fold = (e: SQL) => sql`translate(lower(${e}), ${FOLD_FROM}, ${FOLD_TO})`;
+    const hay = fold(sql`concat_ws(' ', products.name->>'de', products.name->>'it', products.name->>'fr', products.name->>'en', products.grapes, products.region, products.appellation, products.country,
+      (select pq.name from producers pq where pq.id = products.producer_id), (select string_agg(vq.sku, ' ') from variants vq where vq.product_id = products.id))`);
+    const exact = and(...tokens.map((t) => sql`${hay} like ${`%${t}%`}`))!;
+    const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(p).where(and(...where, exact));
+    where.push(n > 0 ? exact : and(...tokens.map((t) => or(...typoPatterns(t).map((pat) => sql`${hay} like ${pat}`))!))!);
+    nameFirst = sql`case when ${fold(sql`coalesce(products.name->>${ctx.locale}, products.name->>'de')`)} like ${`%${tokens.join("%")}%`} then 0 else 1 end`;
   }
   const nameExpr = sql`coalesce(${p.name}->>${ctx.locale}, ${p.name}->>'de')`;
   // Correlated subqueries use explicit aliases (drizzle renders bare column names inside sql``).
@@ -189,7 +192,7 @@ export async function searchProducts(ctx: ShopContext, params: SearchParams) {
     : params.sort === "price_asc" ? [asc(minPrice)]
     : params.sort === "price_desc" ? [desc(minPrice)]
     : params.sort === "new" ? [desc(p.createdAt)]
-    : [desc(p.featured), desc(p.promo), asc(p.categoryId), asc(nameExpr)];
+    : [...(nameFirst ? [asc(nameFirst)] : []), desc(p.featured), desc(p.promo), asc(p.categoryId), asc(nameExpr)];
 
   const perPage = params.perPage ?? 24;
   const page = Math.max(1, params.page ?? 1);

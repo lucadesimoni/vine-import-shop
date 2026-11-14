@@ -12,6 +12,16 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Changed
+- **Better product search** (shop, portal catalogue, quick order):
+  - Every word must appear somewhere (name in all languages, producer, grape, region, appellation, country, article number), in any order. "grigio pinot" and "nebbiolo langhe" now find results.
+  - Accents and apostrophes are folded: "rose" = "Rosé"; "santagata" and "sant agata" find Sant'Agata (before: 0 hits).
+  - With no exact hit, one typo per word of 5+ letters is tolerated: "proseco", "nebiolo", "barbaresko".
+  - Hits in the product name come first.
+
+### Security
+- Security headers are also sent on Vercel (`vercel.json`; `server.js` does not run there): `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` and a CSP with `frame-ancestors`, `base-uri` and `object-src`.
+
 ## [1.15.0] - 2026-11-14
 
 ### Security
