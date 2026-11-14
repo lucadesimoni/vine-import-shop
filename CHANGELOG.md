@@ -12,6 +12,13 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Security
+- **Rate limits in the database** (table `rate_limits`, migration `0010`) instead of per-instance memory. They now hold on Vercel and with several containers, and keys are stored as SHA-256 hashes, so no IPs or e-mail addresses are kept.
+  - Sign-in: 8 failures per client and address, 40 per client (password spraying), 30 per address (attack from many clients).
+  - Sign-in link and password reset: 8 per client and 5 per address per hour, against mail flooding.
+  - Registration, contact form and B2B application are limited per client and hour.
+- **Client IP cannot be forged:** on Vercel it comes from `x-vercel-forwarded-for`; behind Caddy/nginx the last `X-Forwarded-For` entry (the one the proxy adds) is used. Before, the whole header counted and a client could change it freely.
+
 ### Changed
 - **Fewer database round trips** (matters with a remote database such as Vercel ↔ Supabase). Product cards load products, variants and conditions in parallel, and producers, categories, tier prices and customer prices in parallel. The product page loads the product and both recommendation rows in one card query. Measured with 10 ms latency per query: product page 18 → 10 queries, 264 → 97 ms; home page 254 → 144 ms.
 - `DB_TRACE=1` logs every SQL statement, to count round trips per page.

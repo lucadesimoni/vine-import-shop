@@ -432,6 +432,18 @@ section("Sign-in link (magic link)");
   for (const p of [ml, again, mlb, adm]) await p.context().close();
 }
 
+section("Rate limits (shared, in the database)");
+{
+  const tries = [];
+  for (let i = 0; i < 9; i++) {
+    const r = await res("/login", { method: "POST", body: new URLSearchParams({ email: "nobody-e2e@example.ch", password: `wrong-${i}` }), headers: { "Content-Type": "application/x-www-form-urlencoded" }, redirect: "manual" });
+    tries.push(r.status);
+  }
+  ok(tries.slice(0, 8).every((s) => s === 401) && tries[8] === 429, "login: blocked after 8 failed attempts", tries.join(","));
+  const other = await res("/login", { method: "POST", body: new URLSearchParams({ email: "other-e2e@example.ch", password: "x" }), headers: { "Content-Type": "application/x-www-form-urlencoded" }, redirect: "manual" });
+  ok(other.status === 401, "login: other addresses from the same client still allowed", String(other.status));
+}
+
 section("Payment methods per customer (vinX payment terms)");
 await admin.goto(B + "/admin/customers?q=gastro@demo.ch");
 await admin.locator('tbody a[href^="/admin/customers/"]').first().click();

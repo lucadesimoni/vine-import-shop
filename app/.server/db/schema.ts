@@ -415,3 +415,10 @@ export const syncLog = pgTable("sync_log", {
   startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
   finishedAt: timestamp("finished_at", { withTimezone: true }),
 });
+
+/** Request limits shared by all instances (serverless): key = SHA-256 of e.g. "login|<ip>|<email>" */
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull().default(0),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+});

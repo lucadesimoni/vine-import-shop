@@ -1,3 +1,4 @@
+import { clientIp, countAttempt, requestLimited } from "~/.server/auth";
 import { data, Form, useNavigation } from "react-router";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { z } from "zod";
@@ -17,6 +18,9 @@ export async function action({ request, context }: Route.ActionArgs) {
   const parsed = contactSchema.safeParse(Object.fromEntries(await request.formData()));
   if (!parsed.success) return data({ ok: false }, { status: 400 });
   const f = parsed.data;
+  const limit: [string, number][] = [[`contact|${clientIp(request)}`, 10]];
+  if (await requestLimited(limit)) return data({ ok: false, error: ctx.t("auth.throttled") }, { status: 429 });
+  await countAttempt(limit, 60 * 60_000);
   const db = await getDb();
   await db.insert(schema.inquiries).values({ kind: "contact", email: f.email, data: { name: f.name, subject: f.subject, message: f.message } });
   const to = ctx.shop.notifyEmail || ctx.brand.contact.email;
@@ -41,7 +45,7 @@ export default function Contact({ actionData }: Route.ComponentProps) {
             <Notice tone="success">{t("form.sent")}</Notice>
           ) : (
             <Form method="post" className="grid gap-5 sm:grid-cols-2">
-              {actionData && !actionData.ok && <Notice tone="danger" className="sm:col-span-2">{t("checkout.errors")}</Notice>}
+              {actionData && !actionData.ok && <Notice tone="danger" className="sm:col-span-2">{"error" in actionData && typeof actionData.error === "string" ? actionData.error : t("checkout.errors")}</Notice>}
               <Field label={t("form.name")} required>{(id) => <Input id={id} name="name" required autoComplete="name" />}</Field>
               <Field label={t("form.email")} required>{(id) => <Input id={id} name="email" type="email" required autoComplete="email" />}</Field>
               <Field label={t("form.subject")} className="sm:col-span-2">{(id) => <Input id={id} name="subject" />}</Field>

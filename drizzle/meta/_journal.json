@@ -71,6 +71,13 @@
       "when": 1794643729659,
       "tag": "0009_image_edit",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794644717473,
+      "tag": "0010_rate_limits",
+      "breakpoints": true
     }
   ]
 }

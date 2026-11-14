@@ -1,7 +1,7 @@
 import { data, Form, Link, redirect, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/login";
 import { shopContext } from "~/.server/context";
-import { clearFailures, findUserByEmail, homeAfterLogin, login, registerFailure, safeRedirect, throttle, verifyPassword } from "~/.server/auth";
+import { clearAttempts, clientIp, countAttempt, findUserByEmail, homeAfterLogin, login, requestLimited, safeRedirect, verifyPassword } from "~/.server/auth";
 import { sendLoginLink } from "~/.server/magic-link";
 import { useI18n, metaT } from "~/lib/i18n";
 import { usePath } from "~/lib/channel";
@@ -23,21 +23,24 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (form.get("intent") === "link") {
     // sign-in link for registered customers; same answer whether or not the address exists
     if (!/^[^\s@]+@[^\s@]+$/.test(email)) return data({ error: ctx.t("auth.emailRequired") }, { status: 400 });
-    const lk = `link|${request.headers.get("X-Forwarded-For") ?? "local"}`;
-    if (throttle(lk)) return data({ error: ctx.t("auth.throttled") }, { status: 429 });
-    registerFailure(lk); // counts requests per client to limit mail flooding
+    // per client and per address: limits mail flooding of one inbox from many clients
+    const lk: [string, number][] = [[`link|${clientIp(request)}`, 8], [`link-email|${email}`, 5]];
+    if (await requestLimited(lk)) return data({ error: ctx.t("auth.throttled") }, { status: 429 });
+    await countAttempt(lk, 60 * 60_000);
     const user = await findUserByEmail(email, ctx.storefront?.id ?? null);
     if (user?.role === "customer" && (user.storefrontId ?? null) === (ctx.storefront?.id ?? null)) await sendLoginLink(user, new URL(request.url).origin, String(form.get("next") ?? ""));
     return { linkSent: true as const };
   }
-  const key = `${request.headers.get("X-Forwarded-For") ?? "local"}|${email}`;
-  if (throttle(key)) return data({ error: ctx.t("auth.throttled") }, { status: 429 });
+  // failed sign-ins per client+address, per client (password spraying) and per address (attack from many clients)
+  const ip = clientIp(request);
+  const keys: [string, number][] = [[`login|${ip}|${email}`, 8], [`login-ip|${ip}`, 40], [`login-email|${email}`, 30]];
+  if (await requestLimited(keys)) return data({ error: ctx.t("auth.throttled") }, { status: 429 });
   const user = await findUserByEmail(email, ctx.storefront?.id ?? null);
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
-    registerFailure(key);
+    await countAttempt(keys);
     return data({ error: ctx.t("auth.failed") }, { status: 401 });
   }
-  clearFailures(key);
+  await clearAttempts(keys[0][0]);
   return login(request, user.id, safeRedirect(form.get("next"), homeAfterLogin(user, ctx.channel)));
 }
 

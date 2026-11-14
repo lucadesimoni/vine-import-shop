@@ -5,7 +5,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { z } from "zod";
 import type { Route } from "./+types/trade";
 import { shopContext } from "~/.server/context";
-import { findUserByEmail, hashPassword, login } from "~/.server/auth";
+import { clientIp, countAttempt, findUserByEmail, hashPassword, login, requestLimited } from "~/.server/auth";
 import { getDb, schema } from "~/.server/db";
 import { emit } from "~/.server/events";
 import { getSetting } from "~/.server/settings";
@@ -37,6 +37,9 @@ export async function action({ request, context }: Route.ActionArgs) {
   const parsed = applySchema.safeParse(Object.fromEntries(await request.formData()));
   if (!parsed.success) return data({ ok: false, errors: Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), ctx.t("form.invalid")])) }, { status: 400 });
   const f = parsed.data;
+  const limit: [string, number][] = [[`trade|${clientIp(request)}`, 6]];
+  if (await requestLimited(limit)) return data({ ok: false, errors: { email: ctx.t("auth.throttled") } }, { status: 429 });
+  await countAttempt(limit, 60 * 60_000);
   if (ctx.shop.trade.requireUid && f.uid && !/^CHE[-\s]?\d{3}\.?\d{3}\.?\d{3}/i.test(f.uid)) return data({ ok: false, errors: { uid: ctx.t("form.uidHint") } }, { status: 400 });
 
   const db = await getDb();

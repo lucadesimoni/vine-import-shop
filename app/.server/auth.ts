@@ -96,20 +96,23 @@ export async function findUserByEmail(email: string, storefrontId: number | null
   return rows.find((r) => (r.storefrontId ?? null) === storefrontId) ?? rows[0];
 }
 
-/** Very small in-memory login throttle (per instance). Use a shared store when scaling out. */
-const attempts = new Map<string, { n: number; until: number }>();
-export function throttle(key: string): boolean {
-  const now = Date.now();
-  const a = attempts.get(key);
-  if (a && a.until > now && a.n >= 8) return true;
-  return false;
+/**
+ * Rate limits for sign-in, links and forms (app/.server/rate-limit.ts — in the database, shared by all instances).
+ * `requestLimited` checks a set of [key, max] pairs; `countAttempt` counts one attempt on all of them.
+ */
+export { clientIp } from "./rate-limit";
+export async function requestLimited(limits: [key: string, max: number][]) {
+  const { limited } = await import("./rate-limit");
+  return (await Promise.all(limits.map(([k, max]) => limited(k, max)))).some(Boolean);
 }
-export function registerFailure(key: string) {
-  const now = Date.now();
-  const a = attempts.get(key);
-  attempts.set(key, a && a.until > now ? { n: a.n + 1, until: a.until } : { n: 1, until: now + 10 * 60_000 });
+export async function countAttempt(limits: [key: string, max: number][], windowMs?: number) {
+  const { hit } = await import("./rate-limit");
+  await Promise.all(limits.map(([k]) => hit(k, windowMs)));
 }
-export const clearFailures = (key: string) => attempts.delete(key);
+export async function clearAttempts(key: string) {
+  const { clear } = await import("./rate-limit");
+  await clear(key);
+}
 
 /** where a user lands after signing in: one login = one role (approved B2B customers go to the portal unless shop and portal are one channel) */
 export function homeAfterLogin(user: { role: string; tradeStatus: string | null }, channel: { portal: boolean; portalEnabled: boolean; mode: string }) {

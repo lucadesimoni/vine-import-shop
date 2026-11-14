@@ -1,7 +1,7 @@
 import { data, Form, Link, useNavigation } from "react-router";
 import type { Route } from "./+types/forgot";
 import { shopContext } from "~/.server/context";
-import { findUserByEmail, throttle, registerFailure } from "~/.server/auth";
+import { clientIp, countAttempt, findUserByEmail, requestLimited } from "~/.server/auth";
 import { sendTokenMail } from "~/.server/password-reset";
 import { metaT, useI18n } from "~/lib/i18n";
 import { Button, Card, Eyebrow, Field, Input, Notice } from "~/components/ui";
@@ -9,9 +9,9 @@ import { Button, Card, Eyebrow, Field, Input, Notice } from "~/components/ui";
 export async function action({ request, context }: Route.ActionArgs) {
   const ctx = context.get(shopContext);
   const email = String((await request.formData()).get("email") ?? "").trim().toLowerCase();
-  const key = `reset|${request.headers.get("X-Forwarded-For") ?? "local"}`;
-  if (throttle(key)) return data({ error: ctx.t("auth.throttled") }, { status: 429 });
-  registerFailure(key); // counts requests per client to limit mail flooding
+  const keys: [string, number][] = [[`reset|${clientIp(request)}`, 8], [`reset-email|${email}`, 5]];
+  if (await requestLimited(keys)) return data({ error: ctx.t("auth.throttled") }, { status: 429 });
+  await countAttempt(keys, 60 * 60_000); // counts requests to limit mail flooding
   const user = email ? await findUserByEmail(email, ctx.storefront?.id ?? null) : null;
   if (user) await sendTokenMail(user.id, "reset", new URL(request.url).origin);
   return { sent: true }; // same answer whether or not the address exists

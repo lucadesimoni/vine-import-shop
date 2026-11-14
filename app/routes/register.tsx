@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { Route } from "./+types/register";
 import { shopContext } from "~/.server/context";
-import { findUserByEmail, hashPassword, login } from "~/.server/auth";
+import { clientIp, countAttempt, findUserByEmail, hashPassword, login, requestLimited } from "~/.server/auth";
 import { getDb, schema } from "~/.server/db";
 import { emit } from "~/.server/events";
 import { useI18n } from "~/lib/i18n";
@@ -21,6 +21,9 @@ export async function action({ request, context }: Route.ActionArgs) {
   const parsed = schemaIn.safeParse(Object.fromEntries(await request.formData()));
   if (!parsed.success) return data({ errors: Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), ctx.t(i.path[0] === "password" ? "form.passwordHint" : "form.invalid")])) }, { status: 400 });
   const { name, email, password } = parsed.data;
+  const limit: [string, number][] = [[`register|${clientIp(request)}`, 10]];
+  if (await requestLimited(limit)) return data({ errors: { email: ctx.t("auth.throttled") } }, { status: 429 });
+  await countAttempt(limit, 60 * 60_000);
   if (await findUserByEmail(email, ctx.storefront?.id ?? null)) return data({ errors: { email: ctx.t("auth.emailTaken") } }, { status: 409 });
   const db = await getDb();
   const consumer = await db.query.customerGroups.findFirst({ where: eq(schema.customerGroups.code, "consumer") });
