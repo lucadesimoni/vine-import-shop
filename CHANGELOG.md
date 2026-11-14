@@ -12,6 +12,12 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- Admin › Produkte: filters "Bild nicht optimiert" and "Bild von Hand bearbeitet"; bulk actions "Bildstandard anwenden" and "Bild auf Original zurücksetzen" for the selected products, within the time budget.
+
+### Fixed
+- World map: zooming out from a deep zoom could jump backwards for one frame and briefly set a negative view box (browser console error). The `requestAnimationFrame` timestamp can be earlier than the animation start; progress is now clamped.
+
 ## [1.16.0] - 2026-11-14
 
 ### Changed

@@ -166,7 +166,8 @@ function useZoom(enabled: boolean, initial: View, sp: Space = WORLD) {
     const from = viewRef.current;
     const t0 = performance.now();
     const step = (t: number) => {
-      const k = Math.min(1, (t - t0) / 280);
+      // rAF timestamps can be slightly earlier than t0: clamp, or the ease-out curve overshoots backwards
+      const k = Math.max(0, Math.min(1, (t - t0) / 280));
       const e = 1 - (1 - k) ** 3;
       setView({ x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, w: from.w + (to.w - from.w) * e, h: from.h + (to.h - from.h) * e });
       if (k < 1) anim.current = requestAnimationFrame(step);

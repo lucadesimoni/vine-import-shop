@@ -390,6 +390,14 @@ section("Image editor (non-destructive)");
   await admin.click('dialog button:has-text("Übernehmen")');
   await admin.waitForSelector("dialog", { state: "detached", timeout: 30000 });
   ok(!(await admin.getByText("Bearbeitet", { exact: true }).count()), "image editor: reset to the original (plain optimised)");
+  // bulk: list filter + "reset to original" for selected products
+  await admin.goto(B + "/admin/products?flag=rawimage");
+  ok(/Produkt/.test(await admin.locator("main").innerText()), "products: filter 'image not optimised'");
+  const cookie = (await admin.context().cookies()).map((c) => `${c.name}=${c.value}`).join("; ");
+  const bulk = await res("/admin/products?index", { method: "POST", headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams([["action", "images-reset"], ["ids", id]]) });
+  ok(bulk.ok, "products: bulk image action runs", String(bulk.status));
+  await admin.goto(B + href);
+  ok(/\/img\/.+\.webp$/.test(await admin.locator("input[name=image]").inputValue()), "products: bulk reset keeps an optimised image");
 }
 
 section("Sign-in link (magic link)");

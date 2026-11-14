@@ -45,6 +45,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (f.flag === "featured") where.push(eq(p.featured, true));
   if (f.flag === "trade") where.push(eq(p.tradeOnly, true));
   if (f.flag === "noimage") where.push(isNull(p.image));
+  if (f.flag === "rawimage") where.push(and(isNotNull(p.image), sql`products.image not like '%/img/%.webp'`)!);
+  if (f.flag === "editedimage") where.push(sql`products.image_edit is not null and coalesce(products.image_edit->>'auto', 'false') <> 'true'`);
   if (f.flag === "notext") where.push(sql`coalesce(products.description->>'de', '') = ''`);
   const cond = where.length ? and(...where) : undefined;
   const db = await getDb();
@@ -83,6 +85,32 @@ export async function action({ request }: Route.ActionArgs) {
   const free = ids.filter((id) => !linkedIds.has(id));
   const skipped = ids.length - free.length;
   const note = skipped ? ` · ${skipped} mit vinX verknüpft übersprungen (in vinX ändern)` : "";
+  if (action === "images-standard" || action === "images-reset") {
+    // render the selected products' images from their originals, within the time budget
+    const { persistentStorage } = await import("~/.server/storage");
+    if (!persistentStorage()) return { message: "Bildaufbereitung braucht dauerhaften Speicher (Supabase Storage oder STORAGE_DRIVER=s3)." };
+    const { optimizeImage, standardEdit } = await import("~/.server/images");
+    const { defaultBudgetMs, outOfTime, withBudget } = await import("~/.server/job-runtime");
+    const { NO_EDIT, isNoEdit } = await import("~/lib/image-edit");
+    const std = action === "images-standard" ? standardEdit((await getSettings("shop")).shop.images) : null;
+    if (action === "images-standard" && !std) return { message: "Kein Bildstandard eingestellt (Einstellungen › Produktbilder)." };
+    const edit = std ?? NO_EDIT;
+    const rows = await db.select({ id: p.id, slug: p.slug, image: p.image, imageSource: p.imageSource }).from(p).where(and(inArray(p.id, ids), isNotNull(p.image)));
+    let done = 0, failed = 0;
+    await withBudget(defaultBudgetMs(), async () => {
+      for (const r of rows) {
+        if (done + failed > 0 && outOfTime()) break;
+        const source = r.imageSource ?? r.image!;
+        try {
+          const o = await optimizeImage(source, r.slug, edit);
+          await db.update(p).set({ image: o.url, imageSource: source, imageEdit: isNoEdit(edit) ? null : edit, updatedAt: new Date() }).where(eq(p.id, r.id));
+          done++;
+        } catch { failed++; }
+      }
+    });
+    const rest = rows.length - done - failed;
+    return { message: `${done} Bild${done === 1 ? "" : "er"} ${std ? "nach Bildstandard aufbereitet" : "auf das Original zurückgesetzt"}${failed ? `, ${failed} nicht lesbar` : ""}${rest ? `, ${rest} noch offen (Zeitbudget) — erneut ausführen` : ""}${rows.length < ids.length ? ` · ${ids.length - rows.length} ohne Bild` : ""}.` };
+  }
   if (action === "delete") {
     if (free.length) await db.delete(p).where(inArray(p.id, free));
     return { message: `${free.length} Produkt${free.length === 1 ? "" : "e"} gelöscht${note}.` };
@@ -121,13 +149,13 @@ export default function Products({ loaderData }: Route.ComponentProps) {
           <option value="">Status: alle</option><option value="active">Aktiv</option><option value="inactive">Inaktiv</option><option value="soldout">Ausverkauft</option>
         </Select>
         <Select name="flag" defaultValue={params.get("flag") ?? ""} size="sm" className="w-40" aria-label="Merkmal">
-          <option value="">Merkmal: alle</option><option value="promo">Aktion</option><option value="featured">Empfohlen</option><option value="trade">Nur B2B</option><option value="noimage">Ohne Bild</option><option value="notext">Ohne Beschreibung</option>
+          <option value="">Merkmal: alle</option><option value="promo">Aktion</option><option value="featured">Empfohlen</option><option value="trade">Nur B2B</option><option value="noimage">Ohne Bild</option><option value="rawimage">Bild nicht optimiert</option><option value="editedimage">Bild von Hand bearbeitet</option><option value="notext">Ohne Beschreibung</option>
         </Select>
       </ListToolbar>
       <DataTable
         meta={list}
         empty={!rows.length}
-        bulk={[...Object.entries(BULK).map(([value, b]) => ({ value, label: b.label })), { value: "delete", label: "Löschen", tone: "danger" as const }]}
+        bulk={[...Object.entries(BULK).map(([value, b]) => ({ value, label: b.label })), { value: "images-standard", label: "Bildstandard anwenden" }, { value: "images-reset", label: "Bild auf Original zurücksetzen" }, { value: "delete", label: "Löschen", tone: "danger" as const }]}
         head={["", { label: "Produkt", sort: "name" }, { label: "Kategorie", sort: "category" }, "Art.-Nr.", { label: "Preis", sort: "price" }, { label: "Lager", sort: "stock" }, "Status"]}
       >
         {rows.map((x) => {
