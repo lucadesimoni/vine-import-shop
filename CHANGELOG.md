@@ -12,6 +12,12 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Security
+- **Critical: admin actions without a login.** The staff check was only in the admin layout's loader. In React Router an action runs before the loaders, so an anonymous POST to an admin page could change data (product, customer, order, settings, design …) and was redirected to the login only afterwards. The check now runs as middleware on every request under `/admin` (loaders, actions, resource routes) before anything else: anonymous requests go to the login, customers get 403. A regression test in the end-to-end suite covers it. **Please update all installations.**
+
+### Added
+- Admin activity log (backend): after each successful admin action, the middleware records who did what and to which record (product name, order number, customer). Form values are never stored. Table `audit_log`, migration `0011`, kept 365 days.
+
 ## [1.18.0] - 2026-11-14
 
 ### Changed

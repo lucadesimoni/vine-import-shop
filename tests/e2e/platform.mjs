@@ -440,6 +440,21 @@ section("Sign-in link (magic link)");
   for (const p of [ml, again, mlb, adm]) await p.context().close();
 }
 
+section("Admin access (actions run before loaders)");
+{
+  // anonymous and customer POSTs to admin actions must not change anything
+  const form = { "Content-Type": "application/x-www-form-urlencoded", Origin: B };
+  for (const path of ["/admin/products/1", "/admin/products?index", "/admin/settings", "/admin/design", "/admin/customers/2"]) {
+    const r = await res(path, { method: "POST", headers: form, body: "name.de=HACKED&action=deactivate&ids=1&intent=delete", redirect: "manual" });
+    ok(r.status === 302 && /\/login/.test(r.headers.get("location") ?? ""), `admin access: anonymous POST ${path} → login`, String(r.status));
+  }
+  const ccookie = (await consumer.context().cookies()).map((c) => `${c.name}=${c.value}`).join("; ");
+  const asCustomer = await res("/admin/products/1", { method: "POST", headers: { ...form, cookie: ccookie }, body: "name.de=HACKED", redirect: "manual" });
+  ok(asCustomer.status === 403 || asCustomer.status === 302, "admin access: customer POST rejected", String(asCustomer.status));
+  await admin.goto(B + "/admin/products/1");
+  ok((await admin.locator('input[name="name.de"]').inputValue()) !== "HACKED", "admin access: product unchanged");
+}
+
 section("Rate limits (shared, in the database)");
 {
   const tries = [];

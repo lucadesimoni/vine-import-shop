@@ -422,3 +422,20 @@ export const rateLimits = pgTable("rate_limits", {
   count: integer("count").notNull().default(0),
   resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
 });
+
+/** Admin activity log: who did what, when (no form values — only the kind of action and the record concerned) */
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: serial("id").primaryKey(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+    userId: integer("user_id"),
+    actor: text("actor").notNull(),
+    action: text("action").notNull(),
+    entity: text("entity"),
+    entityId: text("entity_id"),
+    summary: text("summary").notNull(),
+    path: text("path"),
+  },
+  (t) => [index("audit_at_idx").on(t.at), index("audit_entity_idx").on(t.entity, t.entityId)],
+);

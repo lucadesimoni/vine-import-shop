@@ -10,6 +10,23 @@ import { getDb, schema } from "~/.server/db";
 import { cn } from "~/lib/cn";
 import { useRootData } from "~/lib/root-data";
 
+/**
+ * Every request under /admin — loaders, actions and resource routes — needs a staff login. This must run as
+ * middleware: an action runs BEFORE the layout loader, so a check in the loader alone would let an anonymous POST
+ * change data (it would only be redirected afterwards). After a successful POST the action is logged (audit.ts).
+ */
+export const middleware: Route.MiddlewareFunction[] = [
+  async ({ request }, next) => {
+    const user = await requireStaff(request);
+    if (request.method === "GET" || request.method === "HEAD") return next();
+    const { prepareAudit } = await import("~/.server/audit");
+    const pending = await prepareAudit(request, user);
+    const res = await next();
+    if (res instanceof Response && res.status < 400) await pending();
+    return res;
+  },
+];
+
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await requireStaff(request);
   // Live installations (no demo data) must not keep the default admin password.
