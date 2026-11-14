@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-11-14
+
 ### Changed
 - Image editor: the crop frame also works with the keyboard. Arrow keys move it (Shift: larger steps), Alt + arrow keys resize it, and screen readers announce position and size.
 
@@ -491,7 +493,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.20.1...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.21.0...HEAD
+[1.21.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.20.1...v1.21.0
 [1.20.1]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.20.0...v1.20.1
 [1.20.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.19.1...v1.20.0
 [1.19.1]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.19.0...v1.19.1
