@@ -12,6 +12,9 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Changed
+- Image editor: the crop frame also works with the keyboard. Arrow keys move it (Shift: larger steps), Alt + arrow keys resize it, and screen readers announce position and size.
+
 ### Added
 - `docs/HANDBUCH.md`: German handbook for shop operators. It covers sign-in and team, orders, products and image editing, image standard, producers, customers, conditions, content and design, settings and storefronts, vinX, system, and the activity log.
 

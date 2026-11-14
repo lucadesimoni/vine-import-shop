@@ -380,6 +380,13 @@ section("Image editor (non-destructive)");
   await admin.locator('dialog label:has-text("Hellen Hintergrund entfernen") input').check();
   await admin.locator('dialog label:has-text("Leere Ränder entfernen") input').check();
   await admin.click('dialog button:has-text("1:1")');
+  // keyboard crop: activate the frame, shrink with Alt + arrows, move with arrows
+  await admin.click('dialog button[aria-label="Zuschneiden"]');
+  const frame = admin.locator('dialog [aria-label^="Ausschnitt"]');
+  await frame.focus();
+  for (let i = 0; i < 3; i++) await admin.keyboard.press("Alt+ArrowLeft");
+  for (let i = 0; i < 2; i++) await admin.keyboard.press("ArrowRight");
+  ok(/x [1-9]\d? %/.test((await frame.getAttribute("aria-valuetext")) ?? ""), "image editor: crop frame works with the keyboard", await frame.getAttribute("aria-valuetext"));
   await admin.click('dialog button:has-text("Übernehmen")');
   await admin.waitForSelector("dialog", { state: "detached", timeout: 30000 });
   const after = await admin.locator("input[name=image]").inputValue();

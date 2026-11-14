@@ -186,6 +186,19 @@ function CropFrame({ src, box, active, ratio, onChange }: { src: string; box: Bo
     onChange({ x, y, w, h });
   };
   const end = () => { drag.current = null; };
+  // keyboard: arrows move the frame (1 %, with Shift 5 %), Alt + arrows resize it (keeps the ratio when one is set)
+  const onKey = (ev: React.KeyboardEvent) => {
+    const step = ev.shiftKey ? 0.05 : 0.01;
+    const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[ev.key];
+    if (!d) return;
+    ev.preventDefault();
+    let { x, y, w, h } = box;
+    if (ev.altKey) {
+      w = Math.min(1 - x, Math.max(0.05, w + d[0])); h = Math.min(1 - y, Math.max(0.05, h + d[1]));
+      if (ratio) { const hh = (w * aspect) / ratio; if (y + hh <= 1) h = hh; else { h = 1 - y; w = (h * ratio) / aspect; } }
+    } else { x = Math.min(1 - w, Math.max(0, x + d[0])); y = Math.min(1 - h, Math.max(0, y + d[1])); }
+    onChange({ x, y, w, h });
+  };
   const handle = "absolute h-3.5 w-3.5 rounded-full border-2 border-white bg-primary shadow";
 
   return (
@@ -194,7 +207,10 @@ function CropFrame({ src, box, active, ratio, onChange }: { src: string; box: Bo
         <img src={src} alt="" className="block max-h-[min(60vh,520px)] max-w-full select-none object-contain" draggable={false}
           onLoad={(x) => setAspect(x.currentTarget.naturalWidth / x.currentTarget.naturalHeight || 1)} />
         {(active || box !== FULL) && (
-          <div className={cn("absolute border-2 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]", active ? "cursor-move" : "pointer-events-none")}
+          <div className={cn("absolute border-2 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] outline-none focus-visible:ring-2 focus-visible:ring-primary", active ? "cursor-move" : "pointer-events-none")}
+            tabIndex={active ? 0 : -1} aria-label="Ausschnitt: Pfeiltasten verschieben, Alt + Pfeiltasten ändern die Grösse"
+            aria-valuetext={`x ${Math.round(box.x * 100)} %, y ${Math.round(box.y * 100)} %, ${Math.round(box.w * 100)} × ${Math.round(box.h * 100)} %`}
+            onKeyDown={active ? onKey : undefined}
             style={{ left: `${box.x * 100}%`, top: `${box.y * 100}%`, width: `${box.w * 100}%`, height: `${box.h * 100}%` }}
             onPointerDown={start("move")}>
             {active && ["nw", "ne", "sw", "se"].map((c) => (
