@@ -144,6 +144,8 @@ Commands: `npm test` (22 unit tests), `npm run e2e` (end-to-end browser smoke te
 - **Settings**: sales model, languages, customer groups, tax, stock display, payments, shipping.
 - **vinX**: connection, mapping, jobs, CSV upload, outbox, log.
 
+Admin handbook for shop operators (German): [docs/HANDBUCH.md](docs/HANDBUCH.md)
+
 More: [Architecture](docs/ARCHITECTURE.md) · [vinX integration](docs/VINX.md) · [Deployment](docs/DEPLOY.md) · [White-labelling](docs/WHITELABEL.md)
 
 ## Licence

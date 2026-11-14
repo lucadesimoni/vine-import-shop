@@ -12,6 +12,9 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- `docs/HANDBUCH.md`: German handbook for shop operators. It covers sign-in and team, orders, products and image editing, image standard, producers, customers, conditions, content and design, settings and storefronts, vinX, system, and the activity log.
+
 ## [1.20.1] - 2026-11-14
 
 ### Fixed
