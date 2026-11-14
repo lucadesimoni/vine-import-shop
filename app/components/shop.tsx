@@ -21,18 +21,18 @@ export function Logo({ inverse = false, compact = false, to = "/", sub }: { inve
   // In dark mode the regular logo swaps to the inverse (light) artwork when one is configured.
   const darkSrc = !inverse && brand.darkMode !== "off" && brand.logoInverseUrl ? brand.logoInverseUrl : null;
   return (
-    <Link to={to} className="group flex min-w-0 shrink-0 items-center gap-2.5 min-[380px]:gap-3" aria-label={brand.name}>
+    <Link to={to} className="group flex min-w-0 shrink items-center gap-2.5 min-[380px]:gap-3" aria-label={brand.name}>
       {src ? (
         <>
-          <img src={src} alt="" className={cn("w-auto", compact ? "h-9" : "h-8 min-[380px]:h-10 md:h-12", darkSrc && "dark:hidden")} />
+          <img src={src} alt="" className={cn("w-auto shrink-0", compact ? "h-9" : "h-8 min-[380px]:h-10 md:h-12", darkSrc && "dark:hidden")} />
           {darkSrc && <img src={darkSrc} alt="" className={cn("hidden w-auto dark:block", compact ? "h-9" : "h-8 min-[380px]:h-10 md:h-12")} />}
         </>
       ) : (
         <span className={cn("grid h-10 w-10 place-items-center rounded-full font-display text-xl italic", inverse ? "bg-on-inverse text-inverse" : "bg-primary text-on-primary")}>{brand.name.slice(0, 1)}</span>
       )}
-      <span className="flex flex-col leading-none">
-        <span className={cn("whitespace-nowrap font-display text-[1.2rem] min-[380px]:text-[1.45rem] md:text-[1.7rem]", brand.name === brand.name.toUpperCase() ? "tracking-[0.06em]" : "tracking-tight")}>{brand.name}</span>
-        {(sub ?? brand.claim) && <span className={cn("text-eyebrow mt-1.5 text-[0.58rem] min-[380px]:text-[0.62rem]", inverse ? "text-on-inverse/70" : "text-muted-fg")}>{sub ?? brand.claim}</span>}
+      <span className="flex min-w-0 flex-col leading-none">
+        <span className={cn("truncate font-display text-[1.2rem] min-[380px]:text-[1.45rem] md:text-[1.7rem]", brand.name === brand.name.toUpperCase() ? "tracking-[0.06em]" : "tracking-tight")}>{brand.name}</span>
+        {(sub ?? brand.claim) && <span className={cn("text-eyebrow mt-1.5 truncate text-[0.58rem] min-[380px]:text-[0.62rem]", inverse ? "text-on-inverse/70" : "text-muted-fg")}>{sub ?? brand.claim}</span>}
       </span>
     </Link>
   );
@@ -105,7 +105,7 @@ export function Header() {
             </NavLink>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-0 sm:gap-1 xl:ml-0">
+        <div className="ml-auto flex shrink-0 items-center gap-0 sm:gap-1 xl:ml-0">
           {locales.length > 1 && (
             <div className="mr-2 hidden items-center gap-1 text-xs font-medium tracking-wider sm:flex">
               {locales.map((l, i) => (
@@ -126,13 +126,13 @@ export function Header() {
             </a>
           )}
           <ThemeToggle className="hidden sm:inline-flex" />
-          <button className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10")} onClick={() => setSearch((s) => !s)} aria-label={t("nav.search")}>
+          <button className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10 max-[379px]:h-9 max-[379px]:w-9")} onClick={() => setSearch((s) => !s)} aria-label={t("nav.search")}>
             <Search size={19} strokeWidth={1.5} />
           </button>
-          <Link to={user ? (user.role !== "customer" ? "/admin" : tradeInPortal ? `${channel.portalUrl}/portal` : "/account") : "/login"} reloadDocument={tradeInPortal && !!channel.portalUrl} className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10 max-[359px]:hidden")} aria-label={user ? t("nav.account") : t("nav.login")}>
+          <Link to={user ? (user.role !== "customer" ? "/admin" : tradeInPortal ? `${channel.portalUrl}/portal` : "/account") : "/login"} reloadDocument={tradeInPortal && !!channel.portalUrl} className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10 max-[379px]:h-9 max-[379px]:w-9 max-[359px]:hidden")} aria-label={user ? t("nav.account") : t("nav.login")}>
             <User size={19} strokeWidth={1.5} />
           </Link>
-          <Link to="/order-list" className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10")} aria-label={cartCount ? `${t("nav.orderList")} (${cartCount})` : t("nav.orderList")}>
+          <Link to="/order-list" className={buttonClass({ variant: "ghost", size: "icon" }, "max-sm:h-10 max-sm:w-10 max-[379px]:h-9 max-[379px]:w-9")} aria-label={cartCount ? `${t("nav.orderList")} (${cartCount})` : t("nav.orderList")}>
             <span className="relative">
               <ShoppingBag size={19} strokeWidth={1.5} />
               {cartCount > 0 && (
@@ -338,8 +338,8 @@ export function StockLabel({ level, qty }: { level: StockLevel; qty?: number | n
   const { t } = useI18n();
   const s = STOCK_STYLE[level];
   return (
-    <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs text-muted-fg">
-      <span className="flex gap-0.5" aria-hidden>
+    <span className="inline-flex min-w-0 max-w-full items-center gap-2 text-xs text-muted-fg">
+      <span className="flex shrink-0 gap-0.5" aria-hidden>
         {[0, 1, 2].map((i) => <span key={i} className={cn("h-1 w-2.5 rounded-full", i < s.dots ? s.tone : "bg-border")} />)}
       </span>
       {qty != null && level !== "out" ? t("stock.exact", { n: qty }) : t(s.key)}

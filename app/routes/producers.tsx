@@ -105,10 +105,10 @@ export default function Producers({ loaderData }: Route.ComponentProps) {
           <p className="max-w-2xl text-muted-fg">{t("origin.intro", { producers: producers.length, areas: showRegions ? regionAreas.length : facets.countries.length })}</p>
         </div>
         {views.length > 1 && (
-          <nav className="flex rounded-control border border-border bg-surface p-1" aria-label={t("origin.view")}>
+          <nav className="grid w-full auto-cols-fr grid-flow-col rounded-control border border-border bg-surface p-1 sm:flex sm:w-auto" aria-label={t("origin.view")}>
             {views.map((v) => (
-              <Link key={v} to={link({ view: v, region: null, origin: null })} preventScrollReset aria-current={view === v ? "page" : undefined} className={cn("btn-label btn-text-sm flex h-9 items-center gap-2 rounded-btn px-4 transition-colors", view === v ? "bg-fg text-bg" : "text-muted-fg hover:text-fg")}>
-                {v === "regions" && <MapIcon size={14} />}{v === "world" && <Globe2 size={14} />}{v === "az" && <List size={14} />} {viewLabel[v]}
+              <Link key={v} to={link({ view: v, region: null, origin: null })} preventScrollReset aria-current={view === v ? "page" : undefined} className={cn("btn-label btn-text-sm flex h-9 min-w-0 items-center justify-center gap-2 rounded-btn px-2 transition-colors sm:px-4", view === v ? "bg-fg text-bg" : "text-muted-fg hover:text-fg")}>
+                {v === "regions" && <MapIcon size={14} className="shrink-0" />}{v === "world" && <Globe2 size={14} className="shrink-0" />}{v === "az" && <List size={14} className="shrink-0" />} <span className="truncate">{viewLabel[v]}</span>
               </Link>
             ))}
           </nav>

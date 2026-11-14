@@ -12,6 +12,15 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Fixed
+- **Phones with a large system font size** (e.g. Android "font size" at 125 %): the shop could become wider than the screen, so the page moved sideways and showed a white strip on the right (seen on the Italian promotions page).
+  - The logo group no longer refuses to shrink; the brand name is shortened with "…" if needed, and the header icons are a little smaller under 380 px.
+  - The stock label in product cards may wrap.
+  - The view switch on the producers page uses three equal columns on phones.
+  - The producer name may wrap, and long single words in headings wrap everywhere.
+  - Checked in all four languages at 360/412 px with 100, 125, 140 and 150 % font size: no overflow left.
+- Admin settings: the "Speichern & alle Produktbilder aufbereiten" button wraps on small screens.
+
 ## [1.20.0] - 2026-11-14
 
 ### Added

@@ -63,9 +63,9 @@ export default function Producer({ loaderData }: Route.ComponentProps) {
         <div className="grid content-start gap-6">
           <div className="flex items-center gap-5">
             <ProducerLogo name={p.name} logo={p.logo} size="lg" />
-            <div className="grid gap-2">
+            <div className="grid min-w-0 gap-2">
               <Eyebrow line>{t("producer.eyebrow")}</Eyebrow>
-              <h1 className="text-h1">{p.name}</h1>
+              <h1 className="text-h1 [overflow-wrap:anywhere] [hyphens:auto]">{p.name}</h1>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-fg">

@@ -110,6 +110,9 @@
 }
 
 @layer base {
+  /* long single words in headings (product and producer names, German compounds) wrap instead of widening the
+     page — matters with large system font sizes on phones */
+  :where(h1, h2, h3) { overflow-wrap: break-word; }
   /* dark mode: photos on the light media stage are dimmed to the stage tone (white packshot background ≈ --t-media) */
   [data-theme="dark"] .bg-media img { filter: brightness(0.9); }
   /* Grid items may shrink below their content width (default min-width:auto lets one long word or a

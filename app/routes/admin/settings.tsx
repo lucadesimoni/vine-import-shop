@@ -252,7 +252,7 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
               <Field label="Toleranz Freistellen" hint="1–60; höher entfernt mehr Hintergrund">{(id) => <Input id={id} name="images.tolerance" type="number" min={1} max={60} defaultValue={shop.images.tolerance} />}</Field>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Button type="submit" name="intent" value="harmonize" variant="secondary" size="sm" disabled={!imageStorage}>Speichern & alle Produktbilder aufbereiten</Button>
+              <Button type="submit" name="intent" value="harmonize" variant="secondary" size="sm" disabled={!imageStorage} className="h-auto min-h-9 whitespace-normal py-2 text-left">Speichern & alle Produktbilder aufbereiten</Button>
               <span className="text-note text-muted-fg">Einzelne Bilder: Produkt › Bild bearbeiten.</span>
             </div>
           </Panel>
