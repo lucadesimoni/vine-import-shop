@@ -6,7 +6,7 @@ import { productDetail } from "~/.server/catalog";
 import { useI18n, type MessageKey } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
 import { useRootData } from "~/lib/root-data";
-import { productLd, socialMeta } from "~/lib/seo";
+import { langOf, productLd, socialMeta } from "~/lib/seo";
 import type { RootData } from "~/root";
 import { usePath } from "~/lib/channel";
 import { ProducerLogo } from "~/components/producer";
@@ -20,7 +20,7 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
   return { product, url: request.url };
 }
 
-export const meta: Route.MetaFunction = ({ loaderData, matches }) => {
+export const meta: Route.MetaFunction = ({ loaderData, matches, location }) => {
   if (!loaderData) return [];
   const root = matches[0].loaderData as RootData | undefined;
   const p = loaderData.product;
@@ -30,7 +30,7 @@ export const meta: Route.MetaFunction = ({ loaderData, matches }) => {
   const description = p.short || p.description.slice(0, 160);
   return [
     { title: `${p.card.name} · ${root?.brand.name ?? ""}` },
-    ...socialMeta({ title: p.card.name, description, url, image: p.card.image, type: "product", siteName: root?.brand.name }),
+    ...socialMeta({ title: p.card.name, description, url, image: p.card.image, type: "product", siteName: root?.brand.name, lang: langOf(location) }),
     {
       "script:ld+json": productLd({
         name: p.card.name, url, origin, description: p.description || p.short, image: p.card.image, brand: p.producer?.name,

@@ -3,7 +3,7 @@ import { shopContext } from "~/.server/context";
 import { getSetting } from "~/.server/settings";
 import { homeBlocks, resolveBlocks } from "~/.server/blocks";
 import { Blocks } from "~/components/blocks";
-import { homeLd, socialMeta } from "~/lib/seo";
+import { homeLd, langOf, socialMeta } from "~/lib/seo";
 import { tl } from "~/lib/localized";
 import type { RootData } from "~/root";
 
@@ -14,13 +14,13 @@ export async function loader({ context }: Route.LoaderArgs) {
   return { blocks: await resolveBlocks(ctx, homeBlocks(home)) };
 }
 
-export const meta: Route.MetaFunction = ({ matches }) => {
+export const meta: Route.MetaFunction = ({ matches, location }) => {
   const root = matches[0].loaderData as RootData | undefined;
   if (!root) return [];
   const tagline = tl(root.brand.tagline, root.locale);
   return [
     { title: `${root.brand.name}${tagline ? ` — ${tagline}` : ""}` },
-    ...socialMeta({ title: root.brand.name, description: tagline || undefined, url: `${root.origin}/`, image: root.brand.logoUrl || null, siteName: root.brand.name }),
+    ...socialMeta({ title: root.brand.name, description: tagline || undefined, url: `${root.origin}/`, image: root.brand.logoUrl || null, siteName: root.brand.name, lang: langOf(location) }),
     { "script:ld+json": homeLd(root.brand, root.origin) },
   ];
 };

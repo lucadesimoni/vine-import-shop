@@ -12,6 +12,13 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Changed
+- **Sitemap:** now includes the producer pages (those with visible products; 124 in the demo), `lastmod` for products and pages, and an `x-default` language variant. `robots.txt` also excludes `/portal` and `/api/`.
+- **Language variants:** the canonical URL keeps `?lang=xx`. Before, the Italian page pointed to the German one and was treated as a duplicate.
+- **Health check** (`/api/health`): the database must answer within 5 s, otherwise the endpoint returns 503 with the reason, so monitors (`shopctl`, uptime services) see the outage. It recovers by itself when the database is back. `Cache-Control: no-store`.
+- **E-mails** carry a plain-text part next to the HTML (better delivery, readable in text-only clients).
+- PostgreSQL notices from idempotent migrations ("already exists, skipping") are no longer logged.
+
 ## [1.17.0] - 2026-11-14
 
 ### Added

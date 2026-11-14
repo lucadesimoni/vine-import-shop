@@ -81,9 +81,16 @@ export function productLd(p: {
   };
 }
 
-/** Open Graph + Twitter tags (absolute image URL) */
-export function socialMeta(o: { title: string; description?: string; url: string; image?: string | null; type?: string; siteName?: string }) {
+/** `?lang=xx` of the current URL (language variants listed in the sitemap), to keep it in the canonical URL */
+export const langOf = (location: { search: string }) => {
+  const l = new URLSearchParams(location.search).get("lang");
+  return l && /^[a-z]{2}$/.test(l) ? l : null;
+};
+
+/** Open Graph + Twitter tags (absolute image URL); the canonical URL keeps an explicit language (?lang=) */
+export function socialMeta(o: { title: string; description?: string; url: string; image?: string | null; type?: string; siteName?: string; lang?: string | null }) {
   const img = o.image ? new URL(o.image, o.url).href : undefined;
+  if (o.lang) { const u = new URL(o.url); u.searchParams.set("lang", o.lang); o = { ...o, url: u.href }; }
   return [
     { property: "og:type", content: o.type ?? "website" },
     { property: "og:title", content: o.title },

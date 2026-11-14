@@ -11,7 +11,8 @@ export async function sendMail(to: string, subject: string, html: string, replyT
     if (driver === "smtp" && process.env.SMTP_URL) {
       const nodemailer = await import("nodemailer");
       const transport = nodemailer.createTransport(process.env.SMTP_URL);
-      await transport.sendMail({ from: process.env.MAIL_FROM, to, subject, html, replyTo });
+      // plain-text part next to the HTML: better delivery (spam filters) and readable in text-only clients
+      await transport.sendMail({ from: process.env.MAIL_FROM, to, subject, html, text: htmlToText(html), replyTo });
       return true;
     }
     await mkdir("data", { recursive: true });
@@ -37,3 +38,21 @@ export function layout(brand: Brand, title: string, body: string) {
 }
 
 export { esc };
+
+/** readable plain text from a mail template: paragraphs and rows on their own lines, links as "text (url)" */
+export function htmlToText(html: string) {
+  return html
+    .replace(/<(style|script|head)[\s\S]*?<\/\1>/gi, "")
+    .replace(/<a\s[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, (_, href: string, text: string) => {
+      const t = text.replace(/<[^>]+>/g, "").trim();
+      return !t || t === href ? href : `${t} (${href})`;
+    })
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|tr|h[1-6]|li|table)>/gi, "\n")
+    .replace(/<\/t[dh]>/gi, "  ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&")
+    .split("\n").map((l) => l.replace(/[ \t]+/g, " ").trim()).join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}

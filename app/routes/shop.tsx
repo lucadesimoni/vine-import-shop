@@ -1,4 +1,4 @@
-import { socialMeta } from "~/lib/seo";
+import { langOf, socialMeta } from "~/lib/seo";
 import type { RootData } from "~/root";
 import { Form, Link, useNavigation, useSearchParams, useSubmit } from "react-router";
 import { Map as MapIcon, Search, SlidersHorizontal, X } from "lucide-react";
@@ -39,7 +39,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   return { result, categories, producers, params, regionLabel: params.region ? regionNameOf(regionCountry(params.region) ?? "", params.region, ctx.locale) : "", origins: { regions: origins.regions.slice(0, 10).map((r) => ({ id: r.id, name: r.name, count: r.count })), countries: origins.countries.map((c) => ({ iso: c.iso, count: c.count })) }, mapEnabled: ctx.shop.originMap.mode !== "off" };
 }
 
-export const meta: Route.MetaFunction = ({ matches, loaderData }) => {
+export const meta: Route.MetaFunction = ({ matches, loaderData, location }) => {
   const root = matches[0].loaderData as RootData | undefined;
   const p = loaderData?.params;
   const category = p?.category ? loaderData?.categories.find((c) => c.slug === p.category) : null;
@@ -47,7 +47,7 @@ export const meta: Route.MetaFunction = ({ matches, loaderData }) => {
   if (!root || !p) return [{ title }];
   // one indexable URL per category; search results, sorting and pages beyond the first are not indexed separately
   const url = `${root.origin}/shop${p.category ? `?category=${encodeURIComponent(p.category)}` : ""}`;
-  return [{ title }, ...socialMeta({ title, url, siteName: root.brand.name }), ...(p.q || p.page > 1 ? [{ name: "robots", content: "noindex, follow" }] : [])];
+  return [{ title }, ...socialMeta({ title, url, siteName: root.brand.name, lang: langOf(location) }), ...(p.q || p.page > 1 ? [{ name: "robots", content: "noindex, follow" }] : [])];
 };
 
 export default function Shop({ loaderData }: Route.ComponentProps) {
