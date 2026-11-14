@@ -62,6 +62,8 @@ async function connect(): Promise<DB> {
     const client = postgres(clean, {
       max: Number(process.env.DB_POOL ?? (process.env.VERCEL ? 5 : 10)), prepare: false, ssl,
       idle_timeout: process.env.VERCEL ? 20 : undefined, connect_timeout: 15,
+      // DB_TRACE=1: log every statement (count round trips per page, e.g. against a remote database)
+      ...(process.env.DB_TRACE ? { debug: (_c: number, q: string) => console.log(`[sql] ${q.replace(/\s+/g, " ").slice(0, 140)}`) } : {}),
     });
     const db = drizzlePg(client, { schema });
     info = { kind: "postgres", url };

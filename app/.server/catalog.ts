@@ -60,20 +60,20 @@ async function tiersFor(variantIds: number[], groupId: number | undefined) {
 export async function toCards(ctx: ShopContext, ids: number[]): Promise<ProductCard[]> {
   if (!ids.length) return [];
   const db = await getDb();
-  const rows = await db.query.products.findMany({
-    where: inArray(p.id, ids),
-    with: undefined,
-  });
-  const vrows = await db.select().from(v).where(and(inArray(v.productId, ids), eq(v.active, true))).orderBy(asc(v.sort), desc(v.vintage));
+  // independent queries in parallel: with a remote database (e.g. Vercel ↔ Supabase) every round trip counts
+  const [rows, vrows, rules] = await Promise.all([
+    db.query.products.findMany({ where: inArray(p.id, ids) }),
+    db.select().from(v).where(and(inArray(v.productId, ids), eq(v.active, true))).orderBy(asc(v.sort), desc(v.vintage)),
+    ctx.showPrices ? rulesFor(ctx) : Promise.resolve([]),
+  ]);
   const prodIds = [...new Set(rows.map((r) => r.producerId).filter((x): x is number => !!x))];
   const catIds = [...new Set(rows.map((r) => r.categoryId).filter((x): x is number => !!x))];
-  const [prods, cats, tiers] = await Promise.all([
+  const [prods, cats, tiers, custom] = await Promise.all([
     prodIds.length ? db.select().from(pr).where(inArray(pr.id, prodIds)) : [],
     catIds.length ? db.select().from(c).where(inArray(c.id, catIds)) : [],
     tiersFor(vrows.map((x) => x.id), ctx.group?.id),
+    ctx.showPrices ? customerTiers(ctx, vrows) : Promise.resolve(null),
   ]);
-  const custom = ctx.showPrices ? await customerTiers(ctx, vrows) : null;
-  const rules = ctx.showPrices ? await rulesFor(ctx) : [];
   const facts = rules.length ? await factsFor(vrows.map((x) => { const prod = rows.find((r) => r.id === x.productId); return { productId: x.productId, variantId: x.id, categoryId: prod?.categoryId ?? null, producerId: prod?.producerId ?? null, discountGroup: x.discountGroup }; })) : null;
   const priced = (x: (typeof vrows)[number], taxClass: "standard" | "reduced") => {
     const base = priceFor({ listGross: x.priceCents, taxRate: taxRate(ctx, taxClass), group: ctx.group, tiers: custom?.get(x.id) ?? tiers.get(x.id) ?? [] });
@@ -235,14 +235,17 @@ export async function productDetail(ctx: ShopContext, slug: string) {
   const db = await getDb();
   const row = await db.query.products.findFirst({ where: and(eq(p.slug, slug), visibleProducts(ctx)) });
   if (!row) return null;
-  const [card] = await toCards(ctx, [row.id]);
-  const producer = row.producerId ? await db.query.producers.findFirst({ where: eq(pr.id, row.producerId) }) : null;
-  const sameProducer = producer
-    ? await db.select({ id: p.id }).from(p).where(and(eq(p.producerId, producer.id), visibleProducts(ctx), sql`${p.id} <> ${row.id}`)).limit(4)
-    : [];
-  const sameCategory = row.categoryId
-    ? await db.select({ id: p.id }).from(p).where(and(eq(p.categoryId, row.categoryId), visibleProducts(ctx), sql`${p.id} <> ${row.id}`)).orderBy(desc(p.featured)).limit(4)
-    : [];
+  const [producer, sameProducer, sameCategory, links] = await Promise.all([
+    row.producerId ? db.query.producers.findFirst({ where: eq(pr.id, row.producerId) }) : null,
+    row.producerId ? db.select({ id: p.id }).from(p).where(and(eq(p.producerId, row.producerId), visibleProducts(ctx), sql`${p.id} <> ${row.id}`)).limit(4) : [],
+    row.categoryId ? db.select({ id: p.id }).from(p).where(and(eq(p.categoryId, row.categoryId), visibleProducts(ctx), sql`${p.id} <> ${row.id}`)).orderBy(desc(p.featured)).limit(4) : [],
+    erpLinks(ctx, row.erpDetails),
+  ]);
+  // one card query for the product and both recommendation rows
+  const cards = await toCards(ctx, [...new Set([row.id, ...sameProducer.map((x) => x.id), ...sameCategory.map((x) => x.id)])]);
+  const byId = new Map(cards.map((x) => [x.id, x]));
+  const pick = (list: { id: number }[]) => list.map((x) => byId.get(x.id)).filter((x): x is ProductCard => !!x);
+  const card = byId.get(row.id)!;
   return {
     card,
     description: tl(row.description, ctx.locale),
@@ -253,10 +256,10 @@ export async function productDetail(ctx: ShopContext, slug: string) {
     alcohol: row.alcohol,
     taxClass: row.taxClass,
     erp: row.erpDetails ?? null,
-    erpLinks: await erpLinks(ctx, row.erpDetails),
+    erpLinks: links,
     producer: producer ? { name: producer.name, slug: producer.slug, logo: producer.logo, region: producer.region, country: producer.country, description: tl(producer.description, ctx.locale) } : null,
-    moreFromProducer: await toCards(ctx, sameProducer.map((x) => x.id)),
-    related: await toCards(ctx, sameCategory.map((x) => x.id)),
+    moreFromProducer: pick(sameProducer),
+    related: pick(sameCategory),
   };
 }
 

@@ -59,7 +59,7 @@ The button in the README opens Elestio's CI/CD deploy for this repository, confi
 
   Neon or any other Postgres works the same way through `DATABASE_URL`. Files can also go to `STORAGE_DRIVER=s3` (R2, S3 …). Without a database the app starts as an **ephemeral demo** (embedded DB in `/tmp`, reset on cold start).
 - **Migrations and the first seed** are bundled and run on the first request. They run in one transaction with an advisory lock, so instances that start together wait instead of migrating twice, and an interrupted first seed leaves nothing half done.
-- **Function region** `fra1` (vercel.json) is the closest to Zurich.
+- **Function region** `fra1` (vercel.json) is the closest to Zurich (≈ 10 ms per query). Pages are built with parallel queries; `DB_TRACE=1` logs every statement if a page feels slow.
 - **Jobs (cron):** three ways to call `/api/cron` (each call needs `Authorization: Bearer $CRON_SECRET`):
   - **Vercel Cron** (`vercel.json`, daily at 04:00 — the Hobby plan allows nothing more frequent). On Pro, set `*/10 * * * *` in `vercel.json`.
   - **GitHub Actions** (`.github/workflows/cron.yml`, every 15 min, any plan): set the repository secrets `SHOP_URL` and `CRON_SECRET`.

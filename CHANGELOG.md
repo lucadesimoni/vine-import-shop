@@ -12,6 +12,10 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Changed
+- **Fewer database round trips** (matters with a remote database such as Vercel ↔ Supabase). Product cards load products, variants and conditions in parallel, and producers, categories, tier prices and customer prices in parallel. The product page loads the product and both recommendation rows in one card query. Measured with 10 ms latency per query: product page 18 → 10 queries, 264 → 97 ms; home page 254 → 144 ms.
+- `DB_TRACE=1` logs every SQL statement, to count round trips per page.
+
 ## [1.14.0] - 2026-11-14
 
 ### Added
