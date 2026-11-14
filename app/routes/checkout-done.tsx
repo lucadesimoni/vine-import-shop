@@ -12,7 +12,9 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
   const ctx = context.get(shopContext);
   const order = await getOrder({ number: params.number });
   const token = new URL(request.url).searchParams.get("t");
-  if (!order || (order.token !== token && order.userId !== ctx.user?.id)) throw data("Not found", { status: 404 });
+  // visible with the order's secret token (link after checkout) or for its signed-in owner — nothing else
+  const allowed = !!order && ((!!token && order.token === token) || (order.userId != null && order.userId === ctx.user?.id));
+  if (!order || !allowed) throw data("Not found", { status: 404 });
   return { order, bank: order.paymentMethod === "prepayment" ? ctx.shop.payments.prepayment : null };
 }
 

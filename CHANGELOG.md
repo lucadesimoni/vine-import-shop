@@ -12,6 +12,15 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Security
+- Review after the admin fix (v1.18.1). Checked:
+  - portal, account and admin data requests (`.data`) without a login: only redirects, no data;
+  - documents, price list and order confirmation: owner or secret token only;
+  - the public product API: consumer view only, no trade prices or trade-only items;
+  - the Markdown renderer: everything escaped, only http(s), relative and `mailto` links;
+  - the session secret: required in production.
+- The order confirmation page now requires a non-empty matching token or the signed-in owner explicitly, instead of relying on the token column never being empty.
+
 ## [1.19.0] - 2026-11-14
 
 ### Added
