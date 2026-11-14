@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Form, Link, NavLink, Outlet, redirect, useLocation } from "react-router";
-import { ExternalLink, FileText, Grape, LayoutDashboard, LogOut, Menu, Package, Palette, Percent, PlugZap, Settings, ShieldCheck, ShoppingCart, Store, Users, X } from "lucide-react";
+import { ExternalLink, FileText, Grape, History, LayoutDashboard, LogOut, Menu, Package, Palette, Percent, PlugZap, Settings, ShieldCheck, ShoppingCart, Store, Users, X } from "lucide-react";
 import { count, eq } from "drizzle-orm";
 import type { Route } from "./+types/layout";
 import { requireStaff, verifyPassword } from "~/.server/auth";
@@ -59,6 +59,7 @@ const NAV = [
   { to: "/admin/storefronts", label: "Storefronts", icon: Store },
   { to: "/admin/integrations", label: "vinX ERP", icon: PlugZap, badge: "integrations" },
   { to: "/admin/system", label: "System & Backups", icon: ShieldCheck },
+  { to: "/admin/activity", label: "Protokoll", icon: History },
 ] as const;
 
 export default function AdminLayout({ loaderData }: Route.ComponentProps) {

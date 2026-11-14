@@ -12,6 +12,12 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Admin › Protokoll:** who changed what and when.
+  - Covers all admin actions (product, image, bulk action, customer approval, order status, settings per storefront, design, import, jobs, backups) and staff sign-ins.
+  - Search, plus filters by area, person and date; entries link to the record.
+  - Form values are never stored; entries are kept 365 days.
+
 ## [1.18.1] - 2026-11-14
 
 ### Security

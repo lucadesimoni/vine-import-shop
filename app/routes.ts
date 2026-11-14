@@ -82,6 +82,7 @@ export default [
     route("storefronts/:id", "routes/admin/storefront.tsx"),
     route("integrations", "routes/admin/integrations.tsx"),
     route("system", "routes/admin/system.tsx"),
+    route("activity", "routes/admin/activity.tsx"),
     route("system/backups/:name", "routes/admin/backup-download.ts"),
     route("password", "routes/admin/password.tsx"),
     route("upload", "routes/admin/upload.ts"),

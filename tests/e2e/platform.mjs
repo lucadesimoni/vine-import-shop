@@ -455,6 +455,18 @@ section("Admin access (actions run before loaders)");
   ok((await admin.locator('input[name="name.de"]').inputValue()) !== "HACKED", "admin access: product unchanged");
 }
 
+section("Admin activity log");
+{
+  await admin.goto(B + "/admin/activity");
+  const log = await admin.locator("main").innerText();
+  ok(/Bild bearbeitet/.test(log) && /Massenaktion/.test(log), "activity log: product image edit and bulk action recorded", log.slice(0, 300));
+  ok(/admin@example\.com/.test(log), "activity log: shows who");
+  await admin.goto(B + "/admin/activity?q=HACKED");
+  ok(!/HACKED/.test(await admin.locator("tbody").innerText()), "activity log: rejected anonymous POSTs are not logged, form values never");
+  await admin.goto(B + "/admin/activity?entity=user");
+  ok(/Anmeldung im Admin/.test(await admin.locator("tbody").innerText()), "activity log: staff sign-ins");
+}
+
 section("Rate limits (shared, in the database)");
 {
   const tries = [];

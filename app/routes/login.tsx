@@ -41,6 +41,10 @@ export async function action({ request, context }: Route.ActionArgs) {
     return data({ error: ctx.t("auth.failed") }, { status: 401 });
   }
   await clearAttempts(keys[0][0]);
+  if (user.role !== "customer") {
+    const { audit } = await import("~/.server/audit");
+    await audit(user, { action: "user.login", entity: "user", entityId: user.id, summary: `Anmeldung im Admin (${clientIp(request)})` });
+  }
   return login(request, user.id, safeRedirect(form.get("next"), homeAfterLogin(user, ctx.channel)));
 }
 

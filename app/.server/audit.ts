@@ -36,6 +36,7 @@ const LABELS: Record<string, string> = {
   status: "Status geändert", ship: "versandt", paid: "als bezahlt markiert", "post-label": "Post-Etikett erstellt", "inquiry-done": "Anfrage erledigt",
   "image-edit": "Bild bearbeitet", "image-reset": "Bild zurückgesetzt", "images-standard": "Bildstandard angewendet", "images-reset": "Bilder zurückgesetzt",
   harmonize: "Produktbilder aufbereitet", preset: "Geschäftsprofil angewendet", "scope-reset": "auf Hauptshop zurückgesetzt",
+  preview: "Vorschau erstellt", import: "durchgeführt", map: "Zuordnung gewählt", bulk: "Massenaktion",
   backup: "Backup erstellt", restore: "Wiederherstellung angefordert", "cancel-restore": "Wiederherstellung abgebrochen", config: "Verbindung gespeichert",
 };
 const AREAS: [RegExp, string, string][] = [
@@ -78,7 +79,7 @@ export function describe(path: string, form: FormData | null, sf?: string | null
   const what = area?.[2] ?? path.replace(/^\/admin\/?/, "") ?? "Admin";
   const verb = kind.intent ?? (ids ? kind.action : undefined);
   let summary: string;
-  if (ids) summary = `${what}: Massenaktion «${LABELS[kind.action] ?? kind.action ?? "?"}» auf ${ids} Einträge`;
+  if (ids) summary = `${what}: Massenaktion «${LABELS[kind.action] ?? kind.action ?? "?"}» auf ${ids} ${ids === 1 ? "Eintrag" : "Einträge"}`;
   else if (m?.[2] === "new") summary = `${what} angelegt`;
   else if (verb === "status" && kind.status) summary = `${what}: Status → ${kind.status}`;
   else if (verb && kind.job) summary = `${what}: Job «${kind.job}» ausgeführt`;
