@@ -1,11 +1,14 @@
 import { asc, eq } from "drizzle-orm";
+import { useState } from "react";
 import { data, Form, Link, redirect, useActionData } from "react-router";
-import { ArrowLeft, ExternalLink, Lock, Trash2 } from "lucide-react";
+import { ArrowLeft, Crop, ExternalLink, Lock, Trash2 } from "lucide-react";
 import type { Route } from "./+types/product";
 import { getDb, schema } from "~/.server/db";
 import { getSettings } from "~/.server/settings";
-import { saveUpload } from "~/.server/storage";
-import { optimizeImage } from "~/.server/images";
+import { persistentStorage, saveUpload } from "~/.server/storage";
+import { optimizeImage, standardEdit } from "~/.server/images";
+import { isNoEdit, NO_EDIT, parseEdit } from "~/lib/image-edit";
+import { ImageEditor } from "~/components/image-editor";
 import { erpOwnedFields } from "~/.server/erp-ownership";
 import { slugify } from "~/lib/slug";
 import { parseMoneyInput } from "~/lib/money";
@@ -28,7 +31,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   ]);
   // locks apply only to records that really come from the ERP (variants with an ERP article id)
   const linked = variants.some((v) => v.erpId);
-  return { product, variants, categories, producers, locales: shop.locales, erpOwned: linked ? erpOwned : [], linked };
+  return { product, variants, categories, producers, locales: shop.locales, erpOwned: linked ? erpOwned : [], linked, imageStandard: standardEdit(shop.images), canEditImages: persistentStorage() };
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -36,7 +39,25 @@ export async function action({ request, params }: Route.ActionArgs) {
   const form = await request.formData();
   const current = params.id === "new" ? [] : await db.select().from(schema.variants).where(eq(schema.variants.productId, Number(params.id)));
   const linked = current.some((v) => v.erpId);
-  if (form.get("intent") === "delete") {
+  const existing = params.id === "new" ? null : await db.query.products.findFirst({ where: eq(schema.products.id, Number(params.id)), columns: { slug: true, image: true, imageSource: true } });
+  const intent = form.get("intent");
+  // image editor: render the shop image from the original with the given edit (the original is never changed)
+  if (intent === "image-edit" || intent === "image-reset") {
+    const source = existing?.imageSource ?? existing?.image;
+    if (!existing || !source) return data({ error: "Kein Bild vorhanden." }, { status: 400 });
+    if (!persistentStorage()) return data({ error: "Bildbearbeitung braucht dauerhaften Speicher (Supabase Storage oder STORAGE_DRIVER=s3)." }, { status: 400 });
+    let edit = NO_EDIT;
+    try { if (intent === "image-edit") edit = parseEdit(JSON.parse(String(form.get("edit") ?? "{}"))); } catch { return data({ error: "Ungültige Bearbeitung." }, { status: 400 }); }
+    const { auto: _auto, ...manual } = edit;
+    try {
+      const o = await optimizeImage(source, existing.slug, manual);
+      await db.update(schema.products).set({ image: o.url, imageSource: source, imageEdit: isNoEdit(manual) ? null : manual, updatedAt: new Date() }).where(eq(schema.products.id, Number(params.id)));
+    } catch (e) {
+      return data({ error: `Bild konnte nicht bearbeitet werden: ${(e as Error).message}` }, { status: 400 });
+    }
+    return { ok: true };
+  }
+  if (intent === "delete") {
     if (linked) return data({ error: "Mit vinX verknüpfte Produkte werden in vinX verwaltet — hier nur deaktivieren." }, { status: 400 });
     await db.delete(schema.products).where(eq(schema.products.id, Number(params.id)));
     return redirect("/admin/products?deleted=1");
@@ -47,15 +68,21 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (!name.de && !Object.values(name)[0]) return data({ error: "Name ist erforderlich" }, { status: 400 });
 
   let image = String(o.image ?? "") || null;
+  let imagePatch: { imageSource?: string | null; imageEdit?: null | ReturnType<typeof parseEdit> } = {};
   const file = form.get("imageFile");
   if (file instanceof File && file.size) {
     try {
-      image = await saveUpload(file, "products");
-      // optimize right away (WebP, 1200 + 480 px); the original upload stays as fallback if it fails
-      image = await optimizeImage(image, String(o.slug || name.de || "product")).then((r) => r.url).catch(() => image);
+      const upload = await saveUpload(file, "products");
+      // optimize right away (WebP, 1200 + 480 px) with the shop's image standard; the upload stays the original
+      const std = standardEdit((await getSettings("shop")).shop.images);
+      image = await optimizeImage(upload, String(o.slug || name.de || "product"), std ?? NO_EDIT).then((r) => r.url).catch(() => upload);
+      imagePatch = { imageSource: upload, imageEdit: image === upload ? null : std };
     } catch (e) {
       return data({ error: (e as Error).message }, { status: 400 });
     }
+  } else if (existing && image !== existing.image) {
+    // URL changed by hand: it is the new original (the optimizer job renders it)
+    imagePatch = { imageSource: image, imageEdit: null };
   }
   const values = {
     name, short: loc("short"), description: loc("description"), pairing: loc("pairing"),
@@ -65,7 +92,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     appellation: String(o.appellation || "") || null, grapes: String(o.grapes || "") || null, alcohol: o.alcohol ? Number(String(o.alcohol).replace(",", ".")) : null,
     taxClass: (o.taxClass === "reduced" ? "reduced" : "standard") as "standard",
     active: form.has("active"), featured: form.has("featured"), promo: form.has("promo"), isNew: form.has("isNew"), organic: form.has("organic"),
-    tradeOnly: form.has("tradeOnly"), ageRestricted: form.has("ageRestricted"), image, updatedAt: new Date(),
+    tradeOnly: form.has("tradeOnly"), ageRestricted: form.has("ageRestricted"), image, ...imagePatch, updatedAt: new Date(),
   };
   // fields mastered by the ERP are never written from the admin (they would be overwritten by the next sync)
   const owned = linked ? await erpOwnedFields() : [];
@@ -95,7 +122,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export default function AdminProduct({ loaderData }: Route.ComponentProps) {
-  const { product: p, variants, categories, producers, locales, erpOwned, linked } = loaderData;
+  const { product: p, variants, categories, producers, locales, erpOwned, linked, imageStandard, canEditImages } = loaderData;
+  const [editing, setEditing] = useState(false);
   const result = useActionData<typeof action>();
   const owned = (f: string) => erpOwned.includes(f);
   const Lk = () => <Lock size={11} className="inline text-muted-fg" aria-label="von vinX verwaltet" />;
@@ -157,7 +185,17 @@ export default function AdminProduct({ loaderData }: Route.ComponentProps) {
             <div className="grid gap-3">
               <Input type="file" name="imageFile" aria-label="Produktbild hochladen" accept="image/jpeg,image/png,image/webp,image/avif" className="h-auto py-2 text-sm" />
               <Input name="image" defaultValue={p?.image ?? ""} placeholder="oder Bild-URL" aria-label="Bild-URL" size="sm" />
+              {p?.image && (
+                <div className="flex items-center justify-between gap-3">
+                  <button type="button" disabled={!canEditImages} onClick={() => setEditing(true)} title={canEditImages ? undefined : "Braucht dauerhaften Bildspeicher (Supabase Storage oder S3)"}
+                    className="inline-flex items-center gap-1.5 text-sm font-medium underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-50">
+                    <Crop size={14} /> Bild bearbeiten
+                  </button>
+                  {p.imageEdit && <Badge tone={p.imageEdit.auto ? "neutral" : "primary"}>{p.imageEdit.auto ? "Bildstandard" : "Bearbeitet"}</Badge>}
+                </div>
+              )}
             </div>
+            {editing && p && <ImageEditor productId={p.id} edit={p.imageEdit ?? null} standard={imageStandard} onClose={() => setEditing(false)} />}
           </Panel>
           <Panel title="Zuordnung">
             <div className="grid gap-4">

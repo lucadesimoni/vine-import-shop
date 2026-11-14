@@ -23,7 +23,7 @@ export async function erpClient(cfg?: Settings["vinx"], files?: ConstructorParam
  * records done so far; the next run receives that number as `resume` (offset) and continues. When the chain completes,
  * the final "ok" row takes the start time of the first partial run, so delta syncs (lastSuccess) miss nothing.
  */
-async function job<T extends { items: number; message: string; partial?: boolean }>(name: string, fn: (resume: number) => Promise<T>) {
+export async function job<T extends { items: number; message: string; partial?: boolean }>(name: string, fn: (resume: number) => Promise<T>) {
   const db = await getDb();
   const recent = await db.select().from(schema.syncLog).where(eq(schema.syncLog.job, name)).orderBy(desc(schema.syncLog.id)).limit(50);
   const chain = [];

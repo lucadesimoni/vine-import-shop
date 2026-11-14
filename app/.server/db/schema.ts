@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import type { ImageEdit } from "~/lib/image-edit";
 import {
   boolean,
   index,
@@ -180,6 +181,9 @@ export const products = pgTable(
     promo: boolean("promo").notNull().default(false),
     isNew: boolean("is_new").notNull().default(false),
     image: text("image"),
+    /** original of the shop image (upload / ERP / supplier URL); `image` is rendered from it with `imageEdit` */
+    imageSource: text("image_source"),
+    imageEdit: jsonb("image_edit").$type<ImageEdit>(),
     /** ERP-owned details (wine texts, ratings, EAN …) — lib/erp-details.ts */
     erpDetails: jsonb("erp_details").$type<ErpDetails>(),
     ...timestamps,

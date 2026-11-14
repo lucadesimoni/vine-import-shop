@@ -3,6 +3,9 @@ import { data, Form, useActionData } from "react-router";
 import type { Route } from "./+types/settings";
 import { getDb, schema } from "~/.server/db";
 import { getScopedSettings, saveSetting } from "~/.server/settings";
+import { harmonizeProductImages } from "~/.server/images";
+import { defaultBudgetMs, withBudget } from "~/.server/job-runtime";
+import { persistentStorage } from "~/.server/storage";
 import { adminScope, resetScope } from "~/.server/admin-scope";
 import { listPriceSources } from "~/.server/price-sources";
 import { LOCALES, LOCALE_LABELS } from "~/lib/localized";
@@ -32,7 +35,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     payrexx: !!e.PAYREXX_INSTANCE && !!e.PAYREXX_API_SECRET,
     post: !!e.POST_CLIENT_ID && !!e.POST_CLIENT_SECRET,
   };
-  return { shop, groups, keys, priceSources: listPriceSources(), scope };
+  return { shop, groups, keys, priceSources: listPriceSources(), scope, imageStorage: persistentStorage() };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -65,6 +68,15 @@ export async function action({ request }: Route.ActionArgs) {
       mode: ["combined", "separate", "portal-only", "shop-only"].includes(o.channels?.mode) ? o.channels.mode : shop.channels.mode,
       portalHost: cleanHost(o.channels?.portalHost),
       shopHost: cleanHost(o.channels?.shopHost),
+    },
+    // image standard: one per installation (main shop), product images are shared by all storefronts
+    images: slug ? shop.images : {
+      enabled: form.has("images.enabled"), cutout: form.has("images.cutout"), trim: form.has("images.trim"), shadow: form.has("images.shadow"),
+      tolerance: int(o.images?.tolerance, 1, 60, shop.images.tolerance),
+      ratio: ["original", "1:1", "3:4", "4:5", "2:3"].includes(o.images?.ratio) ? o.images.ratio : shop.images.ratio,
+      padding: int(o.images?.padding, 0, 25, shop.images.padding),
+      background: o.images?.background === "color" && /^#[0-9a-f]{6}$/i.test(o.images?.color ?? "") ? String(o.images.color).toLowerCase()
+        : ["transparent", "white"].includes(o.images?.background) ? o.images.background : shop.images.background,
     },
     originMap: {
       mode: ["auto", "regions", "world", "off"].includes(o.originMap?.mode) ? o.originMap.mode : shop.originMap.mode,
@@ -122,8 +134,15 @@ export async function action({ request }: Route.ActionArgs) {
     const paymentMethods = ticked.length === offered.length ? null : ticked;
     await db.update(schema.customerGroups).set({ name: g.name, discountPct: Number(g.discount) || 0, minOrderCents: parseMoneyInput(g.minOrder ?? "0"), showNet: g.showNet === "on", erpCode: g.erpCode || null, paymentMethods }).where(eq(schema.customerGroups.id, Number(id)));
   }
+  if (form.get("intent") === "harmonize" && !slug) {
+    // saved first (above), then as many images as fit into the time budget; the rest continues in the next run
+    const r = await withBudget(defaultBudgetMs(), () => harmonizeProductImages());
+    return { ok: true, images: r.message + ("partial" in r && r.partial ? " — läuft im nächsten Durchgang weiter (Admin › vinX/Jobs oder Zeitplan)." : "") };
+  }
   return { ok: true };
 }
+
+const int = (v: unknown, lo: number, hi: number, d: number) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
 
 const list = (v: unknown) => String(v ?? "").split(/[,\s]+/).map((x) => x.trim()).filter(Boolean);
 
@@ -133,7 +152,7 @@ function cleanHost(v: unknown) {
 }
 
 export default function Settings({ loaderData }: Route.ComponentProps) {
-  const { shop, groups, keys, priceSources, scope } = loaderData;
+  const { shop, groups, keys, priceSources, scope, imageStorage } = loaderData;
   const result = useActionData<typeof action>();
   return (
     <>
@@ -215,6 +234,29 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
             <Toggle name="originMap.world" label="Weltkarte anzeigen" description="Zoombare Weltkarte als eigene Ansicht; Länder mit Regionenkarte (z. B. IT, FR, CH, AT, DE, ES, PT) öffnen ihre Regionen. Aus: nur Regionenkarten und A–Z." defaultChecked={shop.originMap.world} />
           </div>
         </Panel>
+        {!scope.current && (
+          <Panel title="Produktbilder" description="Bildstandard: einheitliches Format, Rand und Hintergrund für alle Produktkarten. Gilt für neue Bilder und — per Knopf — für alle, die nicht von Hand bearbeitet wurden. Originale bleiben erhalten.">
+            {!imageStorage && <Notice tone="warning" className="mb-4">Auf Vercel braucht die Bildaufbereitung dauerhaften Speicher (Supabase Storage oder STORAGE_DRIVER=s3).</Notice>}
+            {result && "images" in result && <Notice tone="success" className="mb-4">{result.images}</Notice>}
+            <div className="divide-y divide-border">
+              <Toggle name="images.enabled" label="Bildstandard verwenden" defaultChecked={shop.images.enabled} />
+              <Toggle name="images.trim" label="Leere Ränder entfernen" defaultChecked={shop.images.trim} />
+              <Toggle name="images.cutout" label="Hellen Hintergrund freistellen" description="Für Packshots auf weissem/grauem Grund; Etiketten im Produkt bleiben erhalten." defaultChecked={shop.images.cutout} />
+              <Toggle name="images.shadow" label="Weicher Schatten" defaultChecked={shop.images.shadow} />
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Field label="Format">{(id) => <Select id={id} name="images.ratio" defaultValue={shop.images.ratio}><option value="original">Original</option><option value="1:1">1:1 (quadratisch)</option><option value="3:4">3:4 (Flaschen)</option><option value="4:5">4:5</option><option value="2:3">2:3 (schmal)</option></Select>}</Field>
+              <Field label="Rand (%)">{(id) => <Input id={id} name="images.padding" type="number" min={0} max={25} defaultValue={shop.images.padding} />}</Field>
+              <Field label="Hintergrund">{(id) => <Select id={id} name="images.background" defaultValue={shop.images.background.startsWith("#") ? "color" : shop.images.background}><option value="transparent">Transparent (passt zu hell & dunkel)</option><option value="white">Weiss</option><option value="color">Farbe →</option></Select>}</Field>
+              <Field label="Farbe">{(id) => <Input id={id} name="images.color" type="color" defaultValue={shop.images.background.startsWith("#") ? shop.images.background : "#f4efe9"} className="h-10 p-1" />}</Field>
+              <Field label="Toleranz Freistellen" hint="1–60; höher entfernt mehr Hintergrund">{(id) => <Input id={id} name="images.tolerance" type="number" min={1} max={60} defaultValue={shop.images.tolerance} />}</Field>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button type="submit" name="intent" value="harmonize" variant="secondary" size="sm" disabled={!imageStorage}>Speichern & alle Produktbilder aufbereiten</Button>
+              <span className="text-note text-muted-fg">Einzelne Bilder: Produkt › Bild bearbeiten.</span>
+            </div>
+          </Panel>
+        )}
         <Panel title="Verkaufsmodell" description="B2B-only, B2C oder beides — mit Preisanzeige je Kundengruppe.">
           <div className="grid gap-4">
             <Field label="Preise im Shop sichtbar für" hint="Im B2B-Portal sehen Geschäftskunden nach dem Login immer ihre eigenen Preise.">

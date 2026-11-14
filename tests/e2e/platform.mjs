@@ -363,6 +363,35 @@ ok(await guest.getByText(/Link gesendet/).waitFor({ timeout: 5000 }).then(() => 
 await guest.goto(B + "/login/reset/abcdefghijklmnopqrstuvwxyz0123");
 ok(await guest.getByText(/ungültig oder abgelaufen/).isVisible(), "password reset: invalid token rejected");
 
+section("Image editor (non-destructive)");
+{
+  await admin.goto(B + "/admin/products?q=10075");
+  const href = await admin.locator('a[href^="/admin/products/"]').filter({ hasNotText: "Neu" }).first().getAttribute("href");
+  await admin.goto(B + href);
+  const before = await admin.locator("input[name=image]").inputValue();
+  const id = href.split("/").pop();
+  const prev = await res(`/admin/products/${id}/image-preview?stage=result&edit=${encodeURIComponent('{"cutout":true,"trim":true,"ratio":"3:4"}')}`, { headers: { cookie: (await admin.context().cookies()).map((c) => `${c.name}=${c.value}`).join("; ") } });
+  ok(prev.status === 200 && prev.headers.get("content-type") === "image/webp", "image editor: live preview renders (WebP)", String(prev.status));
+  const anon = await res(`/admin/products/${id}/image-preview`, { redirect: "manual" });
+  ok(anon.status === 302 && /\/login/.test(anon.headers.get("location") ?? ""), "image editor: preview only for staff", String(anon.status));
+  await admin.click("text=Bild bearbeiten");
+  await admin.waitForSelector("dialog[open]");
+  await admin.click('dialog button[aria-label="90° rechts"]');
+  await admin.locator('dialog label:has-text("Hellen Hintergrund entfernen") input').check();
+  await admin.locator('dialog label:has-text("Leere Ränder entfernen") input').check();
+  await admin.click('dialog button:has-text("1:1")');
+  await admin.click('dialog button:has-text("Übernehmen")');
+  await admin.waitForSelector("dialog", { state: "detached", timeout: 30000 });
+  const after = await admin.locator("input[name=image]").inputValue();
+  ok(after !== before && /\/img\/.+\.webp$/.test(after), "image editor: shop image rendered from the original", after);
+  ok(await admin.getByText("Bearbeitet", { exact: true }).isVisible(), "image editor: product marked as edited");
+  await admin.click("text=Bild bearbeiten");
+  await admin.click('dialog button:has-text("Zurücksetzen")');
+  await admin.click('dialog button:has-text("Übernehmen")');
+  await admin.waitForSelector("dialog", { state: "detached", timeout: 30000 });
+  ok(!(await admin.getByText("Bearbeitet", { exact: true }).count()), "image editor: reset to the original (plain optimised)");
+}
+
 section("Sign-in link (magic link)");
 {
   const { readFileSync } = await import("node:fs");

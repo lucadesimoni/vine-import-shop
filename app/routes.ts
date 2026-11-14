@@ -67,6 +67,7 @@ export default [
     route("orders/:id/label", "routes/admin/order-label.ts"),
     route("products", "routes/admin/products.tsx"),
     route("products/:id", "routes/admin/product.tsx"),
+    route("products/:id/image-preview", "routes/admin/image-preview.ts"),
     route("producers", "routes/admin/producers.tsx"),
     route("producers/:id", "routes/admin/producer.tsx"),
     route("customers", "routes/admin/customers.tsx"),

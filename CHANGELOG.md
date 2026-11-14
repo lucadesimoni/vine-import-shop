@@ -12,6 +12,18 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Product image editor** (Admin › Produkte › Bild bearbeiten), non-destructive:
+  - The original stays in `products.image_source`; only the edit is stored (`image_edit`) and the shop image is rendered from it. "Zurücksetzen" always returns to the original.
+  - Edits: quarter turns, mirror, straighten ±15° (corners are cropped automatically), and a crop frame with handles that keeps the ratio when one is chosen.
+  - **Cut-out of light backgrounds** without AI or an external service: a flood fill from the image border with a soft edge, so white labels inside a bottle stay. Includes an adjustable tolerance.
+  - Trimming of empty margins, a canvas in 1:1 / 3:4 / 4:5 / 2:3 with margin, transparent / white / any colour, and a soft shadow.
+  - Live preview of the original with the crop frame and of the result on a checkerboard; a preview renders in 35–250 ms.
+- **Image standard** (Admin › Einstellungen › Produktbilder): one format, margin and background for all product cards.
+  - It applies automatically to new images (upload, ERP, optimizer job).
+  - "Speichern & alle Produktbilder aufbereiten" and the job `images:harmonize` process all images without a manual edit; manual edits are never overwritten. The job is resumable within the time budget.
+- Tests for image editing, the Supabase/Neon database URL, the storage drivers and the sign-in link (110 unit tests); the end-to-end test covers the image editor (151 checks).
+
 ## [1.12.1] - 2026-11-13
 
 ### Fixed

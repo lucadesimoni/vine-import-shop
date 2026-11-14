@@ -132,6 +132,22 @@ export const shopSchema = z.object({
       world: z.boolean().default(true),
     })
     .prefault({}),
+  /**
+   * Product image standard (see lib/image-edit.ts): applied by the optimizer to new images and by the "harmonize"
+   * job to every image without a manual edit — same format, margin and background for all product cards.
+   */
+  images: z
+    .object({
+      enabled: z.boolean().default(false),
+      cutout: z.boolean().default(false),
+      tolerance: z.number().int().min(1).max(60).default(10),
+      trim: z.boolean().default(true),
+      ratio: z.enum(["original", "1:1", "3:4", "4:5", "2:3"]).default("3:4"),
+      padding: z.number().int().min(0).max(25).default(6),
+      background: z.string().regex(/^(transparent|white|#[0-9a-fA-F]{6})$/).default("transparent"),
+      shadow: z.boolean().default(false),
+    })
+    .prefault({}),
   /** Shipping & customer notifications: carriers with tracking links, status e-mails, Swiss Post labels */
   fulfillment: z
     .object({

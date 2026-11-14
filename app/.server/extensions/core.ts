@@ -31,6 +31,7 @@ const maintenance = defineExtension({
   setup(api) {
     api.registerJob({ id: "backup", label: "Backup (täglich)", scheduled: true, run: async () => (await import("../maintenance")).backupIfDue() });
     api.registerJob({ id: "images", label: "Produktbilder optimieren (WebP)", scheduled: true, run: async () => (await import("../images")).optimizeProductImages() });
+    api.registerJob({ id: "images:harmonize", label: "Alle Produktbilder nach Bildstandard aufbereiten", run: async () => (await import("../images")).harmonizeProductImages() });
   },
 });
 

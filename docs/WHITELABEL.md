@@ -13,6 +13,7 @@ Everything brand- or tenant-specific is data. A new client needs **no code chang
 | Legal and info pages (Markdown, per language) | Content → Pages | `pages` table |
 | Languages, price visibility, consumer/guest checkout, stock display, VAT, shipping, payments, customer groups, B2B rules | Settings | `settings.shop`, `customer_groups` |
 | ERP connection and field mapping | vinX ERP | `settings.vinx` (+ env secrets) |
+| Product image standard (format, margin, background, cut-out, shadow) and per-image edits (turn, straighten, crop) | Settings → Product images · Products → Edit image | `settings.shop.images`, `products.image_edit` (original in `products.image_source`) |
 
 The token pipeline is `brand.colors` → `lib/theme.ts` (`--t-primary` …) → `app.css` `@theme` (`--color-primary: var(--t-primary)`) → utilities (`bg-primary`). Emails use the same brand values.
 
