@@ -36,6 +36,7 @@ const LABELS: Record<string, string> = {
   status: "Status geändert", ship: "versandt", paid: "als bezahlt markiert", "post-label": "Post-Etikett erstellt", "inquiry-done": "Anfrage erledigt",
   "image-edit": "Bild bearbeitet", "image-reset": "Bild zurückgesetzt", "images-standard": "Bildstandard angewendet", "images-reset": "Bilder zurückgesetzt",
   harmonize: "Produktbilder aufbereitet", preset: "Geschäftsprofil angewendet", "scope-reset": "auf Hauptshop zurückgesetzt",
+  role: "Rolle geändert", remove: "Zugang entfernt", resend: "Einladung erneut gesendet",
   preview: "Vorschau erstellt", import: "durchgeführt", map: "Zuordnung gewählt", bulk: "Massenaktion",
   backup: "Backup erstellt", restore: "Wiederherstellung angefordert", "cancel-restore": "Wiederherstellung abgebrochen", config: "Verbindung gespeichert",
 };
@@ -53,6 +54,7 @@ const AREAS: [RegExp, string, string][] = [
   [/^\/admin\/integrations/, "integration", "vinX / Jobs"],
   [/^\/admin\/system/, "system", "System"],
   [/^\/admin\/password/, "user", "Passwort"],
+  [/^\/admin\/team/, "user", "Mitarbeitende"],
   [/^\/admin\/upload/, "media", "Datei"],
 ];
 

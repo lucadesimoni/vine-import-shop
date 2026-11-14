@@ -91,7 +91,7 @@ export default function Producer({ loaderData }: Route.ComponentProps) {
             <span className="flex items-center justify-between text-eyebrow text-2xs text-muted-fg">{t("producer.origin")} <span className="flex items-center gap-1 normal-case tracking-normal group-hover:text-fg">{t("producer.onMap")} <ArrowRight size={12} /></span></span>
             <div className="pointer-events-none">
               {regionMap && origin.regionId ? (
-                <RegionMap map={regionMap} data={[{ id: origin.regionId, count: 1 }]} selected={origin.regionId} href={() => mapHref} locale={locale} label={place} markers={false} className="mx-auto h-auto max-h-60 w-full" />
+                <RegionMap map={regionMap} data={[{ id: origin.regionId, count: 1 }]} selected={origin.regionId} href={() => mapHref} locale={locale} label={place} markers={false} focus={origin.regionId} aspect={4 / 3} className="aspect-[4/3] h-auto w-full rounded-control bg-muted/30" />
               ) : (
                 <WorldDotMap data={[{ id: origin.iso, count: 1 }]} selected={origin.iso} href={() => mapHref} locale={locale} label={place} compact />
               )}

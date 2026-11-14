@@ -455,6 +455,20 @@ section("Admin access (actions run before loaders)");
   ok((await admin.locator('input[name="name.de"]').inputValue()) !== "HACKED", "admin access: product unchanged");
 }
 
+section("Admin buttons that submit");
+{
+  await admin.goto(B + "/admin/system");
+  const rowsBefore = await admin.locator("tbody tr").count();
+  await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click("button:has-text('Backup jetzt erstellen')")]);
+  await admin.waitForLoadState("networkidle");
+  ok((await admin.locator("tbody tr").count()) > rowsBefore || /manual/.test(await admin.locator("tbody").innerText()), "system: 'Backup jetzt erstellen' creates a backup");
+  await admin.goto(B + "/admin/conditions");
+  const toggle = () => admin.locator("tr", { hasText: "E2E Rabatt 15 %" }).first().locator("button[value=toggle]");
+  const flip = async (to) => { await toggle().click(); return admin.locator("tr", { hasText: "E2E Rabatt 15 %" }).first().locator(`button[value=toggle]:has-text('${to}')`).waitFor({ timeout: 8000 }).then(() => true, () => false); };
+  ok(await flip("Aktivieren"), "conditions: pause works");
+  ok(await flip("Pausieren"), "conditions: re-activate works");
+}
+
 section("Admin activity log");
 {
   await admin.goto(B + "/admin/activity");
@@ -465,6 +479,43 @@ section("Admin activity log");
   ok(!/HACKED/.test(await admin.locator("tbody").innerText()), "activity log: rejected anonymous POSTs are not logged, form values never");
   await admin.goto(B + "/admin/activity?entity=user");
   ok(/Anmeldung im Admin/.test(await admin.locator("tbody").innerText()), "activity log: staff sign-ins");
+}
+
+section("Team: staff accounts and roles");
+{
+  const { readFileSync } = await import("node:fs");
+  await admin.goto(B + "/admin/team");
+  await admin.fill('form:has(input[value=invite]) input[name=name]', "Mara Muster");
+  await admin.fill('form:has(input[value=invite]) input[name=email]', "mara-e2e@example.ch");
+  await admin.selectOption('form:has(input[value=invite]) select[name=role]', "staff");
+  await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click('form:has(input[value=invite]) button[type=submit]')]);
+  ok(await admin.getByText(/Einladung an mara-e2e@example.ch gesendet/).isVisible(), "team: invitation sent");
+  const mail = readFileSync("data/mail.log", "utf8").split("\n\n").filter((b) => b.includes("To: mara-e2e@example.ch")).at(-1) ?? "";
+  ok(/Admin-Zugang/.test(mail) && !/Preise/.test(mail), "team: staff invitation text (not the customer one)");
+  const link = mail.match(/https?:\/\/\S+\/login\/reset\/[\w-]+/)?.[0];
+  const mara = await newPage();
+  await mara.goto(link);
+  await mara.fill("input[name=password]", "mara-staff-pass-1"); await mara.fill("input[name=confirm]", "mara-staff-pass-1");
+  await Promise.all([mara.waitForURL(/\/login/), mara.click("main button[type=submit]")]);
+  await mara.fill("input[name=email]", "mara-e2e@example.ch"); await mara.fill("input[name=password]", "mara-staff-pass-1");
+  await Promise.all([mara.waitForURL(/\/admin/), mara.click('form[method=post] button[type=submit]:not([value=link]) >> nth=0')]);
+  ok(new URL(mara.url()).pathname === "/admin", "team: invited staff member signs in to the admin");
+  const nav = await mara.locator("aside nav").innerText();
+  ok(/Produkte/.test(nav) && !/Einstellungen|Mitarbeitende|System/.test(nav), "team: staff menu without admin-only areas");
+  const blocked = await mara.goto(B + "/admin/settings");
+  ok(blocked.status() === 403, "team: staff cannot open settings", String(blocked.status()));
+  const mcookie = (await mara.context().cookies()).map((c) => `${c.name}=${c.value}`).join("; ");
+  const post = await res("/admin/system", { method: "POST", headers: { cookie: mcookie, Origin: B, "Content-Type": "application/x-www-form-urlencoded" }, body: "intent=backup", redirect: "manual" });
+  ok(post.status === 403, "team: staff cannot run admin-only actions", String(post.status));
+  // promote, then remove
+  await admin.goto(B + "/admin/team");
+  await admin.selectOption('tr:has-text("mara-e2e@example.ch") select[name=role]', "admin");
+  await admin.waitForLoadState("networkidle");
+  ok(await admin.getByText(/ist jetzt Administrator/).isVisible(), "team: role changed");
+  admin.once("dialog", (d) => d.accept());
+  await Promise.all([admin.waitForResponse((r) => r.request().method() === "POST"), admin.click('tr:has-text("mara-e2e@example.ch") button[aria-label^="Zugang von"]')]);
+  ok(await admin.getByText(/Zugang von mara-e2e@example.ch entfernt/).isVisible(), "team: access removed");
+  await mara.context().close();
 }
 
 section("Rate limits (shared, in the database)");

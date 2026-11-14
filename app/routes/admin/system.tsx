@@ -86,7 +86,7 @@ export default function System({ loaderData, actionData }: Route.ComponentProps)
       {restore && (
         <Notice tone="warning" className="mb-6">
           Wiederherstellung von <strong>{restore.name}</strong> ist geplant und wird beim nächsten Neustart angewendet.
-          <Form method="post" className="mt-2"><input type="hidden" name="intent" value="cancel-restore" /><Button size="sm" variant="secondary">Abbrechen</Button></Form>
+          <Form method="post" className="mt-2"><input type="hidden" name="intent" value="cancel-restore" /><Button type="submit" size="sm" variant="secondary">Abbrechen</Button></Form>
         </Notice>
       )}
 
@@ -127,7 +127,7 @@ export default function System({ loaderData, actionData }: Route.ComponentProps)
           )}
         </Panel>
         <Panel title="Backups" description="Automatisch täglich und vor jedem Update; die neuesten 14 bleiben erhalten. Für Offsite-Kopien herunterladen.">
-          <Form method="post" className="mb-4"><input type="hidden" name="intent" value="backup" /><Button size="sm"><HardDriveDownload size={14} /> Backup jetzt erstellen</Button></Form>
+          <Form method="post" className="mb-4"><input type="hidden" name="intent" value="backup" /><Button type="submit" size="sm"><HardDriveDownload size={14} /> Backup jetzt erstellen</Button></Form>
           <DataTable head={["Backup", "Version", "Grösse", ""]} empty={!backups.length}>
             {backups.map((b) => (
               <tr key={b.name}>
@@ -139,7 +139,7 @@ export default function System({ loaderData, actionData }: Route.ComponentProps)
                   {b.kind === "embedded" && (
                     <Form method="post" className="inline" onSubmit={(e) => { if (!confirm(`Datenbank beim nächsten Neustart auf «${b.name}» zurücksetzen?`)) e.preventDefault(); }}>
                       <input type="hidden" name="intent" value="restore" /><input type="hidden" name="name" value={b.name} />
-                      <Button variant="ghost" size="iconSm" aria-label="Wiederherstellen" title="Wiederherstellen"><RotateCcw size={15} /></Button>
+                      <Button type="submit" variant="ghost" size="iconSm" aria-label="Wiederherstellen" title="Wiederherstellen"><RotateCcw size={15} /></Button>
                     </Form>
                   )}
                 </td>

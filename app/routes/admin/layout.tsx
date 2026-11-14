@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Form, Link, NavLink, Outlet, redirect, useLocation } from "react-router";
-import { ExternalLink, FileText, Grape, History, LayoutDashboard, LogOut, Menu, Package, Palette, Percent, PlugZap, Settings, ShieldCheck, ShoppingCart, Store, Users, X } from "lucide-react";
+import { ExternalLink, FileText, Grape, History, UserCog, LayoutDashboard, LogOut, Menu, Package, Palette, Percent, PlugZap, Settings, ShieldCheck, ShoppingCart, Store, Users, X } from "lucide-react";
 import { count, eq } from "drizzle-orm";
 import type { Route } from "./+types/layout";
 import { requireStaff, verifyPassword } from "~/.server/auth";
 import { APP_VERSION } from "~/.server/maintenance";
 import { copyright, PRODUCT } from "~/lib/product";
+import { canAccess } from "~/lib/roles";
 import { getDb, schema } from "~/.server/db";
 import { cn } from "~/lib/cn";
 import { useRootData } from "~/lib/root-data";
@@ -18,6 +19,8 @@ import { useRootData } from "~/lib/root-data";
 export const middleware: Route.MiddlewareFunction[] = [
   async ({ request }, next) => {
     const user = await requireStaff(request);
+    // staff: no shop-wide configuration, integrations, system or team management (lib/roles.ts)
+    if (!canAccess(user.role, new URL(request.url).pathname)) throw new Response("Nur für Administratoren", { status: 403 });
     if (request.method === "GET" || request.method === "HEAD") return next();
     const { prepareAudit } = await import("~/.server/audit");
     const pending = await prepareAudit(request, user);
@@ -40,7 +43,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     db.select({ n: count() }).from(schema.orders).where(eq(schema.orders.status, "new")),
     db.select({ n: count() }).from(schema.erpOutbox).where(eq(schema.erpOutbox.status, "failed")),
   ]);
-  return { version: APP_VERSION, user: { name: user.name, email: user.email }, badges: { customers: pending.n, orders: newOrders.n, integrations: failed.n } };
+  return { version: APP_VERSION, user: { name: user.name, email: user.email, role: user.role }, badges: { customers: pending.n, orders: newOrders.n, integrations: failed.n } };
 }
 
 export const meta: Route.MetaFunction = () => [{ title: "Admin" }, { name: "robots", content: "noindex" }];
@@ -59,6 +62,7 @@ const NAV = [
   { to: "/admin/storefronts", label: "Storefronts", icon: Store },
   { to: "/admin/integrations", label: "vinX ERP", icon: PlugZap, badge: "integrations" },
   { to: "/admin/system", label: "System & Backups", icon: ShieldCheck },
+  { to: "/admin/team", label: "Mitarbeitende", icon: UserCog },
   { to: "/admin/activity", label: "Protokoll", icon: History },
 ] as const;
 
@@ -84,7 +88,7 @@ export default function AdminLayout({ loaderData }: Route.ComponentProps) {
           </div>
         </div>
         <nav className={cn("max-h-[calc(100dvh-4.5rem)] gap-1 overflow-y-auto pb-2 lg:grid lg:max-h-none lg:content-start lg:overflow-visible lg:pb-0", open ? "grid" : "hidden")}>
-          {NAV.map((n, i) =>
+          {NAV.filter((n) => "section" in n || canAccess(user.role, n.to)).map((n, i) =>
             "section" in n ? (
               <p key={i} className="text-eyebrow mt-4 px-3 text-2xs text-muted-fg">{n.section}</p>
             ) : (

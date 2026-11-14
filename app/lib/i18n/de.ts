@@ -374,6 +374,8 @@ const de = {
   "auth.magicButton": "Jetzt anmelden",
   "auth.magicConfirm": "Anmeldung für {email} bestätigen.",
   "auth.magicInvalid": "Der Anmelde-Link ist ungültig, abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen an.",
+  "auth.staffInviteTitle": "Ihr Admin-Zugang für {brand}",
+  "auth.staffInviteText": "Sie wurden in den Admin-Bereich von {brand} eingeladen. Legen Sie Ihr Passwort fest, um sich anzumelden. Der Link ist 14 Tage gültig.",
 };
 
 export default de;

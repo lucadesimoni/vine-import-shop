@@ -12,6 +12,19 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Admin › Mitarbeitende:** invite staff by e-mail (with their own invitation text; they set their password), change roles and remove access. You cannot lock yourself out, and the last administrator always stays.
+  - **Roles:** "Administrator" may do everything. "Mitarbeiter" handles orders, products, producers, customers, conditions and content, but not settings, design, storefronts, vinX, system or team. This is enforced in the admin middleware (403), not just hidden in the menu.
+
+### Changed
+- **Origin map on the producer page:** zoomed onto the producer's region with its neighbours, marked with a pin and the region name, in a 4:3 frame. Without a region map, it zooms onto the country instead of showing the whole world.
+- **World and region maps:**
+  - Count markers grow with the number ("1253" fits), and overlapping markers (e.g. Switzerland and Italy) move apart.
+  - On phones the zoom bar sits below the map instead of covering it.
+
+### Fixed
+- Buttons in admin forms that did nothing: "Backup jetzt erstellen" and "Wiederherstellen" / "Abbrechen" (system) and "Pausieren" / "Aktivieren" / "Löschen" (conditions). `<Button>` defaults to `type="button"`, so these buttons never submitted their form. A source check in the unit tests (`tests/forms-lint.test.ts`) now fails on any `<Button>` in a `<Form>` without `type` or `onClick`, and the end-to-end suite clicks these buttons.
+
 ## [1.19.1] - 2026-11-14
 
 ### Security

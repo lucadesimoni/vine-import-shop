@@ -24,9 +24,50 @@ function shade(count: number, max: number) {
 
 type Area = { id: string; count: number };
 
+/** count marker: a circle for short numbers, a pill that grows with the digits ("1253" stays inside) */
+function CountMarker({ x, y, n, h, active, stroke }: { x: number; y: number; n: number; h: number; active: boolean; stroke: number }) {
+  const w = Math.max(h, String(n).length * h * 0.36 + h * 0.5);
+  return (
+    <>
+      <rect x={x - w / 2} y={y - h / 2} width={w} height={h} rx={h / 2} fill={active ? "var(--t-on-primary)" : "var(--t-card)"} stroke="var(--t-primary)" strokeWidth={active ? stroke * 1.7 : stroke} className="drop-shadow-sm" />
+      <text x={x} y={y} dy="0.35em" textAnchor="middle" fontSize={h * 0.46} fontWeight={600} fill="var(--t-primary)" className="font-sans tabular-nums">{n}</text>
+    </>
+  );
+}
+const markerWidth = (n: number, h: number) => Math.max(h, String(n).length * h * 0.36 + h * 0.5);
+
+/** nudge overlapping markers apart (a few relaxation passes; positions in map units) */
+function spread<T extends { x: number; y: number; w: number; h: number }>(items: T[]): T[] {
+  const out = items.map((m) => ({ ...m }));
+  for (let pass = 0; pass < 12; pass++) {
+    let moved = false;
+    for (let i = 0; i < out.length; i++) for (let j = i + 1; j < out.length; j++) {
+      const a = out[i], b = out[j];
+      const ox = (a.w + b.w) / 2 + a.h * 0.15 - Math.abs(a.x - b.x), oy = (a.h + b.h) / 2 + a.h * 0.15 - Math.abs(a.y - b.y);
+      if (ox <= 0 || oy <= 0) continue;
+      moved = true;
+      // separate along the axis with the smaller overlap, half each
+      if (ox < oy) { const d = (ox / 2) * (a.x <= b.x ? -1 : 1); a.x += d; b.x -= d; }
+      else { const d = (oy / 2) * (a.y <= b.y ? -1 : 1); a.y += d; b.y -= d; }
+    }
+    if (!moved) break;
+  }
+  return out;
+}
+
+/** bounding box of an absolute SVG path (our maps use M/L/Z only) */
+function pathBox(d: string) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const m of d.matchAll(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g)) {
+    const x = Number(m[1]), y = Number(m[2]);
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+
 type ZoomLabels = { zoomIn: string; zoomOut: string; reset: string; europe?: string };
 
-export const RegionMap = memo(function RegionMap({ map, data, selected, href, locale, label, className, markers = true, zoomable = false, labels }: { map: RegionMapData; data: Area[]; selected?: string | null; href: (id: string) => string; locale: Locale; label: string; className?: string; markers?: boolean; zoomable?: boolean; labels?: ZoomLabels }) {
+export const RegionMap = memo(function RegionMap({ map, data, selected, href, locale, label, className, markers = true, zoomable = false, labels, focus, aspect }: { map: RegionMapData; data: Area[]; selected?: string | null; href: (id: string) => string; locale: Locale; label: string; className?: string; markers?: boolean; zoomable?: boolean; labels?: ZoomLabels; /** zoom onto this region with some context and mark it with a pin (producer page) */ focus?: string | null; /** view aspect (w/h) for `focus` */ aspect?: number }) {
   const counts = new Map(data.map((d) => [d.id, d.count]));
   const max = Math.max(1, ...data.map((d) => d.count));
   const ordered = [...map.regions].sort((a, b) => Number(a.id === selected) - Number(b.id === selected));
@@ -36,10 +77,26 @@ export const RegionMap = memo(function RegionMap({ map, data, selected, href, lo
     return { bounds: b, aspect: w / h, max: 6, base: b };
   }, [map.viewBox]);
   const z = useZoom(zoomable, space.base, space);
+  // focus: the region's box, enlarged for context (neighbours visible), at least 22 % of the country, inside the map
+  const focusRegion = focus ? map.regions.find((r) => r.id === focus) : null;
+  const focusView = useMemo(() => {
+    if (!focusRegion) return null;
+    const b = pathBox(focusRegion.d), B = space.bounds, a = aspect ?? 4 / 3;
+    let w = Math.max(b.w * 2.6, b.h * 2.6 * a, B.w * 0.22), h = w / a;
+    if (w > B.w && h > B.h) return null; // the whole country fits anyway
+    w = Math.min(w, Math.max(B.w, B.h * a)); h = w / a;
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+    return { x: Math.min(Math.max(cx - w / 2, B.x), B.x + B.w - w), y: Math.min(Math.max(cy - h / 2, B.y), B.y + B.h - h), w, h };
+  }, [focusRegion, space, aspect]);
+  const view = focusView ?? z.view;
   // markers and labels keep their on-screen size while zooming
-  const s = 1 / Math.max(1, z.k) ** 0.85;
+  const s = focusView ? focusView.w / space.bounds.w : 1 / Math.max(1, z.k) ** 0.85;
+  const placed = spread(map.regions.filter((r) => markers && counts.get(r.id)).map((r) => {
+    const n = counts.get(r.id)!, h = (40 + Math.min(16, Math.sqrt(n) * 4)) * s;
+    return { r, n, x: r.cx, y: r.cy, h, w: markerWidth(n, h) };
+  }));
   const svg = (
-    <svg ref={z.svgRef} viewBox={`${z.view.x} ${z.view.y} ${z.view.w} ${z.view.h}`} className={cn("block select-none", className ?? "h-auto w-full", zoomable && (z.k > 1.01 ? "cursor-grab touch-none active:cursor-grabbing" : "touch-pan-y"))} role="group" aria-label={label} {...z.handlers}>
+    <svg ref={z.svgRef} viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} className={cn("block select-none", className ?? "h-auto w-full", zoomable && (z.k > 1.01 ? "cursor-grab touch-none active:cursor-grabbing" : "touch-pan-y"))} role="group" aria-label={label} {...z.handlers}>
       {ordered.map((r) => {
         const n = counts.get(r.id) ?? 0;
         const active = r.id === selected;
@@ -65,17 +122,15 @@ export const RegionMap = memo(function RegionMap({ map, data, selected, href, lo
         );
       })}
       {/* count markers + labels on top of all shapes */}
-      {markers && map.regions.filter((r) => counts.get(r.id)).map((r) => {
-        const n = counts.get(r.id)!;
+      {placed.map(({ r, n, x, y, h }) => {
         const active = r.id === selected;
-        const rad = (22 + Math.min(14, Math.sqrt(n) * 4)) * s;
+        const rad = h / 2;
         return (
           <Link key={r.id} to={href(r.id)} preventScrollReset tabIndex={-1} aria-hidden className="group cursor-pointer">
-            <circle cx={r.cx} cy={r.cy} r={rad} fill={active ? "var(--t-on-primary)" : "var(--t-card)"} stroke="var(--t-primary)" strokeWidth={active ? 0 : 2.5 * s} className="drop-shadow-sm" />
-            <text x={r.cx} y={r.cy} dy="0.35em" textAnchor="middle" fontSize={rad * 0.9} fontWeight={600} fill="var(--t-primary)" className="font-sans tabular-nums">{n}</text>
+            <CountMarker x={x} y={y} n={n} h={h} active={active} stroke={2.5 * s} />
             <text
-              x={r.cx}
-              y={r.cy - rad - 12 * s}
+              x={x}
+              y={y - rad - 12 * s}
               textAnchor="middle"
               fontSize={28 * s}
               fontWeight={500}
@@ -90,6 +145,23 @@ export const RegionMap = memo(function RegionMap({ map, data, selected, href, lo
           </Link>
         );
       })}
+      {/* pin on the focused region (producer page) */}
+      {focusRegion && focusView && (() => {
+        const ps = focusView.w * 0.05, x = focusRegion.cx, y = focusRegion.cy;
+        // keep the label inside the view: below the pin near the top edge, aligned inwards near the sides
+        const above = y - ps * 2.6 > focusView.y + ps * 1.1;
+        const ly = above ? y - ps * 2.6 : y + ps * 1.3;
+        const rel = (x - focusView.x) / focusView.w;
+        const anchor = rel < 0.25 ? "start" : rel > 0.75 ? "end" : "middle";
+        const lx = anchor === "start" ? x - ps * 0.8 : anchor === "end" ? x + ps * 0.8 : x;
+        return (
+          <g aria-hidden>
+            <path d={`M${x},${y} c${-ps * 0.55},${-ps * 0.75} ${-ps * 0.8},${-ps * 1.1} ${-ps * 0.8},${-ps * 1.45} a${ps * 0.8},${ps * 0.8} 0 1 1 ${ps * 1.6},0 c0,${ps * 0.35} ${-ps * 0.25},${ps * 0.7} ${-ps * 0.8},${ps * 1.45}z`} fill="var(--t-fg)" stroke="var(--t-bg)" strokeWidth={ps * 0.12} />
+            <circle cx={x} cy={y - ps * 1.45} r={ps * 0.32} fill="var(--t-bg)" />
+            <text x={lx} y={ly} textAnchor={anchor} fontSize={ps * 0.95} fontWeight={600} fill="var(--t-fg)" stroke="var(--t-bg)" strokeWidth={ps * 0.28} paintOrder="stroke" className="font-sans">{regionLabel(focusRegion, locale)}</text>
+          </g>
+        );
+      })()}
     </svg>
   );
   return zoomable ? <ZoomFrame z={z} max={space.max} labels={labels}>{svg}</ZoomFrame> : svg;
@@ -101,7 +173,8 @@ function ZoomFrame({ z, max, labels, europe, children }: { z: ReturnType<typeof 
   return (
     <div className="relative w-full">
       {children}
-      <div className="absolute bottom-2 right-2 flex overflow-hidden rounded-control border border-border bg-card/90 shadow-card backdrop-blur-sm">
+      {/* phones: below the map (never covers it); larger screens: in the corner */}
+      <div className="ml-auto mt-2 flex w-fit overflow-hidden rounded-control border border-border bg-card/90 shadow-card backdrop-blur-sm sm:absolute sm:bottom-2 sm:right-2 sm:mt-0">
         {europe && <><button type="button" onClick={z.europe} className={cn(btn, "w-auto px-3 text-note font-medium")}>{labels?.europe ?? "Europa"}</button><span className="w-px bg-border" /></>}
         <button type="button" onClick={z.zoomOut} disabled={z.k <= 1.01} className={btn} aria-label={labels?.zoomOut}><Minus size={15} /></button>
         <button type="button" onClick={z.zoomIn} disabled={z.k >= max - 0.01} className={btn} aria-label={labels?.zoomIn}><Plus size={15} /></button>
@@ -256,7 +329,10 @@ export const WorldDotMap = memo(function WorldDotMap({ data, selected, href, loc
     return g;
   }, []);
   const z = useZoom(zoomable, useMemo(() => fitView(data.map((d) => d.id)), []));
-  const { k, view } = z;
+  // compact (producer page): zoomed onto the selected country instead of the whole world
+  const compactView = useMemo(() => (compact && selected ? fitView([selected]) : null), [compact, selected]);
+  const k = compactView ? BW / compactView.w : z.k;
+  const view = compactView ?? z.view;
   // country outlines are loaded on first zoom (kept out of the initial bundle)
   const [shapes, setShapes] = useState<Record<string, string> | null>(null);
   useEffect(() => {
@@ -307,16 +383,16 @@ export const WorldDotMap = memo(function WorldDotMap({ data, selected, href, loc
         </g>
       )}
       {!compact &&
-        world.countries.filter((c) => counts.get(c.iso)).map((c) => {
-          const n = counts.get(c.iso)!;
-          const active = c.iso === selected;
+        spread(world.countries.filter((c) => counts.get(c.iso)).map((c) => {
           // markers keep their on-screen size while zooming
-          const s = 1 / Math.max(1, k) ** 0.85;
+          const s = 1 / Math.max(1, k) ** 0.85, n = counts.get(c.iso)!, h = 13 * s;
+          return { c, n, s, x: c.cx, y: c.cy, h, w: markerWidth(n, h) };
+        })).map(({ c, n, s, x, y, h }) => {
+          const active = c.iso === selected;
           return (
             <Link key={c.iso} to={href(c.iso)} preventScrollReset tabIndex={-1} aria-hidden className="group">
-              <circle cx={c.cx} cy={c.cy} r={6.5 * s} fill="var(--t-card)" stroke="var(--t-primary)" strokeWidth={(active ? 1.2 : 0.7) * s} className="drop-shadow-sm" />
-              <text x={c.cx} y={c.cy} dy="0.35em" textAnchor="middle" fontSize={6 * s} fontWeight={600} fill="var(--t-primary)" className="font-sans tabular-nums">{n}</text>
-              <text x={c.cx} y={c.cy - 10 * s} textAnchor="middle" fontSize={7 * s} fontWeight={500} fill="var(--t-fg)" stroke="var(--t-bg)" strokeWidth={2 * s} paintOrder="stroke" className={cn("font-sans transition-opacity", active ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
+              <CountMarker x={x} y={y} n={n} h={h} active={active} stroke={0.7 * s} />
+              <text x={x} y={y - h / 2 - 3.5 * s} textAnchor="middle" fontSize={7 * s} fontWeight={500} fill="var(--t-fg)" stroke="var(--t-bg)" strokeWidth={2 * s} paintOrder="stroke" className={cn("font-sans transition-opacity", active ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
                 {countryName(c.iso, locale)}
               </text>
             </Link>

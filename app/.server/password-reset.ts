@@ -40,8 +40,9 @@ export async function sendTokenMail(userId: number, kind: "reset" | "invite", or
   const { brand } = await getScopedSettings((await storefrontById(user.storefrontId))?.slug, "brand");
   const t = getT(isLocale(user.locale) ? user.locale : "de");
   const url = `${origin.replace(/\/$/, "")}/login/reset/${token}`;
-  const title = kind === "invite" ? t("auth.inviteTitle", { brand: brand.name }) : t("auth.resetTitle");
-  const text = kind === "invite" ? t("auth.inviteMailText", { brand: brand.name }) : t("auth.resetMailText");
+  const staff = user.role !== "customer";
+  const title = kind === "invite" ? t(staff ? "auth.staffInviteTitle" : "auth.inviteTitle", { brand: brand.name }) : t("auth.resetTitle");
+  const text = kind === "invite" ? t(staff ? "auth.staffInviteText" : "auth.inviteMailText", { brand: brand.name }) : t("auth.resetMailText");
   const html = layout(brand, title, `<p>${esc(text)}</p><p style="margin:28px 0"><a href="${esc(url)}" style="background:${brand.colors.primary};color:${brand.colors.primaryForeground};padding:12px 22px;text-decoration:none;display:inline-block">${esc(t("auth.setPassword"))}</a></p><p style="color:#888;font-size:12px">${esc(url)}</p>`);
   await sendMail(user.email, `${brand.name} · ${title}`, html);
   return true;

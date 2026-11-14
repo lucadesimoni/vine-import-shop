@@ -141,12 +141,12 @@ export default function Conditions({ loaderData, actionData }: Route.ComponentPr
                   <Form method="post" className="inline">
                     <input type="hidden" name="id" value={r.id} />
                     <input type="hidden" name="active" value={String(!r.active)} />
-                    <Button name="intent" value="toggle" variant="ghost" size="sm">{r.active ? "Pausieren" : "Aktivieren"}</Button>
+                    <Button type="submit" name="intent" value="toggle" variant="ghost" size="sm">{r.active ? "Pausieren" : "Aktivieren"}</Button>
                   </Form>
                   {r.source === "platform" && (
                     <Form method="post" className="inline">
                       <input type="hidden" name="id" value={r.id} />
-                      <Button name="intent" value="delete" variant="ghost" size="iconSm" aria-label="Löschen" className="text-muted-fg"><Trash2 size={15} /></Button>
+                      <Button type="submit" name="intent" value="delete" variant="ghost" size="iconSm" aria-label="Löschen" className="text-muted-fg"><Trash2 size={15} /></Button>
                     </Form>
                   )}
                 </td>

@@ -165,8 +165,8 @@ export default function Design({ loaderData }: Route.ComponentProps) {
               <h3 className="font-display text-4xl leading-none">Il gusto Italiano</h3>
               <p className="text-sm text-muted-fg">Fliesstext in der gewählten Textschrift mit gedämpften Metadaten.</p>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm">Primär <ArrowRight size={13} /></Button>
-                <Button size="sm" variant="secondary">Sekundär</Button>
+                <Button type="button" size="sm">Primär <ArrowRight size={13} /></Button>
+                <Button type="button" size="sm" variant="secondary">Sekundär</Button>
                 <Badge tone="primary">Aktion</Badge>
               </div>
               <div className="grid grid-cols-2 gap-3">
