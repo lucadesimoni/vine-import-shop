@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.19.1] - 2026-11-14
+
 ### Security
 - Review after the admin fix (v1.18.1). Checked:
   - portal, account and admin data requests (`.data`) without a login: only redirects, no data;
@@ -457,7 +459,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.19.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.19.1...HEAD
+[1.19.1]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.19.0...v1.19.1
 [1.19.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.18.1...v1.19.0
 [1.18.1]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.18.0...v1.18.1
 [1.18.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.17.0...v1.18.0
