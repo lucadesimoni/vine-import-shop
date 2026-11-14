@@ -1,3 +1,4 @@
+import { Img } from "~/components/media";
 import type { Route } from "./+types/story";
 import { getSetting } from "~/.server/settings";
 import { resolveBlocks } from "~/.server/blocks";
@@ -25,7 +26,7 @@ export default function Story({ loaderData }: Route.ComponentProps) {
         <p className="text-lead max-w-2xl text-muted-fg">{L(story.intro)}</p>
       </section>
       {story.imageUrl && (
-        <div className="container-page"><img src={story.imageUrl} alt="" className="aspect-[21/9] w-full rounded-surface object-cover" /></div>
+        <div className="container-page"><Img src={story.imageUrl} alt="" className="aspect-[21/9] w-full rounded-surface object-cover" /></div>
       )}
       <section className="container-page section-y">
         <ol className="relative grid gap-14 border-l border-border pl-8 md:mx-auto md:max-w-3xl md:pl-14">

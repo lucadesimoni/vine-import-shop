@@ -1,3 +1,4 @@
+import { Img } from "~/components/media";
 import { Link } from "react-router";
 import { ArrowRight, ArrowUpRight, Award, Clock, Grape, Heart, Leaf, MapPin, Plus, Shield, Sprout, Star, Truck, Users, Wine, type LucideIcon } from "lucide-react";
 import type { Block, BlockData, CustomBlock } from "~/lib/blocks";
@@ -51,7 +52,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     const Title = first ? "h1" : "h2";
     return (
       <section className="relative isolate -mt-px overflow-hidden bg-inverse text-on-inverse">
-        {d<string>(b, "image") && <img src={d<string>(b, "image")} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" fetchPriority={first ? "high" : undefined} loading={first ? undefined : "lazy"} />}
+        {d<string>(b, "image") && <Img src={d<string>(b, "image")} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" fetchPriority={first ? "high" : undefined} loading={first ? undefined : "lazy"} />}
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-scrim/70 via-scrim/35 to-scrim/10" />
         <div className={cn("container-page grid content-center gap-6 md:gap-8", h === "compact" ? "min-h-[min(44vh,420px)] py-14" : h === "medium" ? "min-h-[min(60vh,560px)] py-16" : "min-h-[min(78vh,760px)] section-y-sm")}>
           {L(b.data.eyebrow) && <Eyebrow line className="animate-fade-up text-on-inverse/85">{L(b.data.eyebrow)}</Eyebrow>}
@@ -94,7 +95,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
           {cats.map((c) => (
             <Link key={c.id} to={`/shop?category=${c.slug}`} className="group grid gap-3 text-center">
               <div className="aspect-[3/4] overflow-hidden rounded-surface bg-muted">
-                {c.image && <img src={c.image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />}
+                {c.image && <Img src={c.image} sizes="(min-width: 1024px) 16vw, (min-width: 640px) 30vw, 45vw" max={828} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />}
               </div>
               <span className="font-display text-lg leading-tight">{c.name}</span>
               <span aria-hidden className="mx-auto h-px w-8 bg-border-strong transition-all duration-300 group-hover:w-14 group-hover:bg-primary" />
@@ -158,7 +159,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     return (
       <section className={cn("section-y", tone === "surface" && "border-y border-border bg-surface", tone === "muted" && "bg-muted/50")}>
         <div className="container-page grid items-center gap-10 md:grid-cols-2 md:gap-16">
-          {d<string>(b, "image") && <img src={d<string>(b, "image")} alt="" loading="lazy" className={cn("aspect-[4/3] w-full rounded-surface object-cover", right && "md:order-2")} />}
+          {d<string>(b, "image") && <Img src={d<string>(b, "image")} sizes="(min-width: 768px) 50vw, 100vw" alt="" loading="lazy" className={cn("aspect-[4/3] w-full rounded-surface object-cover", right && "md:order-2")} />}
           <div className="grid content-center gap-6">
             {L(b.data.eyebrow) && <Eyebrow>{L(b.data.eyebrow)}</Eyebrow>}
             {L(b.data.title) && <h2 className="text-h1"><Lines text={L(b.data.title)} /></h2>}
@@ -281,7 +282,7 @@ const RENDERERS: Record<string, (p: P) => React.ReactNode> = {
     const src = d<string>(b, "image");
     if (!src) return null;
     const ratio = d<string>(b, "ratio");
-    const img = <img src={src} alt={L(b.data.caption)} loading="lazy" className={cn("w-full rounded-surface object-cover", ratio === "square" ? "aspect-square md:aspect-[4/3]" : ratio === "cinema" ? "aspect-[16/9] md:aspect-[21/9]" : "aspect-[4/3] md:aspect-video")} />;
+    const img = <Img src={src} alt={L(b.data.caption)} loading="lazy" className={cn("w-full rounded-surface object-cover", ratio === "square" ? "aspect-square md:aspect-[4/3]" : ratio === "cinema" ? "aspect-[16/9] md:aspect-[21/9]" : "aspect-[4/3] md:aspect-video")} />;
     return (
       <figure className="container-page grid gap-3 section-y-sm">
         {d<string>(b, "href") ? <Link to={d<string>(b, "href")}>{img}</Link> : img}

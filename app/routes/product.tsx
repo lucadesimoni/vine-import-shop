@@ -6,6 +6,8 @@ import { productDetail } from "~/.server/catalog";
 import { useI18n, type MessageKey } from "~/lib/i18n";
 import { formatMoney } from "~/lib/money";
 import { useRootData } from "~/lib/root-data";
+import { productLd, socialMeta } from "~/lib/seo";
+import type { RootData } from "~/root";
 import { usePath } from "~/lib/channel";
 import { ProducerLogo } from "~/components/producer";
 import { Badge, Eyebrow, Notice, SectionHeading } from "~/components/ui";
@@ -20,24 +22,21 @@ export async function loader({ params, context, request }: Route.LoaderArgs) {
 
 export const meta: Route.MetaFunction = ({ loaderData, matches }) => {
   if (!loaderData) return [];
-  const root = matches[0].loaderData as { brand: { name: string } } | undefined;
+  const root = matches[0].loaderData as RootData | undefined;
   const p = loaderData.product;
-  const v = p.card.variants[0];
+  const origin = new URL(loaderData.url).origin;
+  // canonical: the public shop URL (also for the portal route and filtered links)
+  const url = `${origin}/product/${p.card.slug}`;
+  const description = p.short || p.description.slice(0, 160);
   return [
     { title: `${p.card.name} · ${root?.brand.name ?? ""}` },
-    { name: "description", content: p.short || p.description.slice(0, 160) },
-    { property: "og:title", content: p.card.name },
-    ...(p.card.image ? [{ property: "og:image", content: new URL(p.card.image, loaderData.url).href }] : []),
+    ...socialMeta({ title: p.card.name, description, url, image: p.card.image, type: "product", siteName: root?.brand.name }),
     {
-      "script:ld+json": {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        name: p.card.name,
-        sku: v?.sku,
-        brand: p.producer ? { "@type": "Brand", name: p.producer.name } : undefined,
-        image: p.card.image ? new URL(p.card.image, loaderData.url).href : undefined,
-        offers: v ? { "@type": "Offer", availability: v.stock === "out" ? "https://schema.org/OutOfStock" : "https://schema.org/InStock", ...(v.price ? { price: (v.price.gross / 100).toFixed(2), priceCurrency: "CHF" } : {}) } : undefined,
-      },
+      "script:ld+json": productLd({
+        name: p.card.name, url, origin, description: p.description || p.short, image: p.card.image, brand: p.producer?.name,
+        category: p.card.category, ean: p.erp?.ean, currency: root?.shop.currency ?? "CHF",
+        variants: p.card.variants.map((v) => ({ sku: v.sku, size: v.size, vintage: v.vintage, stock: v.stock, price: v.price })),
+      }),
     },
   ];
 };

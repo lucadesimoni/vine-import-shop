@@ -12,6 +12,18 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+### Added
+- **Responsive content images** (`/media/img?src=…&w=…`): hero, category tiles, image blocks, story/B2B images and not yet optimised product photos.
+  - They come as WebP in the right width per screen (`srcset`).
+  - Rendered images are kept in a small in-memory cache, and CDNs may cache them for a year.
+  - Only own images are resized: local paths and the configured S3/Supabase origin, so the endpoint is not an open image proxy.
+  - On the demo home page (mobile), images drop from 4.3 MB to about 0.9 MB.
+- **Search engines and link previews:**
+  - Products carry complete schema.org data: one offer per format with the shop currency and availability, brand, category, GTIN from the ERP EAN, and breadcrumbs. Shops that hide prices from guests publish no prices.
+  - The home page carries Organization (address, contact, social profiles) and a site search box.
+  - Canonical URLs: products always point to the shop URL, also from the portal; the shop has one indexable URL per category; search results and further pages are `noindex, follow`.
+  - Open Graph and Twitter tags on products, producers, shop and home.
+
 ## [1.13.0] - 2026-11-14
 
 ### Added

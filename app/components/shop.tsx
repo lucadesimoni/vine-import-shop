@@ -1,3 +1,4 @@
+import { Img } from "~/components/media";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Form, Link, NavLink, useFetcher, useLocation } from "react-router";
 import { Building2, Check, Leaf, Menu, Moon, Search, ShoppingBag, Sun, User, X } from "lucide-react";
@@ -284,10 +285,11 @@ export function ProductImage({ product, className, sizes = "(min-width: 1024px) 
   if (product.image)
     return (
       <span className="relative block h-full w-full">
-        <img
+        <Img
           src={product.image}
-          // optimized images (job "images") come in 480 and 1200 px — the browser picks the right one
-          srcSet={/\/img\/[^/]+\.webp$/.test(product.image) ? `${product.image.replace(/\.webp$/, "-480.webp")} 480w, ${product.image} 1200w` : undefined}
+          max={1080}
+          // optimized images (job "images") come in 480 and 1200 px; other own images are resized by /media/img
+          {...(/\/img\/[^/]+\.webp$/.test(product.image) ? { srcSet: `${product.image.replace(/\.webp$/, "-480.webp")} 480w, ${product.image} 1200w` } : {})}
           sizes={sizes}
           alt={product.name}
           loading="lazy"

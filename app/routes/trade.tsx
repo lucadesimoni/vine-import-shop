@@ -1,3 +1,4 @@
+import { Img } from "~/components/media";
 import { eq } from "drizzle-orm";
 import { data, Form, useNavigation } from "react-router";
 import { ArrowRight, Check } from "lucide-react";
@@ -79,7 +80,7 @@ export default function Trade({ loaderData, actionData }: Route.ComponentProps) 
               <ButtonLink to="/shop" size="lg" variant="secondary">{t("cart.toShop")}</ButtonLink>
             </div>
           </div>
-          {trade.imageUrl && <img src={trade.imageUrl} alt="" className="aspect-[4/3] w-full rounded-surface object-cover shadow-card" />}
+          {trade.imageUrl && <Img src={trade.imageUrl} sizes="(min-width: 1024px) 45vw, 100vw" alt="" className="aspect-[4/3] w-full rounded-surface object-cover shadow-card" />}
         </div>
       </section>
 

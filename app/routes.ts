@@ -48,6 +48,7 @@ export default [
   route("sitemap.xml", "routes/resources/sitemap.ts"),
   route("robots.txt", "routes/resources/robots.ts"),
   route("uploads/*", "routes/resources/uploads.ts"),
+  route("media/img", "routes/resources/media-img.ts"),
 
   ...prefix("api", [
     route("cron", "routes/api/cron.ts"),

@@ -1,3 +1,4 @@
+import { socialMeta } from "~/lib/seo";
 import { eq } from "drizzle-orm";
 import { Link } from "react-router";
 import { ArrowLeft, ArrowRight, ArrowUpRight, MapPin } from "lucide-react";
@@ -40,7 +41,11 @@ export const meta: Route.MetaFunction = ({ loaderData, matches }) => {
   const root = matches[0].loaderData as { brand: { name: string } } | undefined;
   if (!loaderData) return [{ title: root?.brand.name ?? "" }];
   const desc = loaderData.producer.descriptionHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
-  return [{ title: `${loaderData.producer.name} · ${root?.brand.name ?? ""}` }, { name: "description", content: desc }];
+  const origin = (matches[0].loaderData as { origin?: string } | undefined)?.origin ?? "";
+  return [
+    { title: `${loaderData.producer.name} · ${root?.brand.name ?? ""}` },
+    ...socialMeta({ title: loaderData.producer.name, description: desc, url: `${origin}/producers/${loaderData.producer.slug}`, image: loaderData.producer.logo, siteName: root?.brand.name }),
+  ];
 };
 
 export default function Producer({ loaderData }: Route.ComponentProps) {

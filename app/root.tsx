@@ -8,6 +8,7 @@ import { previewCookie } from "./.server/storefronts";
 import { bootExtensions } from "./.server/extensions";
 import { getSession, commit } from "./.server/auth";
 import { getCart } from "./.server/cart";
+import { mediaOrigins } from "./.server/storage";
 import { I18nContext, makeT, messagesFor } from "./lib/i18n";
 import { tl, type Locale } from "./lib/localized";
 import { fontsHref, themeCss } from "./lib/theme";
@@ -112,6 +113,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       footerPages: pages.filter((p) => p.showInFooter).map((p) => ({ slug: p.slug, title: tl(p.title, ctx.locale) })),
       toast,
       origin: new URL(request.url).origin,
+      mediaOrigins: mediaOrigins(),
       theme: (request.headers.get("Cookie")?.match(/(?:^|;\s*)theme=(light|dark)/)?.[1] ?? "system") as "light" | "dark" | "system",
     },
     { headers },

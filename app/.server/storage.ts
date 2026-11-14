@@ -17,6 +17,13 @@ export function storageDriver(): StorageDriver {
   if (d === "s3" || d === "supabase" || d === "local") return d;
   return process.env.SUPABASE_URL && supabaseKey() ? "supabase" : "local";
 }
+/** origins of the configured object storage — their images may be resized by /media/img */
+export function mediaOrigins(): string[] {
+  const out: string[] = [];
+  for (const u of [process.env.S3_PUBLIC_URL, process.env.SUPABASE_URL]) { try { if (u) out.push(new URL(u).origin); } catch { /* ignore */ } }
+  return out;
+}
+
 /** files survive restarts and are shared by all instances (serverless needs this) */
 export const persistentStorage = () => storageDriver() !== "local" || !process.env.VERCEL;
 // Serverless filesystems are read-only except /tmp → use STORAGE_DRIVER=s3 for persistent uploads there.
