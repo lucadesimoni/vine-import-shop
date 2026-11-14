@@ -12,6 +12,8 @@ See [docs/UPDATING.md](docs/UPDATING.md) for how to update and roll back.
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-11-14
+
 ### Changed
 - **Better product search** (shop, portal catalogue, quick order):
   - Every word must appear somewhere (name in all languages, producer, grape, region, appellation, country, article number), in any order. "grigio pinot" and "nebbiolo langhe" now find results.
@@ -413,7 +415,8 @@ First release of the white-label platform for wine and speciality importers and 
 - **Quality**: unit tests (pricing, conditions, payments, vinX mapping and contract) and a full-platform end-to-end suite in CI.
 - **Demo**: De Simoni (Kriens, since 1917) with 56 products.
 
-[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.15.0...HEAD
+[Unreleased]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.16.0...HEAD
+[1.16.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/lucadesimoni/vine-import-shop/compare/v1.12.1...v1.13.0
